@@ -1,0 +1,102 @@
+/* site.config.json → 모든 페이지의 <head> 블록, 문의 이메일, sitemap.xml, robots.txt, ads.txt 생성
+   실행: npm run configure
+   - url: 사이트 주소 (끝에 / 포함). 도메인을 바꾸면 여기만 고치고 다시 실행
+   - adsenseClient: 애드센스 게시자 ID (ca-pub-로 시작). 넣으면 승인용 코드·ads.txt가 들어감
+   - adSlots: 승인 후 만든 광고 단위 ID. 비어 있는 자리는 화면에 나타나지 않음 */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
+const base = cfg.url.endsWith("/") ? cfg.url : cfg.url + "/";
+const client = (cfg.adsenseClient || "").trim();
+if (client && !/^ca-pub-\d{10,20}$/.test(client)) throw new Error(`adsenseClient 형식이 이상합니다: ${client} (예: ca-pub-1234567890123456)`);
+
+/* 공개 페이지 (sitemap 순서) */
+const PAGES = [
+  { file: "index.html", loc: "", priority: "1.0" },
+  { file: "app.html", loc: "app.html", priority: "0.9" },
+  { file: "guide.html", loc: "guide.html", priority: "0.8" },
+  { file: "about.html", loc: "about.html", priority: "0.5" },
+  { file: "contact.html", loc: "contact.html", priority: "0.3" },
+  { file: "privacy.html", loc: "privacy.html", priority: "0.2" },
+  { file: "terms.html", loc: "terms.html", priority: "0.2" },
+];
+const OTHER = ["404.html"];
+
+const attr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+const pick = (html, re) => (html.match(re) || [])[1] || "";
+
+function headBlock(html, page) {
+  const title = pick(html, /<title>([^<]*)<\/title>/);
+  const desc = pick(html, /<meta name="description" content="([^"]*)"/);
+  const lines = [];
+  if (page) {
+    const url = base + page.loc;
+    lines.push(`<link rel="canonical" href="${url}" />`,
+      `<meta property="og:type" content="website" />`,
+      `<meta property="og:site_name" content="${attr(cfg.siteName)}" />`,
+      `<meta property="og:title" content="${title}" />`,
+      `<meta property="og:description" content="${desc}" />`,
+      `<meta property="og:url" content="${url}" />`,
+      `<meta property="og:image" content="${base}assets/og.png" />`,
+      `<meta property="og:image:width" content="1200" />`,
+      `<meta property="og:image:height" content="630" />`,
+      `<meta property="og:locale" content="ko_KR" />`,
+      `<meta name="twitter:card" content="summary_large_image" />`);
+  } else {
+    // 404는 없는 하위 경로에서도 열리므로 상대 경로 기준을 사이트 루트로 고정
+    lines.push(`<base href="${new URL(base).pathname}" />`, `<meta name="robots" content="noindex" />`);
+  }
+  if (cfg.googleSiteVerification) lines.push(`<meta name="google-site-verification" content="${attr(cfg.googleSiteVerification)}" />`);
+  if (cfg.naverSiteVerification) lines.push(`<meta name="naver-site-verification" content="${attr(cfg.naverSiteVerification)}" />`);
+  if (client) {
+    lines.push(`<meta name="google-adsense-account" content="${client}" />`,
+      `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous"></script>`);
+    const slots = Object.fromEntries(Object.entries(cfg.adSlots || {}).filter(([, v]) => String(v).trim()));
+    lines.push(`<script>window.SITE = ${JSON.stringify({ adClient: client, adSlots: slots })};</script>`);
+  }
+  return lines.join("\n");
+}
+
+function contactBlock() {
+  const mail = (cfg.contactEmail || "").trim();
+  return mail
+    ? `<p>이메일: <a href="mailto:${attr(mail)}">${attr(mail)}</a></p>`
+    : `<p class="note">이메일 문의 창구는 준비 중입니다. 아래 GitHub 문의 게시판을 이용해 주세요.</p>`;
+}
+
+const swap = (html, name, body) => {
+  const re = new RegExp(`(<!-- SITE:${name}-START -->)[\\s\\S]*?(<!-- SITE:${name}-END -->)`);
+  if (!re.test(html)) return html;
+  return html.replace(re, `$1\n${body}\n$2`);
+};
+
+let changed = 0;
+for (const f of [...PAGES.map((p) => p.file), ...OTHER]) {
+  const fp = path.join(root, f);
+  if (!fs.existsSync(fp)) throw new Error(`없는 페이지: ${f}`);
+  const html = fs.readFileSync(fp, "utf8");
+  if (!html.includes("<!-- SITE:HEAD-START -->")) throw new Error(`${f}에 SITE:HEAD 표시가 없습니다`);
+  let out = swap(html, "HEAD", headBlock(html, PAGES.find((p) => p.file === f)));
+  out = swap(out, "CONTACT", contactBlock());
+  if (out !== html) { fs.writeFileSync(fp, out); changed++; }
+}
+
+const today = new Date().toISOString().slice(0, 10);
+fs.writeFileSync(path.join(root, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${PAGES.map((p) => `  <url><loc>${base}${p.loc}</loc><lastmod>${today}</lastmod><priority>${p.priority}</priority></url>`).join("\n")}
+</urlset>
+`);
+fs.writeFileSync(path.join(root, "robots.txt"), `User-agent: *
+Allow: /
+
+Sitemap: ${base}sitemap.xml
+`);
+const adsTxt = path.join(root, "ads.txt");
+if (client) fs.writeFileSync(adsTxt, `google.com, ${client.replace("ca-", "")}, DIRECT, f08c47fec0942fa0\n`);
+else if (fs.existsSync(adsTxt)) fs.unlinkSync(adsTxt);
+
+console.log(`페이지 ${changed}개 갱신 · sitemap.xml · robots.txt${client ? " · ads.txt" : ""} (주소 ${base}, 애드센스 ${client || "미설정"})`);
