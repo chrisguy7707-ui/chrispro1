@@ -185,6 +185,27 @@
   .pat-calc p { margin: 0 0 6px; font-size: 12px; line-height: 1.6; }
   .pat-legend span { display: inline-block; margin-right: 12px; }
   #patPrint { display: none; }
+  .olz-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; margin-top: 12px; align-items: start; }
+  @media (max-width: 960px) { .olz-grid { grid-template-columns: 1fr; } }
+  .olz-view { border: 1px solid var(--ink); background: #f4f4f1; }
+  .olz-view canvas { display: block; width: 100%; height: auto; cursor: crosshair; touch-action: none; }
+  .olz-side { font-size: 13px; }
+  .olz-f { display: block; margin: 0 0 10px; color: var(--ink-soft); }
+  .olz-f input[type=range] { width: 100%; }
+  .olz-f input[type=number] { width: 100%; margin-top: 3px; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 7px; font: inherit; }
+  .olz-box { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+  .olz-box p { margin: 4px 0 6px; line-height: 1.5; }
+  .olz-btn { width: 100%; margin: 4px 0; padding: 9px; border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 8px; font: inherit; font-size: 14px; cursor: pointer; }
+  .olz-btn.primary { background: var(--mat); color: #fff; border-color: var(--mat); font-weight: 700; }
+  .olz-btn[aria-pressed="true"] { background: var(--tape); border-color: var(--tape); color: var(--mat-deep); font-weight: 700; }
+  .olz-quick { display: flex; gap: 4px; flex-wrap: wrap; }
+  .olz-quick button { border: 1px solid var(--rule); background: #fff; border-radius: 999px; padding: 3px 8px; font: inherit; font-size: 12px; cursor: pointer; color: var(--ink); }
+  .olz-table { width: 100%; border-collapse: collapse; margin: 6px 0 8px; }
+  .olz-table th, .olz-table td { border-bottom: 1px solid var(--rule); padding: 4px; text-align: left; }
+  .olz-table th { white-space: nowrap; }
+  .olz-table td.n { text-align: right; font-weight: 700; white-space: nowrap; }
+  .olz-table small { color: var(--ink-soft); display: block; font-size: 11px; }
+  @media print { #olz { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
   @media print {
     body { background: #fff; }
@@ -327,6 +348,7 @@
     <div class="tabs" role="tablist" aria-label="화면">
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
       <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
+      <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">외곽선 <small style="font-weight:500;opacity:.8">시험</small></button>
     </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
@@ -437,6 +459,36 @@
         </div>
       </div>
     </section>
+    <section class="pat" id="olz" role="tabpanel" aria-label="외곽선 분석" hidden>
+      <details class="pat-beta" open>
+        <summary><b>시험 기능</b> · 사진에서 옷의 외곽선을 따서 모양을 판단하고, 기준 길이를 알려 주면 대략의 치수(±2~3cm)를 잽니다. AI 없이 기기 안에서 계산합니다.</summary>
+        <ol>
+          <li>옷을 <b>바닥에 평평하게</b> 펴고, 옷과 다른 색의 <b>단색 배경</b>(바닥·천) 위에서 <b>바로 위에서</b> 찍으세요</li>
+          <li>옷 전체가 나오게, 옆에 <b>A4 종이나 자</b>를 함께 두세요 (크기 기준). 한 장에 <b>옷 하나만</b> — 여러 개가 겹치면 하나로 잡힙니다</li>
+          <li>사람이 입은 사진·마네킹·옷걸이·복잡한 배경은 잘 안 됩니다</li>
+        </ol>
+      </details>
+      <p class="pat-note" id="olzNote" role="status"></p>
+      <div class="olz-grid">
+        <div class="olz-view"><canvas id="olzCanvas" aria-label="외곽선 분석 결과"></canvas></div>
+        <div class="olz-side">
+          <label class="olz-f">배경 구분 민감도 <span id="olzSensV">1.0</span>
+            <input type="range" id="olzSens" min="0.5" max="2" step="0.1" value="1" /></label>
+          <div class="olz-box">
+            <b>크기 기준</b>
+            <p id="olzScale">기준이 없으면 비율만 보입니다.</p>
+            <button id="olzLineBtn" class="olz-btn">사진에 기준선 긋기</button>
+            <label class="olz-f">기준선 실제 길이 (cm)<input type="number" id="olzLen" min="1" step="0.1" value="21" inputmode="decimal" /></label>
+            <div class="olz-quick"><button data-len="21">A4 짧은 변 21</button><button data-len="29.7">A4 긴 변 29.7</button><button data-len="30">30cm 자</button></div>
+          </div>
+          <div class="olz-box"><b>모양 판단</b><p id="olzShape">-</p></div>
+          <table class="olz-table"><thead><tr><th></th><th>항목</th><th>잰 값</th><th>치수표</th></tr></thead><tbody id="olzRows"></tbody></table>
+          <button id="olzApply" class="olz-btn primary">고른 치수를 작업지시서에 넣기</button>
+          <button id="olzSvg" class="olz-btn">외곽선 SVG 저장</button>
+          <p class="pat-warn" id="olzWarn" role="status"></p>
+        </div>
+      </div>
+    </section>
     <div id="patPrint" aria-hidden="true"></div>
     <style id="pageStyle">@page { size: A4 landscape; margin: 7mm; }</style>
   </main>
@@ -444,6 +496,7 @@
 
 <script src="assets/pattern.js"></script>
 <script src="assets/pattern-garments.js"></script>
+<script src="assets/outline.js"></script>
 <script>
 /* ======================================================================
    데이터: 사이즈 체계 · 품목별 치수 기준값 · 기본 봉제사양
@@ -1291,13 +1344,15 @@ function fillFromWorksheet() {
 }
 function setTab(t) {
   activeTab = t;
-  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat");
-  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat";
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz");
+  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz";
+  if (t === "olz") runOutline();
   document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
   if (t === "pat") { syncPatternToTemplate(); applyPendingPattern(); }
 }
 $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
+$("tabOlzBtn").addEventListener("click", () => setTab("olz"));
 
 /* 패턴 탭을 열 때마다 작업지시서 품목을 확인: 패턴이 있으면 그 품목으로, 없으면 안내 */
 function syncPatternToTemplate() {
@@ -1372,6 +1427,7 @@ function buildPatPrint() {
 }
 function preparePrint() {
   document.body.classList.toggle("print-pattern", activeTab === "pat");
+  document.body.classList.toggle("print-olz", activeTab === "olz");   // 외곽선 탭에서 인쇄하면 작업지시서를 인쇄
   if (activeTab === "pat") buildPatPrint();
   else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
@@ -1379,6 +1435,94 @@ $("savePatBtn").addEventListener("click", () => {
   const d = patDraft; if (!d) return;
   saveFile(`패턴_${d.type}_${styleNo()}.svg`, Pattern.svg(d, d.lay, "real", `${d.name} · ${$("fStyle").textContent}`), "image/svg+xml");
 });
+
+/* ====================================================================== 외곽선 분석 (시험, assets/outline.js)
+   치수표에는 '기준 사이즈' 열의 값을 바꾸고, 다른 사이즈는 같은 차이만큼 옮김 */
+const olz = { img: null, canvas: null, res: null, photo: null, line: [], drawing: false, pxPerCm: null };
+const OLZ_KIND = () => { const k = T[state.opt.template].kind; return k === "pants" ? "pants" : k === "skirt" ? "skirt" : k === "bag" ? "bag" : k === "dress" ? "dress" : "top"; };
+const olzOpt = () => ({ hood: state.opt.neck === "hood" || state.opt.template === "hoodie" });
+const GUESS_NAME = { pants: "바지", shorts: "반바지", top: "상의", pouch: "파우치·가방", skirt: "스커트", dress: "원피스", unknown: "판단 어려움" };
+async function runOutline(force) {
+  if (!state.photo) { $("olzNote").textContent = "먼저 1단계에서 옷 사진을 올려 주세요."; $("olzRows").innerHTML = ""; return; }
+  if (olz.photo !== state.photo || force) {
+    olz.photo = state.photo; olz.line = []; olz.pxPerCm = null;
+    const { canvas, img } = await Outline.loadImage(state.photo.blob); olz.canvas = canvas; olz.img = img;
+  }
+  olz.res = Outline.analyze(olz.img, +$("olzSens").value);
+  drawOutline(); showOutlineResult();
+}
+function drawOutline() {
+  const c = $("olzCanvas"), r = olz.res, { w, h } = r; c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.drawImage(olz.canvas, 0, 0);
+  const ov = g.createImageData(w, h);          // 배경을 흐리게
+  for (let i = 0; i < r.mask.length; i++) if (!r.mask[i]) { ov.data[i * 4] = 255; ov.data[i * 4 + 1] = 255; ov.data[i * 4 + 2] = 255; ov.data[i * 4 + 3] = 150; }
+  const tmp = document.createElement("canvas"); tmp.width = w; tmp.height = h; tmp.getContext("2d").putImageData(ov, 0, 0); g.drawImage(tmp, 0, 0);
+  g.lineWidth = 2.2; g.strokeStyle = "#2f5d46"; g.beginPath();
+  r.contour.forEach(([x, y], i) => (i ? g.lineTo(x + 0.5, y + 0.5) : g.moveTo(x + 0.5, y + 0.5))); g.closePath(); g.stroke();
+  const ms = Outline.measure(r.shape, OLZ_KIND(), olz.pxPerCm, olzOpt());
+  g.font = "bold 12px sans-serif"; g.lineWidth = 1.6;
+  ms.forEach((m, i) => {
+    g.strokeStyle = g.fillStyle = m.sure ? "#c62828" : "#b08a10"; g.setLineDash([5, 3]);
+    g.beginPath(); g.moveTo(...m.line[0]); g.lineTo(...m.line[1]); g.stroke(); g.setLineDash([]);
+    const [ax, ay] = m.line[0], [bx, by] = m.line[1], lx = (ax + bx) / 2, ly = (ay + by) / 2;
+    g.beginPath(); g.arc(lx, ly, 8, 0, 7); g.fill(); g.fillStyle = "#fff"; g.textAlign = "center"; g.fillText(String.fromCharCode(97 + i), lx, ly + 4);
+  });
+  if (olz.line.length) {
+    g.strokeStyle = g.fillStyle = "#f2c230"; g.lineWidth = 3;
+    olz.line.forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 5, 0, 7); g.fill(); });
+    if (olz.line.length === 2) { g.beginPath(); g.moveTo(...olz.line[0]); g.lineTo(...olz.line[1]); g.stroke(); }
+  }
+}
+function specRow(part) { return [...$("specTable").querySelectorAll("tr")].find((tr) => tr.children[1]?.textContent === part); }
+function showOutlineResult() {
+  const r = olz.res, s = r.shape, ms = Outline.measure(s, OLZ_KIND(), olz.pxPerCm, olzOpt());
+  // 모양 규칙은 참고용. 믿을 만한 신호(다리 두 갈래, 네모)만 품목과 어긋날 때 알림 — 품목 판단은 사진 인식(AI)이 더 정확
+  const k = OLZ_KIND(), legs = s.legs, boxy = s.guess === "pouch";
+  const clash = (legs && k !== "pants") || (k === "pants" && !legs) || (boxy && !["bag"].includes(k) && s.fill > 0.88) || (k === "bag" && !boxy);
+  $("olzShape").textContent = `참고: ${GUESS_NAME[s.guess]}${s.guess === "unknown" ? "" : " 모양"} — ${s.why}.` + (clash ? ` 작업지시서 품목(${T[state.opt.template].name})과 맞지 않을 수 있습니다. 품목을 확인하세요.` : "");
+  $("olzScale").textContent = olz.pxPerCm ? `기준: 1cm = ${olz.pxPerCm.toFixed(1)}px (기준선 ${(Math.hypot(olz.line[1][0] - olz.line[0][0], olz.line[1][1] - olz.line[0][1])).toFixed(0)}px = ${$("olzLen").value}cm)` : "기준이 없으면 비율만 보입니다. 사진 속 A4나 자 위에 기준선을 그어 주세요.";
+  $("olzNote").textContent = `작업지시서 품목 '${T[state.opt.template].name}' 기준으로 쟀습니다. 빨간 선 = 잰 위치, 노란 선 = 참고(기본 해제).`;
+  $("olzRows").innerHTML = ms.map((m, i) => {
+    const tr = specRow(m.part), base = tr?.querySelector("td.base")?.textContent ?? "-";
+    return `<tr><td><input type="checkbox" data-i="${i}" ${m.sure && m.cm != null && tr ? "checked" : ""} ${m.cm == null || !tr ? "disabled" : ""} aria-label="${esc(m.part)} 넣기" /></td>
+      <td>${String.fromCharCode(97 + i)}. ${esc(m.part)}${m.note ? `<small>${esc(m.note)}</small>` : ""}</td>
+      <td class="n">${m.cm != null ? m.cm + "cm" : Math.round(m.px) + "px"}</td><td class="n">${esc(base)}</td></tr>`;
+  }).join("");
+  $("olzApply").disabled = !olz.pxPerCm;
+  $("olzWarn").textContent = r.warn.join(" ") + (olz.pxPerCm ? "" : " 크기 기준이 없어 cm로 넣을 수 없습니다.");
+}
+function applyOutline() {
+  const ms = Outline.measure(olz.res.shape, OLZ_KIND(), olz.pxPerCm, olzOpt()), done = [];
+  $("olzRows").querySelectorAll("input:checked").forEach((cb) => {
+    const m = ms[+cb.dataset.i], tr = specRow(m.part); if (!tr || m.cm == null) return;
+    const cells = [...tr.querySelectorAll("td[contenteditable]")], bi = cells.findIndex((td) => td.classList.contains("base"));
+    const d = m.cm - parseFloat(cells[bi].textContent);
+    cells.forEach((td) => { const v = parseFloat(td.textContent); if (Number.isFinite(v)) td.textContent = Math.round((v + d) * 2) / 2; });
+    done.push(`${m.part} ${m.cm}`);
+  });
+  fitPrint(); scheduleSave();
+  setStatus(done.length ? `외곽선으로 잰 치수를 기준 사이즈(${state.base})에 넣었습니다: ${done.join(", ")}cm. 다른 사이즈는 같은 차이만큼 옮겼습니다.` : "넣을 치수를 고르세요.", !done.length);
+  showOutlineResult();
+}
+/* 기준선: 사진 위 두 점 */
+function canvasPoint(e) { const c = $("olzCanvas"), b = c.getBoundingClientRect(); return [((e.clientX - b.left) / b.width) * c.width, ((e.clientY - b.top) / b.height) * c.height]; }
+function updateScale() {
+  const L = +$("olzLen").value;
+  olz.pxPerCm = olz.line.length === 2 && L > 0 ? Math.hypot(olz.line[1][0] - olz.line[0][0], olz.line[1][1] - olz.line[0][1]) / L : null;
+  if (olz.res) { drawOutline(); showOutlineResult(); }
+}
+$("olzLineBtn").addEventListener("click", () => { olz.drawing = true; olz.line = []; $("olzLineBtn").setAttribute("aria-pressed", "true"); $("olzLineBtn").textContent = "사진에서 기준의 양 끝을 차례로 누르세요"; updateScale(); });
+$("olzCanvas").addEventListener("pointerdown", (e) => {
+  if (!olz.drawing || !olz.res) return;
+  olz.line.push(canvasPoint(e));
+  if (olz.line.length === 2) { olz.drawing = false; $("olzLineBtn").setAttribute("aria-pressed", "false"); $("olzLineBtn").textContent = "기준선 다시 긋기"; }
+  updateScale();
+});
+$("olzLen").addEventListener("input", updateScale);
+document.querySelectorAll(".olz-quick button").forEach((b) => b.addEventListener("click", () => { $("olzLen").value = b.dataset.len; updateScale(); }));
+$("olzSens").addEventListener("input", () => { $("olzSensV").textContent = (+$("olzSens").value).toFixed(1); if (olz.img) { olz.res = Outline.analyze(olz.img, +$("olzSens").value); drawOutline(); showOutlineResult(); } });
+$("olzApply").addEventListener("click", applyOutline);
+$("olzSvg").addEventListener("click", () => { if (olz.res) saveFile(`외곽선_${styleNo()}.svg`, Outline.contourSVG(olz.res, olz.pxPerCm), "image/svg+xml"); });
 
 /* ====================================================================== 작업 저장 · 열기 · 자동 저장
    저장 내용: 선택 상태, 작업지시서 글자(머리 정보·치수표 수정·부자재·봉제·주의), 4단계 입력, 사진, 패턴 탭 입력.

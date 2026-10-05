@@ -342,6 +342,76 @@ ok("자동 저장: 다시 열면 '이어서 하기' → 이전 작업 복원", b
 await p4.close();
 await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
 
+/* 8-3. 외곽선 분석 (시험): 크기를 아는 합성 사진으로 정확도, 기준선 → 치수표 반영, 경고, SVG, 인쇄 */
+const olzAcc = await page.evaluate(async () => {
+  const out = [];
+  const E = { top_short: ["top", { "총장": 36, "가슴단면": 25.6, "밑단단면": 25.6 }], pants: ["pants", { "허리단면": 23.2, "총장": 56.4, "밑단단면": 10.8 }],
+    skirt: ["skirt", { "허리단면": 20, "총장": 40, "밑단단면": 34.4 }], pouch: ["bag", { "가로": 35.2, "높이": 25.2 }] };
+  for (const [t, [kind, exp]] of Object.entries(E)) {
+    const keep = { ...state.opt }; state.opt.template = t; applyTemplateDefaults(); state.opt.fit = "regular";
+    const vb = buildSVG("front").match(/viewBox="([^"]+)"/)[1].split(" ").map(Number);
+    const svg = buildSVG("front").replace(/<g class="dim">[\s\S]*?<\/g>/g, "").replace("<svg ", `<svg width="${vb[2] * 2}" height="${vb[3] * 2}" `);
+    Object.assign(state.opt, keep); syncControls(); renderAll();
+    const img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); await img.decode();
+    const c = document.createElement("canvas"); c.width = vb[2] * 2 + 80; c.height = vb[3] * 2 + 80; const g = c.getContext("2d");
+    g.fillStyle = "#b9c2bb"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 40, 40);
+    const res = Outline.analyze(g.getImageData(0, 0, c.width, c.height), 1);
+    const m = Object.fromEntries(Outline.measure(res.shape, kind, 10).map((x) => [x.part, x.cm]));
+    for (const [k, v] of Object.entries(exp)) out.push({ t, k, v, got: m[k], err: Math.abs(m[k] - v) / v, guess: res.shape.guess, warn: res.warn.length });
+  }
+  return out;
+});
+const olzBad = olzAcc.filter((x) => !(x.err <= 0.035) || x.warn);
+ok(`외곽선: 크기를 아는 합성 사진 4종 ${olzAcc.length}개 치수 오차 3.5% 이내 (최대 ${(Math.max(...olzAcc.map((x) => x.err)) * 100).toFixed(1)}%)`, olzBad.length === 0, olzBad.map((x) => `${x.t} ${x.k} ${x.got}≠${x.v}`).join(", "));
+ok("외곽선 모양 판단: 합성 사진 상의·바지·스커트·파우치", ["top", "pants", "skirt", "pouch"].every((g, i) => olzAcc.find((x) => x.t === ["top_short", "pants", "skirt", "pouch"][i]).guess === g), olzAcc.map((x) => x.guess).join(","));
+
+// 화면 흐름: 파우치 합성 사진 업로드 → 외곽선 탭 → 기준선(200px = 20cm) → 치수표에 넣기
+const pouchPng = await page.evaluate(async () => {
+  const c = document.createElement("canvas"); c.width = 600; c.height = 420; const g = c.getContext("2d");
+  g.fillStyle = "#9fa8a2"; g.fillRect(0, 0, 600, 420); g.fillStyle = "#f5efe2"; g.beginPath(); g.roundRect(150, 120, 300, 180, 18); g.fill();   // 30×18cm (1cm = 10px)
+  return c.toDataURL("image/png").split(",")[1];
+});
+fs.writeFileSync(new URL_("pouch_synth.png", OUT), Buffer.from(pouchPng, "base64"));
+await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); const s = document.getElementById("oTemplate"); s.value = "pouch"; s.dispatchEvent(new Event("change")); });
+await page.evaluate(() => { document.getElementById("status").textContent = ""; });
+await (await page.$("#file")).uploadFile(new URL_("pouch_synth.png", OUT).pathname);
+await waitDone().catch(() => {});
+// 사진 인식이 품목을 바꿨을 수 있으니 파우치로 다시 고름
+await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.value = "pouch"; s.dispatchEvent(new Event("change")); document.getElementById("tabOlzBtn").click(); });
+await page.waitForFunction(() => document.getElementById("olzRows").children.length > 0, { timeout: 8000 });
+const noScale = await page.evaluate(() => document.getElementById("olzApply").disabled && /cm로 넣을 수 없습니다/.test(document.getElementById("olzWarn").textContent));
+// 캔버스 위 두 점 클릭 (분석 이미지 좌표 100,60 → 300,60 = 200px), 실제 길이 20cm
+await page.evaluate(() => {
+  document.getElementById("olzLineBtn").click();
+  const c = document.getElementById("olzCanvas"), b = c.getBoundingClientRect();
+  for (const [x, y] of [[100, 60], [300, 60]]) c.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: b.left + (x / c.width) * b.width, clientY: b.top + (y / c.height) * b.height }));
+  const L = document.getElementById("olzLen"); L.value = 20; L.dispatchEvent(new Event("input"));
+});
+const olzUi = await page.evaluate(() => {
+  const rows = [...document.querySelectorAll("#olzRows tr")].map((tr) => tr.textContent.replace(/\s+/g, " "));
+  document.getElementById("olzApply").click();
+  const spec = (part) => [...document.querySelectorAll("#specTable tr")].find((tr) => tr.children[1]?.textContent === part);
+  const g = spec("가로"), h = spec("높이");
+  return { rows, ppc: olz.pxPerCm, base: [g.querySelector("td.base").textContent, h.querySelector("td.base").textContent],
+    S: g.querySelectorAll("td[contenteditable]")[0].textContent, status: document.getElementById("status").textContent,
+    svg: Outline.contourSVG(olz.res, olz.pxPerCm) };
+});
+ok("외곽선: 기준선 없으면 넣기 막힘 → 기준선 긋고 20cm 입력 → 1cm = 10px", noScale && Math.abs(olzUi.ppc - 10) < 0.05, String(olzUi.ppc));
+ok("외곽선 → 치수표: 파우치 가로 30·높이 18 (기준 M), 다른 사이즈도 같은 차이만큼 이동 (S 25.5)",
+  olzUi.base[0] === "30" && olzUi.base[1] === "18" && olzUi.S === "25.5" && olzUi.status.includes("넣었습니다"), JSON.stringify({ base: olzUi.base, S: olzUi.S }));
+ok("외곽선 SVG: 올바른 파일, 실제 cm 크기(30×18)", /width="30\.\d+cm" height="18\.\d+cm"/.test(olzUi.svg) && !(await page.evaluate((x) => !!new DOMParser().parseFromString(x, "image/svg+xml").querySelector("parsererror"), olzUi.svg)), olzUi.svg.slice(0, 90));
+// 가장자리에 닿은 사진 → 경고
+const edgeWarn = await page.evaluate(() => {
+  const c = document.createElement("canvas"); c.width = 300; c.height = 300; const g = c.getContext("2d");
+  g.fillStyle = "#ddd"; g.fillRect(0, 0, 300, 300); g.fillStyle = "#222"; g.fillRect(100, 0, 120, 260);
+  return Outline.analyze(g.getImageData(0, 0, 300, 300), 1).warn.join(" ");
+});
+ok("외곽선: 옷이 사진 가장자리에 닿으면 경고", edgeWarn.includes("가장자리"), edgeWarn);
+await page.evaluate(() => preparePrint());
+const olzPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
+ok("외곽선 탭에서 인쇄하면 작업지시서 A4 가로 1장", olzPdf.length === 1 && !isPortrait(olzPdf[0]), olzPdf.join(" "));
+await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
+
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });
 ok("모바일 375px 가로 스크롤 없음", await page.evaluate(() => document.documentElement.scrollWidth <= 376), String(await page.evaluate(() => document.documentElement.scrollWidth)));
