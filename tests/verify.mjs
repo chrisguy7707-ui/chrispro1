@@ -15,9 +15,16 @@ const pages = (buf) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || 
 
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
 const page = await browser.newPage();
+/* 공개 사이트(github.io) 검사: GitHub CDN이 자동화 브라우저에만 봇 탐지 스크립트(사이트 루트의 무작위 경로)를 끼워 넣음.
+   일반 브라우저에서는 없으므로, 우리 경로(/chrispro1/) 밖의 같은 도메인 요청은 막고 일반 방문자 기준으로 확인 */
+if (/github\.io/.test(process.env.APP_URL || process.env.SITE_URL || "")) {
+  await page.setRequestInterception(true);
+  page.on("request", (r) => { const u = new globalThis.URL(r.url()); if (u.hostname.endsWith("github.io") && !u.pathname.startsWith("/chrispro1/")) r.abort(); else r.continue(); });
+}
 const errors = [];
 page.on("pageerror", (e) => errors.push("pageerror: " + e.message));
-page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text()); });
+const LIVE = /github\.io/.test(process.env.APP_URL || "");
+page.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push("console: " + m.text()); });  // 막은 봇 탐지 스크립트 오류는 제외
 await page.setViewport({ width: 1500, height: 1000 });
 /* 사진이 밖으로 나가지 않는지: 모든 요청 기록 (기기 안 인식은 GET으로 모델만 받음) */
 const sent = [];

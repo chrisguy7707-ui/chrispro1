@@ -30,6 +30,13 @@ npm run images       # 대문 미리보기·공유 이미지 다시 만들기
 npm run clip-labels  # 사진 인식 후보 문장을 바꿨을 때 assets/clip-labels.json 다시 만들기
 ```
 
+공개 사이트 검사 (배포 후):
+```bash
+APP_URL=https://chrisguy7707-ui.github.io/chrispro1/app.html node tests/verify.mjs
+SITE_URL=https://chrisguy7707-ui.github.io/chrispro1/ node tests/site.mjs
+```
+GitHub CDN은 자동화 브라우저에만 봇 탐지 스크립트를 끼워 넣기 때문에, 공개 사이트 검사에서는 그 요청을 막고 일반 방문자 기준으로 확인합니다.
+
 ## 공개하고 애드센스 신청하기
 
 ### 1. 사이트 주소 정하기
