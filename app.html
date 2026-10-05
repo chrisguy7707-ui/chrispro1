@@ -1205,21 +1205,55 @@ let sampleFn = null;      // claude.ai에서 열렸을 때: Claude
 let sampleImages = false;
 function geminiMode() { return !sampleFn || !sampleImages; }
 
+/* 쓸 수 있는 모델 이름 → 사진 분석용 Flash 후보 순서: 정식(최신 버전 먼저) → 미리보기 → lite */
+function flashCandidates(names) {
+  const ver = (n) => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+  const pick = (re) => names.filter((n) => re.test(n)).sort((a, b) => ver(b) - ver(a));
+  return [...pick(/^gemini-\d+(\.\d+)?-flash$/), ...pick(/^gemini-\d+(\.\d+)?-flash-preview$/), ...pick(/^gemini-\d+(\.\d+)?-flash-lite$/)];
+}
+async function geminiModels(key) {
+  try { const c = JSON.parse(localStorage.getItem("wo_gmodels") || "null"); if (Array.isArray(c) && c.length) return c; } catch (e) {}
+  try {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
+    const data = await res.json();
+    const names = (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => m.name.replace(/^models\//, ""));
+    try { localStorage.setItem("wo_gmodels", JSON.stringify(names)); } catch (e) {}
+    return names;
+  } catch (e) { return []; }
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/* Gemini 분석: 모델이 붐비면(503·429·500) 잠깐 쉬고 다른 Flash 모델로 다시 (최대 3개) */
 async function analyzeWithGemini() {
   let key = $("gKey").value.trim();
   if (!key) { $("keyBox").hidden = false; $("keyBox").open = true; throw new Error("Gemini API 키를 입력하거나, 4단계에서 직접 선택해 주세요."); }
   try { localStorage.setItem("wo_gkey", key); localStorage.setItem("wo_gmodel", $("gModel").value.trim()); } catch (e) {}
-  const model = $("gModel").value.trim() || "gemini-3-flash-preview";
+  const first = $("gModel").value.trim() || GEMINI_DEFAULT;
+  const models = [...new Set([first, ...flashCandidates(await geminiModels(key))])].slice(0, 3);
   const b64 = state.photo.dataUrl.split(",")[1];
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-    body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }],
-      generationConfig: { responseMimeType: "application/json" } }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error?.message || "HTTP " + res.status);
-  const txt = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
-  return JSON.parse(txt.replace(/```json|```/g, "").trim());
+  const tried = [];
+  for (const model of models) {
+    if (tried.length) { setStatus(`Gemini(${tried[tried.length - 1]})가 붐벼서 ${model}(으)로 다시 시도하는 중…`); await sleep(1500); }
+    tried.push(model);
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }],
+        generationConfig: { responseMimeType: "application/json" } }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      const txt = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+      const r = JSON.parse(txt.replace(/```json|```/g, "").trim());
+      r.__model = model; r.__switched = tried.length > 1;
+      if (tried.length > 1) { $("gModel").value = model; try { localStorage.setItem("wo_gmodel", model); } catch (e) {} }   // 잘 된 모델을 다음부터 먼저
+      return r;
+    }
+    if (![429, 500, 503].includes(res.status)) throw new Error(data?.error?.message || "HTTP " + res.status);
+    if (res.status === 429 && /quota|exhausted/i.test(data?.error?.message || "") && !/per minute/i.test(data?.error?.message || "")) {
+      const e = new Error("오늘 무료 사용량을 다 썼습니다. 내일 다시 시도하거나 기기 안 인식을 쓰세요."); e.code = "busy"; throw e;
+    }
+  }
+  const e = new Error(`Gemini 서버가 지금 붐빕니다 (${tried.join(", ")} 모두 응답 불가). Google 쪽 일시적인 문제라 잠시 후 다시 누르면 대부분 됩니다.`);
+  e.code = "busy"; throw e;
 }
 
 /* ---------------------------------------------------------------- 기기 안 인식 (키 없을 때)
@@ -1322,12 +1356,21 @@ async function analyze() {
     else r = await analyzeWithGemini();
     applyAI(r);
     $("guess").hidden = true;
-    setStatus("완료했습니다. 4단계에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.");
+    setStatus(`완료했습니다${r.__switched ? ` (붐비지 않는 ${r.__model}(으)로 분석)` : ""}. 4단계에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.`);
   } catch (e) {
+    // Gemini가 붐비면, 인식 모델을 이미 받은 브라우저에서는 기기 안 인식으로 품목·디테일·컬러라도 채움
+    if (e && e.code === "busy" && sampleImages !== true && modelReady()) {
+      try {
+        const r = await analyzeLocal(); applyLocal(r);
+        setStatus(`${e.message} 대신 기기 안 인식으로 품목(${T[r.tpl[0].c].name})·디테일·컬러를 채웠습니다. 원단·봉제 사양은 나중에 다시 눌러 Gemini로 채울 수 있습니다.`, true);
+        return;
+      } catch (e2) {}
+    }
     const code = e && e.code;
     const msg = code === "not_granted" ? "Claude 사용이 허용되지 않았습니다. 4단계에서 직접 선택해 주세요."
       : code === "rate_limited" ? "요청이 많습니다. 잠시 후 다시 눌러 주세요."
       : code === "invalid_json" ? "결과를 읽지 못했습니다. 한 번 더 눌러 주세요."
+      : code === "busy" ? e.message
       : localMode() ? "기기 안 인식에 실패했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요."
       : (e && e.message) || "분석에 실패했습니다.";
     setStatus(msg + " (4단계에서 직접 선택해도 작업지시서를 만들 수 있습니다.)", true);
@@ -1505,14 +1548,15 @@ async function checkGeminiKey() {
       return;
     }
     const names = (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => m.name.replace(/^models\//, ""));
-    const cur = $("gModel").value.trim() || GEMINI_DEFAULT;
+    try { localStorage.setItem("wo_gmodels", JSON.stringify(names)); } catch (e) {}
+    const cur = $("gModel").value.trim() || GEMINI_DEFAULT, best = flashCandidates(names)[0];
     let model = cur, note = "";
-    if (!names.includes(cur)) {
-      const flash = names.filter((n) => /flash/.test(n) && !/lite|image|tts|audio|live|embedding/.test(n));
-      model = flash.find((n) => !/preview|exp/.test(n)) || flash[0] || names[0];
-      note = model ? ` 기본 모델(${cur})을 쓸 수 없어 ${model}(으)로 바꿨습니다.` : "";
+    // 미리보기 모델은 붐비기 쉬워서, 정식 Flash가 있으면 그쪽으로 (직접 입력한 정식 모델은 존중)
+    if (best && (!names.includes(cur) || /preview|exp/.test(cur))) {
+      model = best;
+      note = names.includes(cur) ? ` 미리보기 모델(${cur}) 대신 안정적인 ${model}(으)로 정했습니다.` : ` 기본 모델(${cur})을 쓸 수 없어 ${model}(으)로 바꿨습니다.`;
     }
-    $("gKey").value = key; if (model && model !== GEMINI_DEFAULT) $("gModel").value = model;
+    $("gKey").value = key; $("gModel").value = model && model !== GEMINI_DEFAULT ? model : "";
     try { localStorage.setItem("wo_gkey", key); localStorage.setItem("wo_gmodel", $("gModel").value.trim()); } catch (e) {}
     out.className = "ok"; out.textContent = `키가 확인되었습니다. 이제 사진 분석에 Gemini를 씁니다 (모델: ${$("gModel").value.trim() || GEMINI_DEFAULT}).${note}`;
     $("manualHint").hidden = true;
@@ -1523,7 +1567,7 @@ $("keyCheck").addEventListener("click", checkGeminiKey);
 $("keyInput").addEventListener("keydown", (e) => { if (e.key === "Enter") checkGeminiKey(); });
 $("keyForget").addEventListener("click", () => {
   $("keyInput").value = ""; $("gKey").value = ""; $("gModel").value = "";
-  try { localStorage.removeItem("wo_gkey"); localStorage.removeItem("wo_gmodel"); } catch (e) {}
+  try { localStorage.removeItem("wo_gkey"); localStorage.removeItem("wo_gmodel"); localStorage.removeItem("wo_gmodels"); } catch (e) {}
   $("keyResult").className = ""; $("keyResult").textContent = "이 브라우저에서 키를 지웠습니다. 사진 분석은 기기 안 인식으로 돌아갑니다.";
   if (geminiMode()) $("manualHint").hidden = false;
 });

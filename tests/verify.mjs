@@ -415,11 +415,18 @@ await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); cons
 /* 8-4. Gemini 키 받기 탭: 강조 표시, 안내·공식 링크, 키 확인 (Google 응답은 가짜로 대체, 실제 요청 없음) */
 const pk = await browser.newPage();
 await pk.setRequestInterception(true);
-let keySeen = null;
+let keySeen = null, allBusy = false; const genCalls = [];
 pk.on("request", (r) => {
   if (r.url().startsWith("https://generativelanguage.googleapis.com/v1beta/models")) {
     const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "x-goog-api-key, content-type", "access-control-allow-methods": "GET, POST" };
     if (r.method() === "OPTIONS") return r.respond({ status: 204, headers: cors });   // 키 헤더 때문에 브라우저가 먼저 보내는 사전 확인
+    // 사진 분석: 모델별로 '붐빔(503)' 또는 성공을 흉내 냄
+    const gm = r.url().match(/models\/([^:]+):generateContent/);
+    if (gm) {
+      genCalls.push(gm[1]);
+      if (allBusy || gm[1] !== "gemini-3.5-flash-lite") return r.respond({ status: 503, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 503, status: "UNAVAILABLE", message: "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later." } }) });
+      return r.respond({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ itemName: "와이드 데님 팬츠", template: "pants", fit: "regular", pockets: ["side", "back"], color: "연청", fabric: "데님 12oz (추정)", mix: "면 100% (추정)", weight: "12oz (추정)", trims: [], sewing: ["옆선 쌍침"], notes: [] }) }] } }] }) });
+    }
     keySeen = r.headers()["x-goog-api-key"];
     if (keySeen === "AIzaBADBADBADBADBADBADBAD") return r.respond({ status: 400, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { message: "API key not valid" } }) });
     if (keySeen === "AQ.Ab8RN6BROKENBROKENBROKEN") return r.respond({ status: 401, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 401, status: "UNAUTHENTICATED",
@@ -458,6 +465,20 @@ const keyOk = await pk.evaluate(() => ({ gkey: document.getElementById("gKey").v
 ok("키 확인: 모양 검사 → 잘못된 키 안내 → 올바른 키 저장, 없는 기본 모델은 쓸 수 있는 Flash로 교체, 3단계가 Gemini로 전환",
   badShape && keySeen === "AIzaTESTTESTTESTTESTTESTTESTTEST" && keyOk.gkey === keySeen && keyOk.stored === keySeen && keyOk.model === "gemini-3.5-flash" && keyOk.gem, JSON.stringify(keyOk).slice(0, 200));
 ok("API 키는 작업 저장 파일에 들어가지 않음", !keyOk.inJob);
+/* Gemini가 붐빌 때(503): 다른 Flash 모델로 다시 → 성공. 모두 붐비면 기기 안 인식으로 대신 */
+await (await pk.$("#file")).uploadFile(new URL_("pouch_synth.png", OUT).pathname);
+await pk.waitForFunction(() => document.querySelector("#sheetPhoto img"), { timeout: 5000 });
+await pk.evaluate(() => { document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
+await pk.waitForFunction(() => /완료했습니다|붐빕니다/.test(document.getElementById("status").textContent), { timeout: 20000 });
+const busy1 = await pk.evaluate(() => ({ st: document.getElementById("status").textContent, t: state.opt.template, item: document.getElementById("fItem").textContent, model: document.getElementById("gModel").value }));
+ok("Gemini 붐빔(503) → 다른 Flash 모델로 자동 재시도 → 분석 성공, 잘 된 모델을 다음부터 먼저",
+  genCalls[0] === "gemini-3.5-flash" && genCalls.includes("gemini-3.5-flash-lite") && busy1.t === "pants" && busy1.item === "와이드 데님 팬츠" && busy1.st.includes("붐비지 않는") && busy1.model === "gemini-3.5-flash-lite", JSON.stringify({ genCalls, ...busy1 }).slice(0, 220));
+allBusy = true; genCalls.length = 0;
+await pk.evaluate(() => { document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
+await pk.waitForFunction(() => /기기 안 인식으로|붐빕니다/.test(document.getElementById("status").textContent) && !/다시 시도하는 중/.test(document.getElementById("status").textContent), { timeout: 240000 });
+const busy2 = await pk.evaluate(() => document.getElementById("status").textContent);
+ok("모든 모델이 붐비면 한국어로 안내하고, 인식 모델을 받은 브라우저면 기기 안 인식으로 대신 채움", genCalls.length === 2 && /붐빕니다/.test(busy2) && /기기 안 인식으로 품목/.test(busy2), `${genCalls.join(",")} | ${busy2.slice(-90)}`);
+allBusy = false;
 await pk.evaluate(() => document.getElementById("keyForget").click());
 ok("키 지우기 → 기기 안 인식으로 돌아감", await pk.evaluate(() => localMode() && !localStorage.getItem("wo_gkey")));
 await pk.close();
