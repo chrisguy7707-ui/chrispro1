@@ -1227,12 +1227,16 @@ async function analyzeWithGemini() {
   let key = $("gKey").value.trim();
   if (!key) { $("keyBox").hidden = false; $("keyBox").open = true; throw new Error("Gemini API 키를 입력하거나, 4단계에서 직접 선택해 주세요."); }
   try { localStorage.setItem("wo_gkey", key); localStorage.setItem("wo_gmodel", $("gModel").value.trim()); } catch (e) {}
-  const first = $("gModel").value.trim() || GEMINI_DEFAULT;
-  const models = [...new Set([first, ...flashCandidates(await geminiModels(key))])].slice(0, 3);
+  // 순서: 지난번에 된 모델 → 최신 정식 → 오래된 정식(덜 붐빔) → lite(무료 한도가 넉넉한 편). 최대 4개
+  const first = $("gModel").value.trim() || GEMINI_DEFAULT, c = flashCandidates(await geminiModels(key));
+  const stable = c.filter((n) => /-flash$/.test(n)), lite = c.filter((n) => /flash-lite$/.test(n));
+  let lastOk = null; try { lastOk = localStorage.getItem("wo_gmodel_ok"); } catch (e) {}
+  const models = [...new Set([lastOk, first, stable[0], stable[stable.length - 1], lite[0], ...c].filter((n) => n && (c.includes(n) || n === first)))].slice(0, 4);
   const b64 = state.photo.dataUrl.split(",")[1];
-  const tried = [];
+  const tried = [], why = [];   // 모델별 결과 (붐빔·분당 한도·서버 오류)
+  let wait = 0;
   for (const model of models) {
-    if (tried.length) { setStatus(`Gemini(${tried[tried.length - 1]})가 붐벼서 ${model}(으)로 다시 시도하는 중…`); await sleep(1500); }
+    if (tried.length) { setStatus(`Gemini(${tried[tried.length - 1]}: ${why[why.length - 1]})라서 ${Math.round(wait / 1000)}초 뒤 ${model}(으)로 다시 시도…`); await sleep(wait); }
     tried.push(model);
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
@@ -1244,15 +1248,20 @@ async function analyzeWithGemini() {
       const txt = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
       const r = JSON.parse(txt.replace(/```json|```/g, "").trim());
       r.__model = model; r.__switched = tried.length > 1;
-      if (tried.length > 1) { $("gModel").value = model; try { localStorage.setItem("wo_gmodel", model); } catch (e) {} }   // 잘 된 모델을 다음부터 먼저
+      try { localStorage.setItem("wo_gmodel_ok", model); } catch (e) {}   // 잘 된 모델을 다음부터 먼저
       return r;
     }
     if (![429, 500, 503].includes(res.status)) throw new Error(data?.error?.message || "HTTP " + res.status);
-    if (res.status === 429 && /quota|exhausted/i.test(data?.error?.message || "") && !/per minute/i.test(data?.error?.message || "")) {
-      const e = new Error("오늘 무료 사용량을 다 썼습니다. 내일 다시 시도하거나 기기 안 인식을 쓰세요."); e.code = "busy"; throw e;
-    }
+    const msg = data?.error?.message || "";
+    why.push(res.status === 503 ? "붐빔 503" : res.status === 500 ? "서버 오류 500" : /per.?day|daily/i.test(msg) ? "하루 한도 429" : "분당 한도 429");
+    // Google이 알려 준 대기 시간(RetryInfo)이 있으면 그만큼, 없으면 2·4·6초 (최대 10초)
+    const hint = (data?.error?.details || []).find((d) => d.retryDelay)?.retryDelay;
+    wait = Math.min(10000, hint ? parseFloat(hint) * 1000 : 2000 * tried.length);
   }
-  const e = new Error(`Gemini 서버가 지금 붐빕니다 (${tried.join(", ")} 모두 응답 불가). Google 쪽 일시적인 문제라 잠시 후 다시 누르면 대부분 됩니다.`);
+  const detail = tried.map((m, i) => `${m}: ${why[i]}`).join(" · ");
+  const daily = why.length && why.every((w) => /하루 한도/.test(w));
+  const e = new Error(daily ? `오늘 무료 사용량을 다 썼습니다 (${detail}). 내일 다시 시도하거나 기기 안 인식을 쓰세요.`
+    : `Gemini가 지금 응답하지 못합니다 (${detail}). ${why.some((w) => /분당/.test(w)) ? "무료 등급의 분당 한도에 걸린 모델이 있어 1분쯤 뒤에" : "Google 쪽 일시적인 문제라 잠시 후"} 다시 누르면 대부분 됩니다.`);
   e.code = "busy"; throw e;
 }
 
