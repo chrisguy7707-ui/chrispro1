@@ -15,7 +15,11 @@
 - 분석 엔진 3단 구조 (`analyze()`):
   1. claude.ai 아티팩트로 열렸을 때: `window.claude.use("sample")` → Claude가 사진 분석 (키 불필요)
   2. 그 외(직접 호스팅): Gemini API 키 입력 → `generateContent` + `responseMimeType: application/json`
-  3. 키 없음: 4단계 선택상자로 수동 지정 (AI 없이도 작업지시서 생성 가능)
+  3. 키 없음(공개 사이트 기본): **기기 안 인식** `analyzeLocal()`/`applyLocal()`. 사진 올리면 자동 실행.
+     - transformers.js 4.3.0(jsDelivr) + `Xenova/mobileclip_s0` 사진 모델 **fp16**(23MB). q8 양자화 모델은 출력이 망가지므로 쓰지 말 것.
+     - 글자 쪽은 `scripts/build-clip-labels.mjs`로 미리 임베딩해 `assets/clip-labels.json`(그룹별 후보: template·fit·neck·closure·rib·shape·주머니·color).
+       후보 문장을 바꾸면 `npm run clip-labels`. 품목 top-1 적용 + 후보 3개 버튼, 디테일은 `LOCAL_ALLOWED`와 확률 기준을 넘을 때만 적용.
+     - 사진·실측 사진 50장 시험에서 단일 의류 사진 약 90% 품목 일치. 소재·봉제 사양은 추정하지 않음(기본값).
      - 수동 모드 보조: `FABRICS` 원단 프리셋(품목별 추천 그룹) → 원단·혼용률·중량 칸 채움, 컬러·품명 입력칸. AI가 없으면 `manualHint` 안내 표시.
 - AI는 **디테일(품목·넥라인·여밈·주머니·소재·봉제사양)만** 판단. 치수는 AI가 추정하지 않음.
 - 치수는 `T`(품목별 기준값·편차) × `FIT`(핏 보정) × 선택 사이즈로 계산 (`specValues()`).
@@ -26,11 +30,18 @@
   - 치수 기호(A, B, C…)를 빨간 점선으로 도식화에 표시 → 치수표 기호 열과 연결.
 - 출력: `window.print()`(A4 가로 1장, `@media print`에서 zoom .93), HTML 파일 저장, SVG 저장.
 
+## 패턴 제도 (`assets/pattern.js`, app.html의 '패턴 제도' 탭)
+- `Pattern.TYPES`에 품목별 { name, fields, presets, draft } — 지금은 `skirt_h`(H라인 스커트, 칠판 제도식), `pouch`(사각 마치 지퍼 파우치).
+- 조각 = 완성선 다각형(cm, 시계 방향) + `edges`(변마다 시접, 골선 0). 재단선은 `offset()`이 변별 거리로 계산.
+- 인쇄: `preparePrint()`가 탭에 따라 `body.print-pattern` 전환. 축소도 1장(@page pat 세로, 50mm 확인 네모) + 실물 크기 분할(세로/가로 중 장수 적은 쪽, 겹침 1cm).
+  `measureOnly` 조각(허리밴드·웨빙 같은 직사각형)은 분할 인쇄에서 뺌.
+- 제도 값 바꾸면 tests/verify.mjs의 칠판 기준값(S: 옆선 2.6·다트 2·다트 길이 12.5·11.5/10.5·9.5) 확인.
+
 ## 규칙
 - 한국어 UI, 공장 용어(시보리, 오버록, 2본침, 커버스티치, 요척 등) 유지.
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 9개 품목 × 남/여 모두 렌더링 확인.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 23개), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 34개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).

@@ -6,9 +6,11 @@
     "serve": "python3 -m http.server 8766",
     "configure": "node scripts/configure.mjs",
     "images": "node scripts/render-images.mjs",
-    "test": "node tests/verify.mjs && node tests/site.mjs"
+    "test": "node tests/verify.mjs && node tests/site.mjs",
+    "clip-labels": "node scripts/build-clip-labels.mjs"
   },
   "devDependencies": {
+    "@huggingface/transformers": "^4.3.0",
     "puppeteer-core": "^24.0.0"
   }
 }

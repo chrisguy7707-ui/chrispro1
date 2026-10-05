@@ -110,6 +110,7 @@
   :focus-visible { outline: 3px solid var(--tape); outline-offset: 2px; }
   .status { margin-top: 10px; font-size: 13px; line-height: 1.5; min-height: 1.5em; }
   .status.err { color: #ffd2cc; }
+  #guess .chip small { opacity: .75; margin-left: 4px; }
   details.key { margin-top: 10px; font-size: 13px; }
   details.key summary { cursor: pointer; }
 
@@ -149,6 +150,29 @@
   .foot { margin-top: 8px; font-size: 10.5px; color: var(--ink-soft); display: flex; justify-content: space-between; }
   .sheet .mk { color: var(--mark); font-weight: 700; }
 
+  /* ---------- 탭 · 패턴 제도 ---------- */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; max-width: 1123px; border-bottom: 2px solid var(--mat); }
+  .tabs button { border: 0; background: transparent; color: var(--ink-soft); font: inherit; font-size: 15px; font-weight: 700; padding: 9px 16px; border-radius: 8px 8px 0 0; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--mat); color: #fff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button:not([aria-selected="true"]) { color: #b8c2bc; } }
+  :root[data-theme="dark"] .tabs button:not([aria-selected="true"]) { color: #b8c2bc; }
+  .pat { width: 1123px; max-width: 100%; background: var(--paper); color: var(--ink); padding: 18px 20px; box-shadow: 0 2px 18px rgba(0,0,0,.18); }
+  .pat-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; align-items: end; }
+  .pat-form label { font-size: 12px; color: var(--ink-soft); display: block; }
+  .pat-form input, .pat-form select { width: 100%; margin-top: 3px; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 7px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
+  .pat-form .wide { grid-column: span 2; }
+  .pat-warn { color: var(--mark); font-size: 13px; margin: 8px 0 0; }
+  .pat-view { margin-top: 12px; border: 1px solid var(--ink); }
+  .pat-view svg { display: block; width: 100%; height: auto; max-height: 720px; }
+  .pat-calc { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 10px; }
+  .pat-calc table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  .pat-calc th, .pat-calc td { border: 1px solid var(--ink); padding: 4px 6px; text-align: left; }
+  .pat-calc th { background: #f1f1ee; font-weight: 500; }
+  .pat-calc td.n { text-align: right; font-weight: 700; white-space: nowrap; }
+  .pat-calc p { margin: 0 0 6px; font-size: 12px; line-height: 1.6; }
+  .pat-legend span { display: inline-block; margin-right: 12px; }
+  #patPrint { display: none; }
+
   @media print {
     @page { size: A4 landscape; margin: 7mm; }
     body { background: #fff; }
@@ -157,7 +181,25 @@
     .stage { padding: 0; overflow: visible; }
     .sheet { box-shadow: none; width: 1123px; min-height: 0; padding: 0; zoom: var(--print-zoom, .93); }
     .sheet [contenteditable]:hover { background: none; }
+    .tabs { display: none !important; }
+    body.print-pattern .sheet, body.print-pattern .pat { display: none !important; }
+    body.print-pattern #patPrint { display: block; }
+    .pat-page { page: pat; break-after: page; width: 196mm; height: 283mm; overflow: hidden; position: relative; font-family: var(--font); color: #1d1d1b; }
+    .pat-page:last-child { break-after: auto; }
+    .pat-page.l { page: patL; width: 283mm; height: 196mm; }
+    .pat-page svg { display: block; }
+    .pat-page .lab { position: absolute; left: 3mm; top: 2mm; font-size: 9pt; font-weight: 700; background: #fff; padding: 0 2mm; }
+    .pat-page .ov-r { position: absolute; right: 0; top: 0; width: 10mm; height: 100%; background: rgba(242,194,48,.12); border-left: .3mm dashed #b08a10; }
+    .pat-page .ov-b { position: absolute; left: 0; bottom: 0; height: 10mm; width: 100%; background: rgba(242,194,48,.12); border-top: .3mm dashed #b08a10; }
+    .pat-page .chk { float: right; margin: 2mm 0 0 4mm; width: 50mm; height: 50mm; border: .4mm solid #1d1d1b; background: #fff; font-size: 7.5pt; padding: 2mm; box-sizing: border-box; }
+    .pat-cover h1 { font-size: 18pt; margin: 0 0 2mm; }
+    .pat-cover p, .pat-cover li { font-size: 9.5pt; line-height: 1.55; margin: 0; }
+    .pat-cover svg { width: 100%; height: auto; max-height: 118mm; border: .3mm solid #1d1d1b; margin: 3mm 0; }
+    .pat-cover table { border-collapse: collapse; width: 100%; font-size: 8.5pt; margin-top: 2mm; }
+    .pat-cover th, .pat-cover td { border: .25mm solid #1d1d1b; padding: 1mm 1.5mm; text-align: left; }
   }
+  @page pat { size: A4 portrait; margin: 7mm; }
+  @page patL { size: A4 landscape; margin: 7mm; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -204,10 +246,11 @@
         <summary>Gemini API 키 (이 사이트를 직접 호스팅할 때)</summary>
         <input type="password" id="gKey" placeholder="AIza..." autocomplete="off" />
         <input type="text" id="gModel" placeholder="모델명 (기본 gemini-3-flash-preview)" />
-        <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 아래에서 직접 선택해도 됩니다.</p>
+        <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 기기 안 인식을 씁니다.</p>
       </details>
-      <p class="hint" id="manualHint" hidden>AI 없이 쓰려면 이 단계는 건너뛰고 4단계에서 직접 고르세요. 사진은 참고 사진 칸에 그대로 들어갑니다.</p>
+      <p class="hint" id="manualHint" hidden>사진을 올리면 <b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않고, 처음 한 번 인식 모델(약 23MB)을 받습니다.</p>
       <div class="status" id="status" role="status"></div>
+      <div class="chips" id="guess" aria-label="인식 후보" hidden></div>
     </section>
 
     <section class="step">
@@ -262,11 +305,17 @@
 
   <!-- ================= 작업지시서 ================= -->
   <main class="stage">
+    <div class="tabs" role="tablist" aria-label="화면">
+      <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
+      <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도</button>
+    </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
-      <button id="saveHtmlBtn">작업지시서 파일 저장</button>
-      <button id="saveSvgBtn">도식화 SVG 저장</button>
-      <span class="note">치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요.</span>
+      <button id="saveHtmlBtn" data-tab="sheet">작업지시서 파일 저장</button>
+      <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
+      <button id="savePatBtn" data-tab="pat" hidden>패턴 SVG 저장 (실물 크기)</button>
+      <span class="note" data-tab="sheet">치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요.</span>
+      <span class="note" data-tab="pat" hidden>인쇄하면 1장은 축소도, 나머지는 실물 크기 A4 분할입니다. 배율 100%로 인쇄하세요.</span>
     </div>
 
     <aside class="ad-slot" data-ad-key="app-top" aria-label="광고"></aside>
@@ -334,9 +383,30 @@
       </div>
       <div class="foot"><span>치수 허용오차 ±1cm (별도 협의 시 협의값 우선)</span><span id="footStamp"></span></div>
     </article>
+
+    <section class="pat" id="pat" role="tabpanel" aria-label="패턴 제도" hidden>
+      <div class="pat-form">
+        <label class="wide">품목<select id="patType"></select></label>
+        <label class="wide">사이즈 프리셋<select id="patPreset"></select></label>
+        <div id="patFields" style="display:contents"></div>
+      </div>
+      <p class="pat-warn" id="patWarn" role="status"></p>
+      <div class="pat-view" id="patView"></div>
+      <div class="pat-calc">
+        <table><thead><tr><th>계산 항목</th><th>식</th><th>값 (cm)</th></tr></thead><tbody id="patCalc"></tbody></table>
+        <div>
+          <p><b>읽는 법</b></p>
+          <p class="pat-legend"><span>━ 재단선</span><span>┅ 완성선</span><span style="color:var(--mark)">↔ 치수 (cm)</span><span>↕ 식서(원단 결)</span><span style="color:var(--mark)">골선: 접어서 재단</span><span>│ 너치(맞춤 표시)</span></p>
+          <p id="patSeam"></p>
+          <p style="color:var(--ink-soft)">제도 값은 표준 공식에 따른 참고값입니다. 가봉(시착)으로 확인한 뒤 수정하세요. 인쇄물의 50mm 확인 네모로 배율을 꼭 확인하세요.</p>
+        </div>
+      </div>
+    </section>
+    <div id="patPrint" aria-hidden="true"></div>
   </main>
 </div>
 
+<script src="assets/pattern.js"></script>
 <script>
 /* ======================================================================
    데이터: 사이즈 체계 · 품목별 치수 기준값 · 기본 봉제사양
@@ -542,7 +612,7 @@ function renderSpec() {
 /* ====================================================================== 도식화 (SVG) */
 const S = { stroke: "#1d1d1b", sw: 1.6 };
 const P = (d, extra = "") => `<path d="${d}" fill="#fff" stroke="${S.stroke}" stroke-width="${S.sw}" stroke-linejoin="round" ${extra}/>`;
-const L = (d, extra = "") => `<path d="${d}" fill="none" stroke="${S.stroke}" stroke-width="1" ${extra}/>`;
+const L = (d, extra = "") => `<path d="${d}" fill="none" stroke="${S.stroke}"${extra.includes("stroke-width") ? "" : ' stroke-width="1"'} ${extra}/>`;
 const ST = (d) => `<path d="${d}" fill="none" stroke="${S.stroke}" stroke-width=".8" stroke-dasharray="3 2.2"/>`;
 const C = (x, y, r = 3) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${S.stroke}" stroke-width="1"/>`;
 const mirror = (x) => 300 - x;
@@ -828,7 +898,7 @@ $("oColor").addEventListener("input", () => { $("fColor").textContent = $("oColo
 $("oItem").addEventListener("input", () => { $("fItem").textContent = $("oItem").value || T[state.opt.template].name; });
 
 $("sheet").addEventListener("input", fitPrint);
-window.addEventListener("beforeprint", fitPrint);
+window.addEventListener("beforeprint", () => preparePrint());
 
 $("gM").addEventListener("click", () => setGender("m"));
 $("gF").addEventListener("click", () => setGender("f"));
@@ -851,9 +921,9 @@ async function takeFile(file) {
     $("dropImg").src = state.photo.dataUrl; $("dropImg").hidden = false; $("dropTxt").textContent = "다른 사진으로 바꾸려면 누르세요";
     $("sheetPhoto").innerHTML = `<img src="${state.photo.dataUrl}" alt="참고 사진" />`;
     $("sheetPhoto").querySelector("img").addEventListener("load", fitPrint);
-    setStatus(geminiMode() && !$("gKey").value.trim()
-      ? "사진을 불러왔습니다. 4단계에서 품목과 디테일을 고르면 작업지시서가 완성됩니다."
-      : "사진을 불러왔습니다. '사진으로 도식화·작업지시서 만들기'를 누르세요.");
+    $("guess").hidden = true;
+    if (localMode()) analyze();   // 키가 없으면 바로 기기 안 인식 (비용 없음)
+    else setStatus("사진을 불러왔습니다. '사진으로 도식화·작업지시서 만들기'를 누르세요.");
   } catch (e) { setStatus("사진을 읽지 못했습니다. 다른 파일로 시도해 주세요.", true); }
 }
 const drop = $("drop");
@@ -933,21 +1003,101 @@ async function analyzeWithGemini() {
   return JSON.parse(txt.replace(/```json|```/g, "").trim());
 }
 
+/* ---------------------------------------------------------------- 기기 안 인식 (키 없을 때)
+   MobileCLIP S0 사진 모델을 브라우저에서 돌리고, 미리 계산한 글자 임베딩(assets/clip-labels.json,
+   scripts/build-clip-labels.mjs)과 비교해 품목·디테일·컬러를 고릅니다. 사진은 기기 밖으로 나가지 않습니다.
+   q8 양자화 모델은 결과가 망가져서 fp16(23MB)을 씀. */
+const LOCAL = { lib: "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js", labels: "assets/clip-labels.json", dtype: "fp16" };
+const localMode = () => geminiMode() && !$("gKey").value.trim();
+let localModel = null;
+function loadLocal() {
+  if (!localModel) localModel = (async () => {
+    const lib = await import(LOCAL.lib);
+    const labels = await (await fetch(LOCAL.labels)).json();
+    lib.env.allowLocalModels = false;
+    const seen = {};
+    const progress_callback = (p) => {
+      if (p.status !== "progress" || !p.total) return;
+      seen[p.file] = [p.loaded, p.total];
+      const [l, t] = Object.values(seen).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
+      if (t > 1e6) setStatus(`인식 모델을 받는 중… ${Math.round(l / 1e6)} / ${Math.round(t / 1e6)}MB (처음 한 번만)`);
+    };
+    const processor = await lib.AutoProcessor.from_pretrained(labels.model, { progress_callback });
+    let vision;
+    try { vision = await lib.CLIPVisionModelWithProjection.from_pretrained(labels.model, { dtype: LOCAL.dtype, progress_callback }); }
+    catch (e) { vision = await lib.CLIPVisionModelWithProjection.from_pretrained(labels.model, { dtype: "fp32", progress_callback }); }
+    return { lib, labels, processor, vision };
+  })().catch((e) => { localModel = null; throw e; });
+  return localModel;
+}
+/* 그룹 안 후보 확률 (CLIP logit scale 100). only가 있으면 그 후보끼리만 비교 */
+function rankGroup(labels, emb, group, only) {
+  const cs = Object.entries(labels.groups[group]).filter(([c]) => !only || only.includes(c));
+  const lg = cs.map(([, v]) => 100 * v.reduce((s, x, i) => s + x * emb[i], 0));
+  const m = Math.max(...lg), ex = lg.map((x) => Math.exp(x - m)), z = ex.reduce((a, b) => a + b, 0);
+  return cs.map(([c], i) => ({ c, p: ex[i] / z })).sort((a, b) => b.p - a.p);
+}
+/* 품목마다 고를 수 있는 디테일 */
+const LOCAL_ALLOWED = {
+  neck: { top_short: ["crew", "v", "mock"], top_long: ["crew", "v", "mock"], dress: ["crew", "v", "collar"], jacket: ["mock", "collar"] },
+  closure: { top_short: ["none"], top_long: ["none", "half_zip"], hoodie: ["none", "zip"], jacket: ["zip", "buttons"], dress: ["none", "buttons"] },
+};
+async function analyzeLocal() {
+  const { lib, labels, processor, vision } = await loadLocal();
+  setStatus("사진을 인식하는 중…");
+  const image = await lib.RawImage.fromBlob(state.photo.blob);
+  const { image_embeds } = await vision(await processor(image));
+  const emb = image_embeds.normalize(2, -1).tolist()[0];
+  const tpl = rankGroup(labels, emb, "template");
+  const color = rankGroup(labels, emb, "color")[0];
+  return { tpl, color, emb, labels };
+}
+function applyLocal({ tpl, color, emb, labels }, template = tpl[0].c) {
+  const o = state.opt;
+  o.template = template; applyTemplateDefaults();         // 품목 기본 디테일에서 시작
+  const kind = T[template].kind, sure = (g, only, min = 0.5) => { const r = rankGroup(labels, emb, g, only)[0]; return r.p >= min ? r.c : null; };
+  const fit = sure("fit", null, 0.6); if (fit) o.fit = fit;
+  for (const g of ["neck", "closure"]) { const only = LOCAL_ALLOWED[g][template]; if (only) { const v = only.length === 1 ? only[0] : sure(g, only); if (v) o[g] = v; } }
+  if (template === "top_long" || template === "jacket") { const v = sure("rib", null, 0.6); if (v) o.rib = v; }
+  if (kind === "skirt" || kind === "dress") { const v = sure("shape", null, 0.45); if (v) o.shape = v; }
+  if (template === "hoodie") o.kangaroo = sure("kangaroo", null, 0.5) !== "no";
+  if (template === "shirt") o.chest = sure("chest", null, 0.55) === "yes";
+  if (template === "jacket") o.patch = sure("patch", null, 0.55) === "yes";
+  syncControls(); renderAll(); renderFabricOptions(); renderContent();
+  const fitName = { oversize: "오버핏 ", slim: "슬림 " }[o.fit] || "";
+  if (!$("oItem").value.trim()) $("fItem").textContent = fitName + T[template].name;
+  const oc = $("oColor");
+  if (color.p >= 0.3 && (!oc.value.trim() || oc.value === oc.dataset.auto)) { oc.value = oc.dataset.auto = color.c; $("fColor").textContent = color.c; }
+  // 후보 버튼: 틀렸을 때 바로 바꿀 수 있게
+  const g = $("guess"); g.hidden = false;
+  g.innerHTML = tpl.slice(0, 3).map((x) => `<button class="chip" data-t="${x.c}" aria-pressed="${x.c === template}">${T[x.c].name}<small>${Math.round(x.p * 100)}%</small></button>`).join("");
+  g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { applyLocal({ tpl, color, emb, labels }, b.dataset.t); setStatus(`품목을 ${T[b.dataset.t].name}(으)로 바꿨습니다.`); }));
+}
+
 async function analyze() {
   if (!state.photo) return setStatus("먼저 옷 사진을 올려 주세요.", true);
   const btn = $("analyzeBtn"); btn.disabled = true;
-  setStatus("사진을 분석하는 중입니다… (보통 10~40초)");
+  setStatus(localMode() ? "기기 안에서 인식을 준비하는 중…" : "사진을 분석하는 중입니다… (보통 10~40초)");
   try {
+    if (localMode()) {
+      const r = await analyzeLocal();
+      applyLocal(r);
+      const top = r.tpl[0];
+      setStatus(`기기 안에서 인식했습니다: ${T[top.c].name} (확신 ${Math.round(top.p * 100)}%)${r.color.p >= 0.3 ? " · " + r.color.c : ""}. 틀리면 아래 후보를 누르거나 4단계에서 고르세요.`);
+      return;
+    }
     let r;
     if (!geminiMode()) r = await sampleFn.json(PROMPT, { images: state.photo.blob });
     else r = await analyzeWithGemini();
     applyAI(r);
+    $("guess").hidden = true;
     setStatus("완료했습니다. 4단계에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.");
   } catch (e) {
     const code = e && e.code;
     const msg = code === "not_granted" ? "Claude 사용이 허용되지 않았습니다. 4단계에서 직접 선택해 주세요."
       : code === "rate_limited" ? "요청이 많습니다. 잠시 후 다시 눌러 주세요."
       : code === "invalid_json" ? "결과를 읽지 못했습니다. 한 번 더 눌러 주세요."
+      : localMode() ? "기기 안 인식에 실패했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요."
       : (e && e.message) || "분석에 실패했습니다.";
     setStatus(msg + " (4단계에서 직접 선택해도 작업지시서를 만들 수 있습니다.)", true);
   } finally { btn.disabled = false; }
@@ -980,7 +1130,76 @@ $("saveSvgBtn").addEventListener("click", () => {
   saveFile(`도식화_${styleNo()}.svg`, both, "image/svg+xml");
 });
 $("printBtn").addEventListener("click", () => {
+  preparePrint();
   try { window.print(); } catch (e) { setStatus("이 화면에서는 인쇄가 막혀 있습니다. '작업지시서 파일 저장' 후 열어서 인쇄해 주세요.", true); }
+});
+
+/* ====================================================================== 탭 · 패턴 제도 (엔진: assets/pattern.js) */
+let activeTab = "sheet", patDraft = null;
+function setTab(t) {
+  activeTab = t;
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat");
+  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat";
+  document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
+  if (t === "pat") {
+    // 작업지시서에서 스커트를 골랐으면 스커트 제도로 시작
+    if (!patDraft) { $("patType").value = state.opt.template === "skirt" ? "skirt_h" : "pouch"; buildPatForm(); }
+    renderPattern();
+  }
+}
+$("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
+$("tabPatBtn").addEventListener("click", () => setTab("pat"));
+
+function buildPatForm() {
+  const T = Pattern.TYPES[$("patType").value];
+  $("patPreset").innerHTML = `<option value="">직접 입력</option>` + Object.keys(T.presets).map((k) => `<option>${esc(k)}</option>`).join("");
+  $("patPreset").value = Object.keys(T.presets)[0];
+  $("patFields").innerHTML = T.fields.map(([k, label, def]) => `<label>${esc(label)} (cm)<input type="number" inputmode="decimal" step="0.5" min="0" data-k="${k}" value="${def}" /></label>`).join("");
+  $("patFields").querySelectorAll("input").forEach((n) => n.addEventListener("input", () => { $("patPreset").value = ""; renderPattern(); }));
+}
+function patValues() { return Object.fromEntries([...$("patFields").querySelectorAll("input")].map((n) => [n.dataset.k, n.value])); }
+function renderPattern() {
+  patDraft = Pattern.draft($("patType").value, patValues());
+  const title = `${patDraft.name} · ${($("fStyle").textContent || "").trim()}`;
+  $("patView").innerHTML = Pattern.svg(patDraft, patDraft.lay, "view", title);
+  $("patCalc").innerHTML = patDraft.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="n">${esc(c)}</td></tr>`).join("");
+  $("patSeam").textContent = patDraft.seam;
+  $("patWarn").textContent = patDraft.warn.join(" ");
+}
+$("patType").innerHTML = Object.entries(Pattern.TYPES).map(([k, t]) => `<option value="${k}">${esc(t.name)}</option>`).join("");
+$("patType").addEventListener("change", () => { buildPatForm(); renderPattern(); });
+$("patPreset").addEventListener("change", () => {
+  const pr = Pattern.TYPES[$("patType").value].presets[$("patPreset").value]; if (!pr) return;
+  for (const [k, v] of Object.entries(pr)) { const n = $("patFields").querySelector(`[data-k="${k}"]`); if (n) n.value = v; }
+  renderPattern();
+});
+
+/* 인쇄용: 1장 축소도 + 계산표, 나머지는 실물 크기 A4 분할 (겹침 1cm, 첫 분할 장에 50mm 확인 네모) */
+function buildPatPrint() {
+  const d = patDraft, ts = d.tiles, title = `${d.name} · ${($("fStyle").textContent || "").trim()}`;
+  const order = ts.map((t) => t.label).join(" · ");
+  let html = `<div class="pat-page pat-cover"><h1>${esc(d.name)} 패턴</h1>
+    <p>${esc($("fStyle").textContent)} · ${esc($("fDate").textContent)} · 입력 치수: ${d.v ? Object.entries(d.v).map(([k, v]) => `${esc(Pattern.TYPES[d.type].fields.find((f) => f[0] === k)[1])} ${v}`).join(", ") : ""}</p>
+    ${Pattern.svg(d, d.lay, "view", title)}
+    <table><tr><th>계산 항목</th><th>식</th><th>값(cm)</th></tr>${d.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("")}</table>
+    <p style="margin-top:2mm">${esc(d.seam)}</p>
+    <div class="chk">배율 확인<br>이 네모가 가로·세로 50mm여야 합니다. 다르면 프린터 배율을 100%(실제 크기)로 바꿔 다시 인쇄하세요.</div>
+    <ul style="margin:2mm 0 0;padding-left:5mm"><li>다음 장부터 실물 크기입니다. 프린터 설정에서 <b>배율 100% (실제 크기)</b>로 인쇄하고, 오른쪽 확인 네모가 50mm인지 자로 재세요.</li>
+    <li>${ts.length}장(A4 ${ts[0].landscape ? "가로" : "세로"})을 ${ts[0].rows}줄 × ${ts[0].cols}칸 순서(${esc(order)})로 놓고, 노란 겹침 띠(1cm)를 겹쳐 붙이세요.</li></ul></div>`;
+  ts.forEach((t, i) => {
+    html += `<div class="pat-page${t.landscape ? " l" : ""}">${Pattern.svg(d, d.lay, t, title)}<div class="lab">${t.label} (${i + 1}/${ts.length}) · ${esc(d.name)}</div>`
+      + (t.col < t.cols - 1 ? '<div class="ov-r"></div>' : "") + (t.row < t.rows - 1 ? '<div class="ov-b"></div>' : "")
+      + "</div>";
+  });
+  $("patPrint").innerHTML = html;
+}
+function preparePrint() {
+  document.body.classList.toggle("print-pattern", activeTab === "pat");
+  if (activeTab === "pat") buildPatPrint(); else fitPrint();
+}
+$("savePatBtn").addEventListener("click", () => {
+  const d = patDraft; if (!d) return;
+  saveFile(`패턴_${d.type}_${styleNo()}.svg`, Pattern.svg(d, d.lay, "real", `${d.name} · ${$("fStyle").textContent}`), "image/svg+xml");
 });
 
 /* ====================================================================== 시작 */

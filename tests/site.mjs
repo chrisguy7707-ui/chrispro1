@@ -58,9 +58,11 @@ ok("페이지마다 제목·설명이 서로 다름", titles.size === PAGES.leng
 
 /* 2. 내부 링크 전부 열림 */
 const broken = [];
-for (const l of links) { const r = await fetch(l); if (r.status !== 200) broken.push(`${l} ${r.status}`); }
-for (const f of ["assets/og.png", "assets/preview.png", "assets/favicon.svg", "sitemap.xml", "robots.txt"]) { const r = await fetch(BASE + f); if (r.status !== 200) broken.push(`${f} ${r.status}`); }
-ok(`내부 링크·파일 ${links.size + 5}개 모두 열림`, broken.length === 0, broken.join(", "));
+// 브라우저로 확인 (Node fetch는 python http.server와 연결 종료 처리가 맞지 않아 가끔 멈춤)
+const status = (u) => page.evaluate(async (u) => (await fetch(u, { cache: "no-store" })).status, u);
+for (const l of links) { const st = await status(l); if (st !== 200) broken.push(`${l} ${st}`); }
+for (const f of ["assets/og.png", "assets/preview.png", "assets/favicon.svg", "assets/clip-labels.json", "sitemap.xml", "robots.txt"]) { const st = await status(BASE + f); if (st !== 200) broken.push(`${f} ${st}`); }
+ok(`내부 링크·파일 ${links.size + 6}개 모두 열림`, broken.length === 0, broken.join(", "));
 
 /* 3. sitemap · robots */
 const sm = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
