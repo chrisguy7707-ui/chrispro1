@@ -1230,8 +1230,11 @@ async function analyzeWithGemini() {
   // 순서: 지난번에 된 모델 → 최신 정식 → 오래된 정식(덜 붐빔) → lite(무료 한도가 넉넉한 편). 최대 4개
   const first = $("gModel").value.trim() || GEMINI_DEFAULT, c = flashCandidates(await geminiModels(key));
   const stable = c.filter((n) => /-flash$/.test(n)), lite = c.filter((n) => /flash-lite$/.test(n));
-  let lastOk = null; try { lastOk = localStorage.getItem("wo_gmodel_ok"); } catch (e) {}
-  const models = [...new Set([lastOk, first, stable[0], stable[stable.length - 1], lite[0], ...c].filter((n) => n && (c.includes(n) || n === first)))].slice(0, 4);
+  let lastOk = null, bad = []; try { lastOk = localStorage.getItem("wo_gmodel_ok"); bad = JSON.parse(localStorage.getItem("wo_gmodel_bad") || "[]"); } catch (e) {}
+  // 목록에는 있어도 새 사용자에게 막힌 모델(예: '더 이상 제공하지 않음')은 기억해 두고 건너뜀
+  const ok = (n) => n && !bad.includes(n) && (c.includes(n) || n === first);
+  const st = stable.filter((n) => !bad.includes(n));
+  const models = [...new Set([lastOk, first, st[0], st[1], lite.find((n) => !bad.includes(n)), ...c].filter(ok))].slice(0, 5);
   const b64 = state.photo.dataUrl.split(",")[1];
   const tried = [], why = [];   // 모델별 결과 (붐빔·분당 한도·서버 오류)
   let wait = 0;
@@ -1251,8 +1254,14 @@ async function analyzeWithGemini() {
       try { localStorage.setItem("wo_gmodel_ok", model); } catch (e) {}   // 잘 된 모델을 다음부터 먼저
       return r;
     }
-    if (![429, 500, 503].includes(res.status)) throw new Error(data?.error?.message || "HTTP " + res.status);
     const msg = data?.error?.message || "";
+    // 이 계정에서 쓸 수 없는 모델: 기억하고 바로 다음 모델로 (기다리지 않음)
+    if ([400, 403, 404].includes(res.status) && /no longer available|not found|not supported|deprecated|unsupported/i.test(msg)) {
+      bad.push(model); try { localStorage.setItem("wo_gmodel_bad", JSON.stringify([...new Set(bad)])); } catch (e) {}
+      if ($("gModel").value.trim() === model) $("gModel").value = "";
+      why.push(`사용 불가 ${res.status}`); wait = 0; continue;
+    }
+    if (![429, 500, 503].includes(res.status)) throw new Error(msg || "HTTP " + res.status);
     why.push(res.status === 503 ? "붐빔 503" : res.status === 500 ? "서버 오류 500" : /per.?day|daily/i.test(msg) ? "하루 한도 429" : "분당 한도 429");
     // Google이 알려 준 대기 시간(RetryInfo)이 있으면 그만큼, 없으면 2·4·6초 (최대 10초)
     const hint = (data?.error?.details || []).find((d) => d.retryDelay)?.retryDelay;

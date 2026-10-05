@@ -424,6 +424,7 @@ pk.on("request", (r) => {
     const gm = r.url().match(/models\/([^:]+):generateContent/);
     if (gm) {
       genCalls.push(gm[1]);
+      if (gm[1] === "gemini-2.0-flash") return r.respond({ status: 404, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 404, message: "This model models/gemini-2.0-flash is no longer available to new users." } }) });
       if (allBusy || gm[1] !== "gemini-3.5-flash-lite") return r.respond({ status: 503, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 503, status: "UNAVAILABLE", message: "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later." } }) });
       return r.respond({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ itemName: "와이드 데님 팬츠", template: "pants", fit: "regular", pockets: ["side", "back"], color: "연청", fabric: "데님 12oz (추정)", mix: "면 100% (추정)", weight: "12oz (추정)", trims: [], sewing: ["옆선 쌍침"], notes: [] }) }] } }] }) });
     }
@@ -432,7 +433,7 @@ pk.on("request", (r) => {
     if (keySeen === "AQ.Ab8RN6BROKENBROKENBROKEN") return r.respond({ status: 401, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 401, status: "UNAUTHENTICATED",
       message: "Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.", details: [{ reason: "ACCESS_TOKEN_TYPE_UNSUPPORTED" }] } }) });
     return r.respond({ status: 200, contentType: "application/json", headers: cors,
-      body: JSON.stringify({ models: [{ name: "models/gemini-3.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }, { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }] }) });
+      body: JSON.stringify({ models: [{ name: "models/gemini-3.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.0-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }, { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }] }) });
   }
   r.continue();
 });
@@ -471,13 +472,14 @@ await pk.waitForFunction(() => document.querySelector("#sheetPhoto img"), { time
 await pk.evaluate(() => { document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
 await pk.waitForFunction(() => /완료했습니다|응답하지 못합니다/.test(document.getElementById("status").textContent), { timeout: 30000 });
 const busy1 = await pk.evaluate(() => ({ st: document.getElementById("status").textContent, t: state.opt.template, item: document.getElementById("fItem").textContent, model: document.getElementById("gModel").value }));
-ok("Gemini 붐빔(503) → 다른 Flash 모델로 자동 재시도 → 분석 성공, 잘 된 모델을 다음부터 먼저",
-  genCalls[0] === "gemini-3.5-flash" && genCalls.includes("gemini-3.5-flash-lite") && busy1.t === "pants" && busy1.item === "와이드 데님 팬츠" && busy1.st.includes("붐비지 않는") && (await pk.evaluate(() => localStorage.getItem("wo_gmodel_ok"))) === "gemini-3.5-flash-lite", JSON.stringify({ genCalls, ...busy1 }).slice(0, 220));
+ok("Gemini 붐빔(503) → 다른 모델로 재시도, '더 이상 제공 안 함(404)' 모델은 건너뛰고 기억 → 분석 성공, 잘 된 모델을 다음부터 먼저",
+  genCalls[0] === "gemini-3.5-flash" && genCalls.includes("gemini-2.0-flash") && genCalls.includes("gemini-3.5-flash-lite") && busy1.t === "pants"
+  && (await pk.evaluate(() => JSON.parse(localStorage.getItem("wo_gmodel_bad") || "[]").includes("gemini-2.0-flash"))) && busy1.item === "와이드 데님 팬츠" && busy1.st.includes("붐비지 않는") && (await pk.evaluate(() => localStorage.getItem("wo_gmodel_ok"))) === "gemini-3.5-flash-lite", JSON.stringify({ genCalls, ...busy1 }).slice(0, 220));
 allBusy = true; genCalls.length = 0;
 await pk.evaluate(() => { document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
 await pk.waitForFunction(() => /기기 안 인식으로|응답하지 못합니다/.test(document.getElementById("status").textContent) && !/다시 시도…/.test(document.getElementById("status").textContent), { timeout: 240000 });
 const busy2 = await pk.evaluate(() => document.getElementById("status").textContent);
-ok("모든 모델이 붐비면 한국어로 안내하고, 인식 모델을 받은 브라우저면 기기 안 인식으로 대신 채움", genCalls.length === 2 && /응답하지 못합니다/.test(busy2) && /붐빔 503/.test(busy2) && /기기 안 인식으로 품목/.test(busy2), `${genCalls.join(",")} | ${busy2.slice(-90)}`);
+ok("모든 모델이 붐비면 한국어로 안내하고, 인식 모델을 받은 브라우저면 기기 안 인식으로 대신 채움", genCalls.length === 2 && !genCalls.includes("gemini-2.0-flash") && /응답하지 못합니다/.test(busy2) && /붐빔 503/.test(busy2) && /기기 안 인식으로 품목/.test(busy2), `${genCalls.join(",")} | ${busy2.slice(-90)}`);
 allBusy = false;
 await pk.evaluate(() => document.getElementById("keyForget").click());
 ok("키 지우기 → 기기 안 인식으로 돌아감", await pk.evaluate(() => localMode() && !localStorage.getItem("wo_gkey")));
