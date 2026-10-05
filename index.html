@@ -35,7 +35,8 @@
       "operatingSystem": "Web",
       "inLanguage": "ko",
       "description": "옷 사진과 사이즈로 도식화·치수표·봉제 사양이 담긴 의류 작업지시서를 만드는 무료 웹 도구",
-      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+      "creator": { "@type": "Organization", "name": "겸이네 공방" }
     },
     {
       "@type": "FAQPage",
@@ -51,7 +52,7 @@
         { "@type": "Question", "name": "어떤 옷을 만들 수 있나요?",
           "acceptedAnswer": { "@type": "Answer", "text": "반팔 티셔츠, 긴팔 티·맨투맨, 셔츠, 후드티, 자켓·점퍼, 바지, 반바지, 스커트, 원피스 9가지 품목을 지원합니다." } },
         { "@type": "Question", "name": "패턴(제도)도 만들 수 있나요?",
-          "acceptedAnswer": { "@type": "Answer", "text": "H라인 스커트와 사각 지퍼 파우치는 치수를 넣으면 다트·시접·골선·너치까지 계산한 패턴을 그리고, 실물 크기로 A4에 나눠 인쇄할 수 있습니다. 다른 품목은 차례로 추가할 예정입니다." } },
+          "acceptedAnswer": { "@type": "Answer", "text": "네. 9가지 품목 모두 작업지시서 치수표의 기준 사이즈 값으로 앞판·뒤판·소매·칼라·후드 등 조각을 그립니다. 소매산은 진동둘레에 맞춰 자동 계산하고, 시접·골선·너치·식서를 표시합니다. A4에 나눠 실물 크기로 인쇄하거나 대형 출력용 한 장 PDF로 저장할 수 있습니다. 사각 지퍼 파우치 패턴도 있습니다." } },
         { "@type": "Question", "name": "바지 사이즈를 인치로 표기할 수 있나요?",
           "acceptedAnswer": { "@type": "Answer", "text": "하의는 호칭(남 80~110, 여 44~88)과 허리 인치를 함께 적거나 인치만 적도록 고를 수 있습니다." } }
       ]
@@ -70,6 +71,7 @@
   </div>
   <div class="wrap hero">
     <div>
+      <p class="eyebrow">겸이네 공방</p>
       <h1>옷만들기<br />도면 메이커<span class="tape" aria-hidden="true"></span></h1>
       <p class="lead">옷 사진 한 장과 사이즈만 고르면 <strong>도식화 · 치수표 · 봉제 사양</strong>까지 담긴 작업지시서가 A4 한 장으로 나옵니다.</p>
       <p class="sub">회원가입 없이 무료 · 사진 자동 인식도 내 기기 안에서 · 인쇄와 PDF 저장 지원</p>
@@ -107,7 +109,7 @@
       <article class="card"><div class="ic">치수표</div><h3>사이즈별 치수 자동 계산</h3><p>품목별 기준값과 사이즈 편차로 전 사이즈 치수를 채웁니다. 오버핏·슬림 보정과 바지 허리 인치 표기도 됩니다.</p></article>
       <article class="card"><div class="ic">봉제 사양</div><h3>현장 용어로 쓰는 봉제 사양</h3><p>오버록, 2본침, 커버스티치, 시보리처럼 공장에서 바로 알아듣는 말로 기본 사양을 채워 줍니다.</p></article>
       <article class="card"><div class="ic">원단</div><h3>원단 · 부자재 표</h3><p>싱글저지, 쭈리, 데님, 옥스포드 등 원단을 고르면 혼용률과 중량이 채워지고, 부자재 표도 품목에 맞게 준비됩니다.</p></article>
-      <article class="card"><div class="ic">패턴</div><h3>패턴 제도 · 실물 크기 출력</h3><p>치수를 넣으면 다트·시접·골선까지 계산한 패턴을 그리고, A4에 나눠 실물 크기로 인쇄합니다. 작업지시서는 A4 가로 한 장으로 나옵니다.</p></article>
+      <article class="card"><div class="ic">패턴</div><h3>패턴 제도 · 실물 크기 출력</h3><p>작업지시서 치수로 9개 품목의 패턴 조각을 그립니다. 소매산·다트·시접·골선을 계산하고 A4 분할 또는 대형 한 장으로 실물 크기 인쇄합니다.</p></article>
       <article class="card"><div class="ic">보안</div><h3>사진 인식도 내 기기 안에서</h3><p>품목·디테일·컬러 인식을 브라우저 안에서 무료로 합니다. 사진은 사이트 서버나 AI 회사로 보내지 않습니다.</p></article>
     </div>
   </section>
@@ -130,7 +132,7 @@
     <details><summary>올린 옷 사진은 어디에 저장되나요?</summary><p>사진은 사용자의 브라우저 안에서만 처리되며 사이트 서버에 저장하지 않습니다. 기본 사진 인식도 기기 안에서 이루어집니다. Gemini API 키를 직접 넣은 경우에만 사진이 Google로 전송됩니다. 자세한 내용은 <a href="privacy.html">개인정보처리방침</a>을 확인해 주세요.</p></details>
     <details><summary>사진 인식은 어떻게 하나요? 비용이 드나요?</summary><p>사진을 올리면 브라우저 안에서 무료로 품목·디테일·컬러를 인식합니다. 처음 한 번 인식 모델(약 23MB)을 받고, 사진은 서버로 보내지 않습니다. 결과가 틀리면 후보를 누르거나 직접 고르면 됩니다.</p></details>
     <details><summary>어떤 옷을 만들 수 있나요?</summary><p>반팔 티셔츠, 긴팔 티·맨투맨, 셔츠, 후드티, 자켓·점퍼, 바지, 반바지, 스커트, 원피스 9가지 품목을 지원합니다.</p></details>
-    <details><summary>패턴(제도)도 만들 수 있나요?</summary><p>H라인 스커트와 사각 지퍼 파우치는 치수를 넣으면 다트·시접·골선·너치까지 계산한 패턴을 그리고, 실물 크기로 A4에 나눠 인쇄할 수 있습니다. 다른 품목은 차례로 추가할 예정입니다.</p></details>
+    <details><summary>패턴(제도)도 만들 수 있나요?</summary><p>네. 9가지 품목 모두 작업지시서 치수표의 기준 사이즈 값으로 앞판·뒤판·소매·칼라·후드 등 조각을 그립니다. 소매산은 진동둘레에 맞춰 자동 계산하고, 시접·골선·너치·식서를 표시합니다. A4에 나눠 실물 크기로 인쇄하거나 대형 출력용 한 장 PDF로 저장할 수 있습니다. 사각 지퍼 파우치 패턴도 있습니다.</p></details>
     <details><summary>바지 사이즈를 인치로 표기할 수 있나요?</summary><p>하의는 호칭(남 80~110, 여 44~88)과 허리 인치를 함께 적거나 인치만 적도록 고를 수 있습니다.</p></details>
   </section>
 
@@ -149,7 +151,7 @@
   <div class="wrap">
     <div class="links"><a href="about.html">사이트 소개</a><a href="guide.html">작업지시서 작성법</a><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="contact.html">문의</a></div>
     <p>치수는 레귤러핏 참고 표준값이며 샘플 실측을 대체하지 않습니다.</p>
-    <p>© 2026 옷만들기 도면 메이커</p>
+    <p>© 2026 겸이네 공방 · 옷만들기 도면 메이커</p>
   </div>
 </footer>
 <script src="assets/site.js" defer></script>

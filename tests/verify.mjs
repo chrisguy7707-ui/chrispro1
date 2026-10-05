@@ -186,7 +186,46 @@ ok("저장한 HTML 파일 인쇄도 1장", pages(p2) === 1, `${pages(p2)}장`);
 /* 8-1. 패턴 제도 탭 */
 const mediaBoxes = (buf) => Buffer.from(buf).toString("latin1").match(/\/MediaBox \[[^\]]+\]/g) || [];
 const isPortrait = (mb) => { const n = mb.match(/[\d.]+/g).map(Number); return n[3] > n[2]; };
+/* 작업지시서 품목과 패턴 탭 연결: 바지 → 준비 중 안내, 스커트 → H라인 스커트 자동 (탭을 이미 열었어도) */
+await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.value = "pants"; s.dispatchEvent(new Event("change")); });
 await page.click("#tabPatBtn");
+const pantsNote = await page.evaluate(() => document.getElementById("patType").value === "ws_pants" && !document.getElementById("patNote").hidden);
+await page.click("#tabSheetBtn");
+await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.value = "skirt"; s.dispatchEvent(new Event("change")); });
+await page.click("#tabPatBtn");
+ok("패턴 탭이 작업지시서 품목을 따라감 (바지 → 바지 제도, 스커트 → 스커트 제도, 기준 사이즈 안내)", pantsNote
+  && (await page.evaluate(() => document.getElementById("patType").value === "ws_skirt" && document.getElementById("patNote").textContent.includes("기준 사이즈"))));
+
+/* 9개 품목 × 남/여 × 3핏: 작업지시서 치수로 채워지고, 도면·시접·소매산이 맞는지 */
+const allPat = await page.evaluate(() => {
+  const bad = [], sel = (id, v) => { const s = document.getElementById(id); s.value = v; s.dispatchEvent(new Event("change")); };
+  let n = 0;
+  for (const g of ["gM", "gF"]) for (const t of Object.keys(T)) for (const fit of ["regular", "oversize", "slim"]) {
+    document.getElementById("tabSheetBtn").click(); document.getElementById(g).click(); sel("oTemplate", t); sel("oFit", fit);
+    document.getElementById("tabPatBtn").click(); n++;
+    const d = patDraft, svg = Pattern.svg(d, d.lay, "real"), tag = `${g}/${t}/${fit}`;
+    if (d.type !== "ws_" + t) bad.push(tag + " 품목 " + d.type);
+    const ws = worksheetBaseValues().values, TT = Pattern.TYPES[d.type];
+    for (const [k, part] of Object.entries(TT.fromSpec)) if (ws[part] != null && TT.fields.some((f) => f[0] === k) && +d.v[k] !== ws[part]) bad.push(`${tag} ${part} ${d.v[k]}≠${ws[part]}`);
+    if (/NaN|undefined/.test(svg)) bad.push(tag + " NaN");
+    if (new DOMParser().parseFromString(svg, "image/svg+xml").querySelector("parsererror")) bad.push(tag + " SVG");
+    for (const p of d.pieces) if (p.edges.some((e) => e > 0) && Math.abs(Pattern._area(p.cut)) <= Math.abs(Pattern._area(p.pts))) bad.push(`${tag} ${p.name} 시접`);
+    if (d.warn.length) bad.push(`${tag} ${d.warn[0]}`);
+    if (d.tiles.length > 30) bad.push(`${tag} 분할 ${d.tiles.length}장`);
+  }
+  return { n, bad };
+});
+ok(`9개 품목 × 남/여 × 3핏 = ${allPat.n}개 패턴: 치수표 값 반영·도면·시접·소매산 정상, 경고 없음`, allPat.bad.length === 0, allPat.bad.slice(0, 4).join(" | "));
+/* 치수표에서 고친 값이 패턴에 반영 */
+const edited = await page.evaluate(() => {
+  document.getElementById("tabSheetBtn").click(); document.getElementById("gM").click();
+  const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change"));
+  const tr = [...document.querySelectorAll("#specTable tr")].find((r) => r.children[1]?.textContent === "가슴단면");
+  tr.querySelector("td.base").textContent = "58";
+  document.getElementById("tabPatBtn").click();
+  return patDraft.v.C;
+});
+ok("작업지시서 치수표에서 고친 값(가슴단면 58)이 패턴에 반영", edited === 58, String(edited));
 ok("패턴 탭: 작업지시서 숨기고 패턴 화면·버튼 표시", await page.evaluate(() => document.getElementById("sheet").hidden && !document.getElementById("pat").hidden
   && !document.getElementById("savePatBtn").hidden && document.getElementById("saveHtmlBtn").hidden && document.querySelector("#patView svg") !== null));
 ok("시접 계산: 10×10 정사각형 시접 1 → 12×12", await page.evaluate(() => {
@@ -210,7 +249,7 @@ const patAll = await page.evaluate(() => {
   }
   return bad;
 });
-ok("패턴 2종 × 프리셋 3개: 도면·시접·실물 SVG 정상, 분할 1~12장", patAll.length === 0, patAll.join(", "));
+ok("따로 제도 2종(H라인 스커트·파우치) × 프리셋 3개: 도면·시접·실물 SVG 정상, 분할 1~12장", patAll.length === 0, patAll.join(", "));
 await page.evaluate(() => { const s = document.getElementById("patType"); s.value = "skirt_h"; s.dispatchEvent(new Event("change")); });
 const before = await page.evaluate(() => patDraft.calc[1][2]);
 await page.evaluate(() => { const n = document.querySelector('#patFields [data-k="hip"]'); n.value = 100; n.dispatchEvent(new Event("input")); });
@@ -231,6 +270,13 @@ for (const type of ["skirt_h", "pouch"]) {
   ok(`${type} 인쇄: 축소도 1장 + 실물 ${info.tiles}장 (A4 ${info.land ? "가로" : "세로"}, 폭 ${info.w}, 50mm 확인 네모)`,
     mb.length === 1 + info.tiles && isPortrait(mb[0]) && mb.slice(1).every((m) => isPortrait(m) === !info.land) && info.w === (info.land ? "283mm" : "196mm") && info.chk, `${mb.length}장`);
 }
+/* 한 장(대형 출력): 축소도 + 패턴 크기 그대로 한 장 */
+await page.evaluate(() => { const s = document.getElementById("patType"); s.value = "ws_pants"; s.dispatchEvent(new Event("change")); document.getElementById("patPrintMode").value = "one"; preparePrint(); });
+const big = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
+const bigWant = await page.evaluate(() => [patDraft.lay.w, patDraft.lay.h]);
+const bigPt = big[1] ? big[1].match(/[\d.]+/g).map(Number).slice(2) : [];
+ok(`한 장 대형 출력: 2장, 둘째 장 = 패턴 크기 ${bigWant[0]}×${bigWant[1]}cm`, big.length === 2 && Math.abs(bigPt[0] - bigWant[0] / 2.54 * 72) < 2 && Math.abs(bigPt[1] - bigWant[1] / 2.54 * 72) < 2, big.join(" "));
+await page.evaluate(() => { document.getElementById("patPrintMode").value = "tiles"; });
 await page.click("#tabSheetBtn");
 await page.evaluate(() => preparePrint());
 const back = await page.pdf({ preferCSSPageSize: true });

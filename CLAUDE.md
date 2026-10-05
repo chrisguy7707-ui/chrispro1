@@ -31,9 +31,14 @@
 - 출력: `window.print()`(A4 가로 1장, `@media print`에서 zoom .93), HTML 파일 저장, SVG 저장.
 
 ## 패턴 제도 (`assets/pattern.js`, app.html의 '패턴 제도' 탭)
-- `Pattern.TYPES`에 품목별 { name, fields, presets, draft } — 지금은 `skirt_h`(H라인 스커트, 칠판 제도식), `pouch`(사각 마치 지퍼 파우치).
+- `Pattern.TYPES`에 품목별 { name, fields, presets, draft }.
+  - `ws_<템플릿>` 9종(`assets/pattern-garments.js`): 작업지시서 치수표 **기준 사이즈 열(화면에서 고친 값 포함)** → `fromSpec`으로 칸을 채워 완성 치수 기반 제도.
+    상의 원형 `bodice()`(진동 깊이 = 가슴단면 × 0.48, 어깨 경사 4.5/오버핏 3) + `sleevePiece()`(소매산 높이를 진동둘레+여유에 이분 탐색으로 맞춤).
+    셔츠 요크·칼라·칼라밴드·커프스, 후드·캥거루, 자켓 스탠드 칼라, 원피스 몸판 다트+치마, 바지 밑위 연장(허벅지×2−엉덩이를 3:7).
+  - 따로 제도: `skirt_h`(H라인 스커트, 칠판 제도식, 신체 치수), `pouch`(사각 마치 지퍼 파우치).
+  - 작업지시서 디테일(state.opt: 핏·넥라인·여밈·시보리·주머니·모양)은 `Pattern.draft(type, vals, opts)`로 전달.
 - 조각 = 완성선 다각형(cm, 시계 방향) + `edges`(변마다 시접, 골선 0). 재단선은 `offset()`이 변별 거리로 계산.
-- 인쇄: `preparePrint()`가 탭에 따라 `body.print-pattern` 전환. 축소도 1장(@page pat 세로, 50mm 확인 네모) + 실물 크기 분할(세로/가로 중 장수 적은 쪽, 겹침 1cm).
+- 인쇄: `preparePrint()`가 탭에 따라 `body.print-pattern` 전환. 축소도 1장(@page pat 세로, 50mm 확인 네모) + 실물 크기 분할(세로/가로 중 장수 적은 쪽, 겹침 1cm) 또는 `patPrintMode=one`이면 패턴 크기 그대로 한 장(@page patBig).
   `measureOnly` 조각(허리밴드·웨빙 같은 직사각형)은 분할 인쇄에서 뺌.
 - 제도 값 바꾸면 tests/verify.mjs의 칠판 기준값(S: 옆선 2.6·다트 2·다트 길이 12.5·11.5/10.5·9.5) 확인.
 
@@ -41,7 +46,7 @@
 - 한국어 UI, 공장 용어(시보리, 오버록, 2본침, 커버스티치, 요척 등) 유지.
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 9개 품목 × 남/여 모두 렌더링 확인.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 34개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 38개, 9품목×남녀×3핏 패턴 54개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).

@@ -18,13 +18,13 @@
    claude.ai에서 열면 Claude가, Gemini API 키를 넣으면 Gemini가 소재·봉제 사양까지 분석합니다.
 4. 디테일 확인·수정: 품목·핏·넥라인·여밈·주머니·원단·컬러·품명. AI 없이 여기서 직접 골라도 됩니다.
 5. 인쇄·PDF 저장 / 작업지시서 파일(HTML) 저장 / 도식화 SVG 저장
-6. **패턴 제도 탭**: H라인 스커트·사각 지퍼 파우치. 치수 입력 → 제도도·계산표, 인쇄하면 축소도 1장 + 실물 크기 A4 분할(배율 100%, 50mm 확인 네모), 실물 크기 SVG 저장
+6. **패턴 제도 탭**: 작업지시서 품목 9종 전체(치수표 기준 사이즈 값으로 자동 제도) + H라인 스커트(신체 치수)·사각 지퍼 파우치. 제도도·계산표, 인쇄하면 축소도 1장 + 실물 크기 A4 분할(배율 100%, 50mm 확인 네모) 또는 대형 한 장, 실물 크기 SVG 저장
 
 ## 개발
 ```bash
 npm install          # 검사·이미지 생성용 (puppeteer-core, 설치된 Chrome 사용)
 npm run serve        # http://localhost:8766
-npm test             # 도구 34개 + 사이트 22개 항목 검사 (인식 모델 다운로드에 인터넷 필요)
+npm test             # 도구 38개 + 사이트 22개 항목 검사 (인식 모델 다운로드에 인터넷 필요)
 npm run configure    # site.config.json → 모든 페이지 <head>, sitemap.xml, robots.txt, ads.txt
 npm run images       # 대문 미리보기·공유 이미지 다시 만들기
 npm run clip-labels  # 사진 인식 후보 문장을 바꿨을 때 assets/clip-labels.json 다시 만들기

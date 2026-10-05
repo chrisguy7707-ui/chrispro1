@@ -162,6 +162,7 @@
   .pat-form input, .pat-form select { width: 100%; margin-top: 3px; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 7px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
   .pat-form .wide { grid-column: span 2; }
   .pat-warn { color: var(--mark); font-size: 13px; margin: 8px 0 0; }
+  .pat-note { margin: 10px 0 0; padding: 9px 12px; border-left: 4px solid var(--tape); background: #fff8dc; font-size: 13px; line-height: 1.55; }
   .pat-view { margin-top: 12px; border: 1px solid var(--ink); }
   .pat-view svg { display: block; width: 100%; height: auto; max-height: 720px; }
   .pat-calc { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 10px; }
@@ -187,6 +188,7 @@
     .pat-page { page: pat; break-after: page; width: 196mm; height: 283mm; overflow: hidden; position: relative; font-family: var(--font); color: #1d1d1b; }
     .pat-page:last-child { break-after: auto; }
     .pat-page.l { page: patL; width: 283mm; height: 196mm; }
+    .pat-page.big { page: patBig; }
     .pat-page svg { display: block; }
     .pat-page .lab { position: absolute; left: 3mm; top: 2mm; font-size: 9pt; font-weight: 700; background: #fff; padding: 0 2mm; }
     .pat-page .ov-r { position: absolute; right: 0; top: 0; width: 10mm; height: 100%; background: rgba(242,194,48,.12); border-left: .3mm dashed #b08a10; }
@@ -314,6 +316,8 @@
       <button id="saveHtmlBtn" data-tab="sheet">작업지시서 파일 저장</button>
       <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
       <button id="savePatBtn" data-tab="pat" hidden>패턴 SVG 저장 (실물 크기)</button>
+      <select id="patPrintMode" data-tab="pat" hidden aria-label="패턴 인쇄 방식" style="border:1px solid var(--rule);border-radius:8px;padding:8px;font:inherit;font-size:14px;background:#fff;color:var(--ink)">
+        <option value="tiles">A4 나눠 인쇄</option><option value="one">한 장 (플로터·대형 출력)</option></select>
       <span class="note" data-tab="sheet">치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요.</span>
       <span class="note" data-tab="pat" hidden>인쇄하면 1장은 축소도, 나머지는 실물 크기 A4 분할입니다. 배율 100%로 인쇄하세요.</span>
     </div>
@@ -390,6 +394,7 @@
         <label class="wide">사이즈 프리셋<select id="patPreset"></select></label>
         <div id="patFields" style="display:contents"></div>
       </div>
+      <p class="pat-note" id="patNote" role="status" hidden></p>
       <p class="pat-warn" id="patWarn" role="status"></p>
       <div class="pat-view" id="patView"></div>
       <div class="pat-calc">
@@ -403,10 +408,12 @@
       </div>
     </section>
     <div id="patPrint" aria-hidden="true"></div>
+    <style id="patPageStyle"></style>
   </main>
 </div>
 
 <script src="assets/pattern.js"></script>
+<script src="assets/pattern-garments.js"></script>
 <script>
 /* ======================================================================
    데이터: 사이즈 체계 · 품목별 치수 기준값 · 기본 봉제사양
@@ -1135,40 +1142,72 @@ $("printBtn").addEventListener("click", () => {
 });
 
 /* ====================================================================== 탭 · 패턴 제도 (엔진: assets/pattern.js) */
-let activeTab = "sheet", patDraft = null;
+let activeTab = "sheet", patDraft = null, patSyncedTemplate = null;
+/* 작업지시서 품목 → 패턴 제도 품목 (없는 품목은 '준비 중' 안내) */
+const PATTERN_FOR = Object.fromEntries(Object.keys(T).map((t) => [t, "ws_" + t]));
+/* 작업지시서 치수표(화면에 고친 값 포함)의 기준 사이즈 열 → { 측정부위: 값 } */
+function worksheetBaseValues() {
+  const head = [...$("specTable").querySelectorAll("tr:first-child th")].map((th) => th.textContent);
+  const col = [...$("specTable").querySelectorAll("tr:first-child th")].findIndex((th) => th.classList.contains("base"));
+  const out = {};
+  [...$("specTable").querySelectorAll("tr")].slice(1).forEach((tr) => { const td = tr.children; const v = parseFloat(td[col]?.textContent); if (Number.isFinite(v)) out[td[1].textContent.trim()] = v; });
+  return { values: out, size: head[col] };
+}
+const patKey = () => [state.opt.template, state.gender, state.base, ...Pattern.OPT_KEYS.map((k) => state.opt[k]), JSON.stringify(worksheetBaseValues().values)].join("|");
+let patFilledKey = null;
+function fillFromWorksheet() {
+  const T = Pattern.TYPES[$("patType").value]; if (!T.fromWorksheet) return;
+  const { values } = worksheetBaseValues();
+  for (const [k, part] of Object.entries(T.fromSpec)) { const n = $("patFields").querySelector(`[data-k="${k}"]`); if (n && values[part] != null) n.value = values[part]; }
+  patFilledKey = patKey(); $("patPreset").value = "__ws";
+}
 function setTab(t) {
   activeTab = t;
   $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat");
   $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat";
   document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
-  if (t === "pat") {
-    // 작업지시서에서 스커트를 골랐으면 스커트 제도로 시작
-    if (!patDraft) { $("patType").value = state.opt.template === "skirt" ? "skirt_h" : "pouch"; buildPatForm(); }
-    renderPattern();
-  }
+  if (t === "pat") syncPatternToTemplate();
 }
 $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
 
+/* 패턴 탭을 열 때마다 작업지시서 품목을 확인: 패턴이 있으면 그 품목으로, 없으면 안내 */
+function syncPatternToTemplate() {
+  const tpl = state.opt.template, target = PATTERN_FOR[tpl], changed = tpl !== patSyncedTemplate;
+  if (changed && target && $("patType").value !== target) { $("patType").value = target; buildPatForm(); }
+  if (!patDraft) buildPatForm();
+  patSyncedTemplate = tpl;
+  // 작업지시서(품목·사이즈·핏·치수표)가 바뀌었으면 다시 채움. 같으면 패턴 탭에서 고친 값을 지킴
+  const ws = Pattern.TYPES[$("patType").value].fromWorksheet;
+  if (ws && $("patType").value === target && patFilledKey !== patKey()) fillFromWorksheet();
+  const { size } = worksheetBaseValues();
+  $("patNote").hidden = !ws;
+  $("patNote").textContent = ws ? `작업지시서 치수표의 기준 사이즈(${size}) 완성 치수로 채웠습니다. 치수표를 고친 뒤 이 탭을 다시 열면 반영됩니다. 디테일(핏·넥라인·여밈·시보리·주머니)도 작업지시서 선택을 따릅니다.` : "";
+  renderPattern();
+}
 function buildPatForm() {
   const T = Pattern.TYPES[$("patType").value];
-  $("patPreset").innerHTML = `<option value="">직접 입력</option>` + Object.keys(T.presets).map((k) => `<option>${esc(k)}</option>`).join("");
-  $("patPreset").value = Object.keys(T.presets)[0];
-  $("patFields").innerHTML = T.fields.map(([k, label, def]) => `<label>${esc(label)} (cm)<input type="number" inputmode="decimal" step="0.5" min="0" data-k="${k}" value="${def}" /></label>`).join("");
+  $("patPreset").innerHTML = `<option value="">직접 입력</option>` + (T.fromWorksheet ? `<option value="__ws">작업지시서 치수 (기준 사이즈)</option>` : "")
+    + Object.keys(T.presets).map((k) => `<option>${esc(k)}</option>`).join("");
+  $("patPreset").value = T.fromWorksheet ? "__ws" : Object.keys(T.presets)[0];
+  $("patFields").innerHTML = T.fields.map(([k, label, def]) => `<label>${esc(label)} (cm)<input type="number" inputmode="decimal" step="0.5" min="0" data-k="${k}" value="${def ?? ""}" placeholder="자동" /></label>`).join("");
+  if (T.fromWorksheet) fillFromWorksheet();
   $("patFields").querySelectorAll("input").forEach((n) => n.addEventListener("input", () => { $("patPreset").value = ""; renderPattern(); }));
 }
 function patValues() { return Object.fromEntries([...$("patFields").querySelectorAll("input")].map((n) => [n.dataset.k, n.value])); }
 function renderPattern() {
-  patDraft = Pattern.draft($("patType").value, patValues());
+  patDraft = Pattern.draft($("patType").value, patValues(), state.opt);
   const title = `${patDraft.name} · ${($("fStyle").textContent || "").trim()}`;
   $("patView").innerHTML = Pattern.svg(patDraft, patDraft.lay, "view", title);
   $("patCalc").innerHTML = patDraft.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="n">${esc(c)}</td></tr>`).join("");
   $("patSeam").textContent = patDraft.seam;
   $("patWarn").textContent = patDraft.warn.join(" ");
 }
-$("patType").innerHTML = Object.entries(Pattern.TYPES).map(([k, t]) => `<option value="${k}">${esc(t.name)}</option>`).join("");
+$("patType").innerHTML = `<optgroup label="작업지시서 품목 (완성 치수로 제도)">${Object.entries(Pattern.TYPES).filter(([, t]) => t.fromWorksheet).map(([k, t]) => `<option value="${k}">${esc(t.name)}</option>`).join("")}</optgroup>`
+  + `<optgroup label="따로 제도">${Object.entries(Pattern.TYPES).filter(([, t]) => !t.fromWorksheet).map(([k, t]) => `<option value="${k}">${esc(t.name)}${k === "skirt_h" ? " (신체 치수)" : ""}</option>`).join("")}</optgroup>`;
 $("patType").addEventListener("change", () => { buildPatForm(); renderPattern(); });
 $("patPreset").addEventListener("change", () => {
+  if ($("patPreset").value === "__ws") { fillFromWorksheet(); renderPattern(); return; }
   const pr = Pattern.TYPES[$("patType").value].presets[$("patPreset").value]; if (!pr) return;
   for (const [k, v] of Object.entries(pr)) { const n = $("patFields").querySelector(`[data-k="${k}"]`); if (n) n.value = v; }
   renderPattern();
@@ -1179,13 +1218,21 @@ function buildPatPrint() {
   const d = patDraft, ts = d.tiles, title = `${d.name} · ${($("fStyle").textContent || "").trim()}`;
   const order = ts.map((t) => t.label).join(" · ");
   let html = `<div class="pat-page pat-cover"><h1>${esc(d.name)} 패턴</h1>
-    <p>${esc($("fStyle").textContent)} · ${esc($("fDate").textContent)} · 입력 치수: ${d.v ? Object.entries(d.v).map(([k, v]) => `${esc(Pattern.TYPES[d.type].fields.find((f) => f[0] === k)[1])} ${v}`).join(", ") : ""}</p>
+    <p>${esc($("fStyle").textContent)} · ${esc($("fDate").textContent)} · 입력 치수: ${Pattern.TYPES[d.type].fields.filter(([k]) => d.v[k] != null).map(([k, label]) => `${esc(label.replace(/ \(.*\)/, ""))} ${d.v[k]}`).join(", ")}</p>
     ${Pattern.svg(d, d.lay, "view", title)}
     <table><tr><th>계산 항목</th><th>식</th><th>값(cm)</th></tr>${d.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("")}</table>
     <p style="margin-top:2mm">${esc(d.seam)}</p>
     <div class="chk">배율 확인<br>이 네모가 가로·세로 50mm여야 합니다. 다르면 프린터 배율을 100%(실제 크기)로 바꿔 다시 인쇄하세요.</div>
     <ul style="margin:2mm 0 0;padding-left:5mm"><li>다음 장부터 실물 크기입니다. 프린터 설정에서 <b>배율 100% (실제 크기)</b>로 인쇄하고, 오른쪽 확인 네모가 50mm인지 자로 재세요.</li>
     <li>${ts.length}장(A4 ${ts[0].landscape ? "가로" : "세로"})을 ${ts[0].rows}줄 × ${ts[0].cols}칸 순서(${esc(order)})로 놓고, 노란 겹침 띠(1cm)를 겹쳐 붙이세요.</li></ul></div>`;
+  if ($("patPrintMode").value === "one") {
+    // 대형 출력: 패턴 전체를 실물 크기 한 장으로 (용지 크기 = 패턴 크기)
+    const W = d.lay.w * 10, H = d.lay.h * 10;
+    html = html.replace(/<li>\d+장\(A4[^<]*<\/li>/, `<li>다음 장은 패턴 전체 실물 크기 한 장(${W / 10} × ${H / 10}cm)입니다. 출력소·플로터에 PDF로 맡기세요.</li>`);
+    html += `<div class="pat-page big" style="width:${W}mm;height:${H}mm">${Pattern.svg(d, d.lay, "real", title)}</div>`;
+    $("patPageStyle").textContent = `@page patBig { size: ${W}mm ${H}mm; margin: 0; }`;
+    $("patPrint").innerHTML = html; return;
+  }
   ts.forEach((t, i) => {
     html += `<div class="pat-page${t.landscape ? " l" : ""}">${Pattern.svg(d, d.lay, t, title)}<div class="lab">${t.label} (${i + 1}/${ts.length}) · ${esc(d.name)}</div>`
       + (t.col < t.cols - 1 ? '<div class="ov-r"></div>' : "") + (t.row < t.rows - 1 ? '<div class="ov-b"></div>' : "")

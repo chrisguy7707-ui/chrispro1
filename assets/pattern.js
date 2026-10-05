@@ -76,15 +76,17 @@
     if (exB < 1 || exF < 1) warn.push("허리와 엉덩이 차이가 너무 작습니다. 다트 없이 고무줄 허리를 고려하세요.");
     if (db > 3.5 || df > 3.5) warn.push("다트 하나가 3.5cm를 넘습니다. 다트를 3개로 나누거나 옆선 들임을 늘리세요.");
 
+    // v.hem(밑단 둘레)이 있으면 엉덩이선 아래로 밑단까지 벌림 (A라인). 없으면 H라인
+    const flare = v.hem ? Math.max(0, v.hem / 4 - half / 2) : 0;
     function panel(back) {
-      const w = back ? Bw : Fw, s = back ? sb : sf, top = back ? cbDrop : 0;
+      const w = back ? Bw : Fw, s = back ? sb : sf, top = back ? cbDrop : 0, wh = w + flare;
       const waist = bez([0, top], [(w - s) * 0.5, top], [(w - s) * 0.85, back ? 0.2 : 0], [w - s, 0], 12);
       const side = bez([w - s, 0], [w - s + s * 0.35, HL * 0.25], [w, HL * 0.5], [w, HL], 14);
       const { pts, edges } = chain([
         [waist, 1],
         [side, 1.5],
-        [[[w, HL], [w, L]], 1.5],
-        [[[w, L], [0, L]], 4],
+        [[[w, HL], [wh, L]], 1.5],
+        [[[wh, L], [0, L]], flare > 3 ? 2 : 4],
         [[[0, L], [0, top]], back ? 1.5 : 0],
       ]);
       const dl = back ? lenB : lenF, d = back ? db : df;
@@ -100,13 +102,14 @@
         notchPts: [[w, HL]].concat(back ? [[0, top + v.zip]] : []),
         dims: [   // 치수선은 조각 안쪽에 (분할 인쇄 장수를 줄이려고)
           { a: [0, HL + 4], b: [w, HL + 4], text: `${r1(w)}` },
+          ...(flare ? [{ a: [0, L - 3], b: [wh, L - 3], text: `${r1(wh)}` }] : []),
           { a: [w * 0.22, top], b: [w * 0.22, L], text: `${r1(L - top)}`, v: true },
         ],
         notes: back ? [[1.5, top + v.zip + 1.2, `콘솔지퍼 ${v.zip}cm`]] : [[1.2, L * 0.7, "앞중심 골선 (CF)"]],
       };
       return p;
     }
-    const bandLen = W + 3, bandW = 3;
+    const bandLen = W + 3, bandW = v.band || 3;
     const band = {
       name: "허리밴드", count: "1장 (접착 심지)",
       ...chain([[[[0, 0], [bandLen, 0]], 1], [[[bandLen, 0], [bandLen, bandW * 2]], 1], [[[bandLen, bandW * 2], [0, bandW * 2]], 1], [[[0, bandW * 2], [0, 0]], 1]]),
@@ -131,7 +134,7 @@
         ["뒤중심 내림", "", cbDrop],
         ["허리밴드", "허리 + 여유 + 겹침 3 × 완성 폭 3", `${r1(bandLen)} × 6`],
       ].map(([a, b, c]) => [a, b, typeof c === "number" ? r1(c) : c]),
-      seam: "시접: 허리 1 · 옆선 1.5 · 뒤중심 1.5 · 밑단 4 · 앞중심 골선",
+      seam: `시접: 허리 1 · 옆선 1.5 · 뒤중심 1.5 · 밑단 ${flare > 3 ? 2 : 4} · 앞중심 골선`,
     };
   }
 
@@ -204,9 +207,10 @@
     for (const p of dr.pieces.filter((p) => p.below)) {
       p.cut = offset(p.pts, p.edges);
       const bb = bbox(p.cut.concat(p.dims.flatMap((d) => [d.a, d.b])));
+      if (bb.x1 - bb.x0 < 6) bb.x1 += 10;          // 좁은 조각은 이름을 오른쪽 바깥에 씀
       placed.push({ p, dx: x2 - bb.x0, dy: rowBottom + GAP + 1 - bb.y0 }); x2 += bb.x1 - bb.x0 + GAP;
     }
-    const all = bbox(placed.flatMap(({ p, dx, dy }) => p.cut.concat(p.dims.flatMap((d) => [d.a, d.b])).map(([a, b]) => [a + dx, b + dy])));
+    const all = bbox(placed.flatMap(({ p, dx, dy }) => { const b0 = bbox(p.cut); return p.cut.concat(p.dims.flatMap((d) => [d.a, d.b]), b0.x1 - b0.x0 < 6 ? [[b0.x1 + 10, b0.y0]] : []).map(([a, b]) => [a + dx, b + dy]); }));
     return { placed, w: Math.ceil(all.x1 + MARGIN), h: Math.ceil(all.y1 + MARGIN) };
   }
   function bbox(pts) {
@@ -297,13 +301,16 @@
     return out;
   }
 
-  function draft(type, vals) {
+  /* opts: 작업지시서 디테일 선택(핏·넥라인·여밈·시보리·주머니·모양). 숫자 칸이 비면 기본값(null = 자동) */
+  function draft(type, vals, opts = {}) {
     const T = TYPES[type];
-    const v = Object.fromEntries(T.fields.map(([k, , def]) => [k, Number.isFinite(+vals[k]) && vals[k] !== "" ? +vals[k] : def]));
+    const v = { ...opts, ...Object.fromEntries(T.fields.map(([k, , def]) => [k, vals[k] !== "" && vals[k] != null && Number.isFinite(+vals[k]) ? +vals[k] : def])) };
     const dr = T.draft(v);
     const lay = layout(dr);
     return { type, name: T.name, v, ...dr, lay, tiles: tiles(lay) };
   }
 
-  window.Pattern = { TYPES, draft, svg, TILE, _offset: offset, _area: area };
+  const curveLen = (pts) => pts.reduce((s, p, i) => (i ? s + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), 0);
+  window.Pattern = { TYPES, draft, svg, TILE, _offset: offset, _area: area, draftSkirt,
+    h: { bez, chain, yOnCurve, r1, bbox, curveLen, area } };
 })();
