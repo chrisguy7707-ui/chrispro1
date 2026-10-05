@@ -1241,11 +1241,18 @@ async function analyzeWithGemini() {
   for (const model of models) {
     if (tried.length) { setStatus(`Gemini(${tried[tried.length - 1]}: ${why[why.length - 1]})라서 ${Math.round(wait / 1000)}초 뒤 ${model}(으)로 다시 시도…`); await sleep(wait); }
     tried.push(model);
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }],
-        generationConfig: { responseMimeType: "application/json" } }),
-    });
+    // 연결 실패(사파리 'Load failed', 크롬 'Failed to fetch' — 붐빌 때 CORS 없는 응답·끊김)와 60초 시간 초과도 다음 모델로
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 60000);
+    let res;
+    try {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, signal: ctl.signal,
+        body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }],
+          generationConfig: { responseMimeType: "application/json" } }),
+      });
+    } catch (err) {
+      why.push(err?.name === "AbortError" ? "시간 초과" : "연결 실패"); wait = 2000 * tried.length; continue;
+    } finally { clearTimeout(timer); }
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
       const txt = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
@@ -1269,6 +1276,9 @@ async function analyzeWithGemini() {
   }
   const detail = tried.map((m, i) => `${m}: ${why[i]}`).join(" · ");
   const daily = why.length && why.every((w) => /하루 한도/.test(w));
+  if (why.length && why.every((w) => /연결 실패|시간 초과/.test(w))) {
+    const e = new Error(`Gemini에 연결하지 못했습니다 (${detail}). 인터넷 연결을 확인하고 잠시 후 다시 누르세요. 회사·학교 와이파이나 광고 차단 앱이 막는 경우도 있습니다.`); e.code = "busy"; throw e;
+  }
   const e = new Error(daily ? `오늘 무료 사용량을 다 썼습니다 (${detail}). 내일 다시 시도하거나 기기 안 인식을 쓰세요.`
     : `Gemini가 지금 응답하지 못합니다 (${detail}). ${why.some((w) => /분당/.test(w)) ? "무료 등급의 분당 한도에 걸린 모델이 있어 1분쯤 뒤에" : "Google 쪽 일시적인 문제라 잠시 후"} 다시 누르면 대부분 됩니다.`);
   e.code = "busy"; throw e;
@@ -1389,6 +1399,7 @@ async function analyze() {
       : code === "rate_limited" ? "요청이 많습니다. 잠시 후 다시 눌러 주세요."
       : code === "invalid_json" ? "결과를 읽지 못했습니다. 한 번 더 눌러 주세요."
       : code === "busy" ? e.message
+      : /Load failed|Failed to fetch|NetworkError/i.test(e?.message || "") ? "연결에 실패했습니다. 인터넷 연결을 확인하고 잠시 후 다시 눌러 주세요."
       : localMode() ? "기기 안 인식에 실패했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요."
       : (e && e.message) || "분석에 실패했습니다.";
     setStatus(msg + " (4단계에서 직접 선택해도 작업지시서를 만들 수 있습니다.)", true);

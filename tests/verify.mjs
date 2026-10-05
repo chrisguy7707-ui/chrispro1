@@ -415,7 +415,7 @@ await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); cons
 /* 8-4. Gemini 키 받기 탭: 강조 표시, 안내·공식 링크, 키 확인 (Google 응답은 가짜로 대체, 실제 요청 없음) */
 const pk = await browser.newPage();
 await pk.setRequestInterception(true);
-let keySeen = null, allBusy = false; const genCalls = [];
+let keySeen = null, allBusy = false, dropFirst = false; const genCalls = [];
 pk.on("request", (r) => {
   if (r.url().startsWith("https://generativelanguage.googleapis.com/v1beta/models")) {
     const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "x-goog-api-key, content-type", "access-control-allow-methods": "GET, POST" };
@@ -424,6 +424,7 @@ pk.on("request", (r) => {
     const gm = r.url().match(/models\/([^:]+):generateContent/);
     if (gm) {
       genCalls.push(gm[1]);
+      if (gm[1] === "gemini-3.5-flash" && dropFirst) return r.abort("failed");   // 연결 실패 흉내 (사파리 'Load failed')
       if (gm[1] === "gemini-2.0-flash") return r.respond({ status: 404, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 404, message: "This model models/gemini-2.0-flash is no longer available to new users." } }) });
       if (allBusy || gm[1] !== "gemini-3.5-flash-lite") return r.respond({ status: 503, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 503, status: "UNAVAILABLE", message: "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later." } }) });
       return r.respond({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ itemName: "와이드 데님 팬츠", template: "pants", fit: "regular", pockets: ["side", "back"], color: "연청", fabric: "데님 12oz (추정)", mix: "면 100% (추정)", weight: "12oz (추정)", trims: [], sewing: ["옆선 쌍침"], notes: [] }) }] } }] }) });
@@ -481,6 +482,13 @@ await pk.waitForFunction(() => /기기 안 인식으로|응답하지 못합니�
 const busy2 = await pk.evaluate(() => document.getElementById("status").textContent);
 ok("모든 모델이 붐비면 한국어로 안내하고, 인식 모델을 받은 브라우저면 기기 안 인식으로 대신 채움", genCalls.length === 2 && !genCalls.includes("gemini-2.0-flash") && /응답하지 못합니다/.test(busy2) && /붐빔 503/.test(busy2) && /기기 안 인식으로 품목/.test(busy2), `${genCalls.join(",")} | ${busy2.slice(-90)}`);
 allBusy = false;
+/* 연결 실패(Load failed)도 다음 모델로 넘어가 성공 */
+dropFirst = true; genCalls.length = 0;
+await pk.evaluate(() => { localStorage.removeItem("wo_gmodel_ok"); document.getElementById("gModel").value = "gemini-3.5-flash"; document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
+await pk.waitForFunction(() => /완료했습니다|응답하지 못합니다|연결하지 못했습니다/.test(document.getElementById("status").textContent), { timeout: 30000 });
+const dropSt = await pk.evaluate(() => document.getElementById("status").textContent);
+ok("연결 실패(사파리 'Load failed')도 멈추지 않고 다음 모델로 넘어가 분석 성공", genCalls[0] === "gemini-3.5-flash" && genCalls.includes("gemini-3.5-flash-lite") && /완료했습니다/.test(dropSt), `${genCalls.join(",")} | ${dropSt.slice(0, 80)}`);
+dropFirst = false;
 await pk.evaluate(() => document.getElementById("keyForget").click());
 ok("키 지우기 → 기기 안 인식으로 돌아감", await pk.evaluate(() => localMode() && !localStorage.getItem("wo_gkey")));
 await pk.close();
