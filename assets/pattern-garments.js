@@ -303,6 +303,9 @@
   reg("ws_skirt", "스커트", (v) => P.draftSkirt({ waist: v.W * 2, hip: v.HP * 2, hipLen: v.HL, len: v.L - 3, ease: 0, waistEase: 0, zip: 20, hem: v.shape === "h" ? 0 : v.HM * 2 }),
     [["W", "허리단면", 35], ["HP", "엉덩이단면", 48], ["HM", "밑단단면", 58], ["L", "총장 (밴드 포함)", 65], ["HL", "엉덩이길이", 18]], { W: "허리단면", HP: "엉덩이단면", HM: "밑단단면", L: "총장" });
 
+  reg("ws_pouch", "파우치", (v) => P.draftPouch({ w: v.W, h: v.H, d: v.D, sa: v.sa }),
+    [["W", "가로", 20], ["H", "높이", 12], ["D", "마치", 6], ["sa", "시접", 1]], { W: "가로", H: "높이", D: "마치" });
+
   /* 원피스 소매통이 치수표에 없으면 가슴단면으로 추정 */
   const dd = P.TYPES.ws_dress.draft;
   P.TYPES.ws_dress.draft = (v) => dd({ ...v, SW: v.SW || r1(v.C * 0.36) });

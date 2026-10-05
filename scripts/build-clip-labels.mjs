@@ -24,6 +24,7 @@ export const GROUPS = {
     shorts: ["a pair of shorts", "short pants above the knee", "denim shorts"],
     skirt: ["a skirt", "a mini skirt", "a midi skirt"],
     dress: ["a dress", "a one-piece dress", "a sleeveless summer dress"],
+    pouch: ["a small zippered pouch", "a cosmetic pouch with a zipper", "a mini pouch bag with a key ring clip"],
   },
   fit: {
     regular: ["a regular fit top", "a standard fit garment"],

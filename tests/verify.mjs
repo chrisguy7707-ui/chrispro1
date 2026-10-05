@@ -43,7 +43,13 @@ await input.uploadFile(new URL_("photo.png", OUT).pathname);
 await page.waitForFunction(() => document.querySelector("#sheetPhoto img"), { timeout: 5000 }).catch(() => {});
 ok("사진 업로드 → 참고 사진 칸", !!(await page.$("#sheetPhoto img")));
 const waitDone = () => page.waitForFunction(() => /인식했습니다|실패/.test(document.getElementById("status").textContent), { timeout: 240000 });
+const hfBefore = sent.length;
+ok("첫 사진: 모델(23MB)을 받기 전에 묻고 자동으로 받지 않음",
+  (await page.$eval("#status", (n) => n.textContent.includes("23MB"))) && !(await page.evaluate(() => /인식했습니다/.test(document.getElementById("status").textContent))));
+await page.click("#analyzeBtn");
 await waitDone();
+ok("버튼을 누르면 기기 안 인식, 확신도는 높음·보통·낮음으로 표시 (퍼센트 없음)",
+  await page.$eval("#status", (n) => /확신 (높음|보통|낮음)/.test(n.textContent) && !/%/.test(n.textContent)) && (await page.$$eval("#guess small", (a) => a.every((x) => /순위/.test(x.textContent)))));
 
 /* 2-0. 기기 안 인식: 앱이 그린 도식화를 사진처럼 올려서 품목을 맞히는지 (모델 다운로드에 인터넷 필요) */
 const flatPng = (t) => page.evaluate(async (t) => {
@@ -55,7 +61,7 @@ const flatPng = (t) => page.evaluate(async (t) => {
   return c.toDataURL("image/png").split(",")[1];
 }, t);
 const recog = [];
-for (const t of ["hoodie", "shirt", "pants", "shorts", "skirt"]) {
+for (const t of ["hoodie", "shirt", "pants", "shorts", "skirt", "pouch"]) {
   fs.writeFileSync(new URL_(`flat_${t}.png`, OUT), Buffer.from(await flatPng(t), "base64"));
   await page.evaluate(() => { document.getElementById("status").textContent = ""; });
   await input.uploadFile(new URL_(`flat_${t}.png`, OUT).pathname);
@@ -64,7 +70,7 @@ for (const t of ["hoodie", "shirt", "pants", "shorts", "skirt"]) {
   recog.push(`${t}→${got[0]}${got[1] ? "(오류)" : ""}`);
   if (got[2] !== 3) recog.push("후보 버튼 " + got[2]);
 }
-ok("기기 안 인식: 도식화 5종 품목 맞힘 + 후보 3개 표시", recog.every((x) => /^(\w+)→\1$/.test(x)), recog.join(" "));
+ok("기기 안 인식: 도식화 6종(파우치 포함) 품목 맞힘 + 후보 3개 표시", recog.every((x) => /^(\w+)→\1$/.test(x)), recog.join(" "));
 await page.evaluate(() => document.querySelector("#guess button:nth-child(2)").click());
 ok("인식 후보 버튼으로 품목 바꾸기", await page.evaluate(() => state.opt.template === document.querySelector('#guess button[aria-pressed="true"]').dataset.t && document.querySelector("#guess button:nth-child(2)").getAttribute("aria-pressed") === "true"));
 
@@ -84,7 +90,7 @@ const selectAll = () => page.evaluate(() => { for (const c of document.querySele
 const setSel = (id, v) => page.evaluate((id, v) => { const s = document.getElementById(id); s.value = v; s.dispatchEvent(new Event("change")); }, id, v);
 let maxPages = 0, combos = 0, renderFails = [];
 for (const g of ["m", "f"]) for (const t of templates) for (const fit of ["regular", "oversize", "slim"]) {
-  await page.click(g === "m" ? "#gM" : "#gF");
+  await page.evaluate((sel) => document.querySelector(sel).click(), g === "m" ? "#gM" : "#gF");
   await setSel("oTemplate", t); await setSel("oFit", fit); await selectAll();
   const r = await page.evaluate(() => {
     const rows = [...document.querySelectorAll("#specTable tr")].slice(1);
@@ -98,17 +104,17 @@ for (const g of ["m", "f"]) for (const t of templates) for (const fit of ["regul
       label: document.getElementById("labelBox").hidden === !isBottom(),
     };
   });
-  const sizes = g === "m" ? 7 : 5;
+  const sizes = t === "pouch" ? 3 : g === "m" ? 7 : 5;   // 잡화는 S·M·L
   if (r.want !== r.got || r.cols !== sizes + 4 || r.bad || !r.svg || r.nan || !r.label) renderFails.push(`${g}/${t}/${fit} ${JSON.stringify(r)}`);
   const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
   const n = pages(Buffer.from(pdf)); maxPages = Math.max(maxPages, n); combos++;
   if (n !== 1) fs.writeFileSync(new URL_(`fail_${g}_${t}_${fit}.pdf`, OUT), pdf);
 }
-ok(`${combos}개 조합(품목9×성별2×핏3) 도식화·치수표 정상`, renderFails.length === 0, renderFails.slice(0, 3).join(" | "));
+ok(`${combos}개 조합(품목10×성별2×핏3) 도식화·치수표 정상`, renderFails.length === 0, renderFails.slice(0, 3).join(" | "));
 ok(`인쇄 A4 가로 1장 (${combos}개 조합 최대 ${maxPages}장)`, maxPages === 1);
 
 /* 4. 최악 조건: AI 결과로 긴 봉제사양 10줄·부자재 8줄 + 남 7사이즈 */
-await page.click("#gM");
+await page.evaluate((sel) => document.querySelector(sel).click(), "#gM");
 await page.evaluate(() => applyAI({
   itemName: "오버핏 기모 후드 집업 점퍼 (테스트용 긴 품명)", template: "hoodie", fit: "oversize", neck: "hood", closure: "zip", rib: "rib", shape: "a",
   pockets: ["kangaroo"], color: "멜란지 그레이", fabric: "기모 쭈리 30수 (추정)", mix: "면 80% 폴리 20% (추정)", weight: "380g/㎡ (추정)",
@@ -127,12 +133,27 @@ ok("작업지시서에서 직접 줄을 더 추가해도 인쇄 1장", pages(typ
 ok("기본 내용일 때 인쇄 배율 .93 유지", await page.evaluate(() => { const o = state.ai; state.ai = null; renderContent(); const z = document.getElementById("sheet").style.getPropertyValue("--print-zoom"); state.ai = o; renderContent(); return z === "0.930"; }));
 ok("AI 결과 → 4단계 품명·컬러 입력칸 동기화", await page.evaluate(() => document.getElementById("oItem").value.startsWith("오버핏") && document.getElementById("oColor").value === "멜란지 그레이"));
 
+/* 4-1. 파우치(잡화): S·M·L, 성별 버튼 숨김, 앞면·옆면 도식화, 잡화 부자재·봉제 */
+const pouch = await page.evaluate(() => {
+  const s = document.getElementById("oTemplate"); s.value = "pouch"; s.dispatchEvent(new Event("change"));
+  const r = { sizes: document.getElementById("fSizes").textContent, seg: getComputedStyle(document.querySelector('.seg[aria-label="성별"]')).display === "none" && getComputedStyle(document.getElementById("oNeck").closest("label")).display === "none",
+    cap: document.getElementById("capBack").textContent, trims: document.getElementById("trimTable").textContent.includes("개고리"),
+    sew: document.getElementById("sewList").textContent.includes("마치"), meta: document.getElementById("specMeta").textContent,
+    A: [...document.querySelectorAll("#specTable tr")].find((tr) => tr.children[1]?.textContent === "가로")?.textContent };
+  s.value = "top_short"; s.dispatchEvent(new Event("change"));
+  r.back = document.getElementById("fSizes").textContent; r.segBack = getComputedStyle(document.querySelector('.seg[aria-label="성별"]')).display === "none";
+  return r;
+});
+ok("파우치: S·M·L 사이즈, 성별 버튼 숨김, 옆면(마치) 도식화, 개고리·마치 사양 → 옷으로 돌아오면 원래 사이즈",
+  pouch.sizes === "S / M / L" && pouch.seg && pouch.cap.includes("옆면") && pouch.trims && pouch.sew && pouch.meta.includes("잡화") && pouch.A.includes("15.5") && pouch.A.includes("24.5")
+  && !pouch.segBack && /\d/.test(pouch.back), JSON.stringify(pouch).slice(0, 200));
+
 /* 5. 하의 인치 표기 */
 const lbl = async (mode) => { await page.click(`#labelBox [data-label="${mode}"]`); return page.$eval("#fSizes", (n) => n.textContent); };
-await page.click("#gM"); await setSel("oTemplate", "pants"); await selectAll();
+await page.evaluate((sel) => document.querySelector(sel).click(), "#gM"); await setSel("oTemplate", "pants"); await selectAll();
 const m = { num: await lbl("num"), both: await lbl("both"), inch: await lbl("inch") };
 ok("남 바지 호칭/병기/인치", m.num === "80 / 85 / 90 / 95 / 100 / 105 / 110" && m.both.startsWith("80(28)") && m.inch === "28 / 29 / 30 / 31 / 32 / 34 / 36", JSON.stringify(m));
-await page.click("#gF"); await setSel("oTemplate", "skirt");
+await page.evaluate((sel) => document.querySelector(sel).click(), "#gF"); await setSel("oTemplate", "skirt");
 ok("여 스커트 인치", (await lbl("inch")) === "24 / 26 / 28 / 30 / 32");
 await lbl("both");
 await setSel("oTemplate", "top_short");
@@ -215,7 +236,7 @@ const allPat = await page.evaluate(() => {
   }
   return { n, bad };
 });
-ok(`9개 품목 × 남/여 × 3핏 = ${allPat.n}개 패턴: 치수표 값 반영·도면·시접·소매산 정상, 경고 없음`, allPat.bad.length === 0, allPat.bad.slice(0, 4).join(" | "));
+ok(`10개 품목 × 남/여 × 3핏 = ${allPat.n}개 패턴: 치수표 값 반영·도면·시접·소매산 정상, 경고 없음`, allPat.bad.length === 0, allPat.bad.slice(0, 4).join(" | "));
 /* 치수표에서 고친 값이 패턴에 반영 */
 const edited = await page.evaluate(() => {
   document.getElementById("tabSheetBtn").click(); document.getElementById("gM").click();
@@ -226,6 +247,9 @@ const edited = await page.evaluate(() => {
   return patDraft.v.C;
 });
 ok("작업지시서 치수표에서 고친 값(가슴단면 58)이 패턴에 반영", edited === 58, String(edited));
+ok("패턴 탭: 베타 안내·실물 검증 순서 표시, 인쇄 표지·분할 장에도 '베타'",
+  await page.evaluate(() => { const b = document.querySelector("#pat .pat-beta"); preparePrint(); const cover = document.querySelector("#patPrint .pat-cover")?.textContent || "", tile = document.querySelector("#patPrint .pat-page:nth-child(2) .beta");
+    return b && getComputedStyle(b).display !== "none" && b.querySelectorAll("li").length >= 5 && cover.includes("베타") && !!tile; }));
 ok("패턴 탭: 작업지시서 숨기고 패턴 화면·버튼 표시", await page.evaluate(() => document.getElementById("sheet").hidden && !document.getElementById("pat").hidden
   && !document.getElementById("savePatBtn").hidden && document.getElementById("saveHtmlBtn").hidden && document.querySelector("#patView svg") !== null));
 ok("시접 계산: 10×10 정사각형 시접 1 → 12×12", await page.evaluate(() => {
@@ -273,18 +297,60 @@ for (const type of ["skirt_h", "pouch"]) {
 /* 한 장(대형 출력): 축소도 + 패턴 크기 그대로 한 장 */
 await page.evaluate(() => { const s = document.getElementById("patType"); s.value = "ws_pants"; s.dispatchEvent(new Event("change")); document.getElementById("patPrintMode").value = "one"; preparePrint(); });
 const big = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
-const bigWant = await page.evaluate(() => [patDraft.lay.w, patDraft.lay.h]);
-const bigPt = big[1] ? big[1].match(/[\d.]+/g).map(Number).slice(2) : [];
-ok(`한 장 대형 출력: 2장, 둘째 장 = 패턴 크기 ${bigWant[0]}×${bigWant[1]}cm`, big.length === 2 && Math.abs(bigPt[0] - bigWant[0] / 2.54 * 72) < 2 && Math.abs(bigPt[1] - bigWant[1] / 2.54 * 72) < 2, big.join(" "));
+const bigWant = await page.evaluate(() => [patDraft.lay.w, patDraft.lay.h + 7]);
+const bigPt = big[0] ? big[0].match(/[\d.]+/g).map(Number).slice(2) : [];
+ok(`한 장 대형 출력: 패턴 크기 그대로 1장 (${bigWant[0]}×${bigWant[1]}cm, 안내·50mm 네모 포함)`, big.length === 1 && Math.abs(bigPt[0] - bigWant[0] / 2.54 * 72) < 2 && Math.abs(bigPt[1] - bigWant[1] / 2.54 * 72) < 2
+  && (await page.evaluate(() => !!document.querySelector("#patPrint .big .chk"))), big.join(" "));
 await page.evaluate(() => { document.getElementById("patPrintMode").value = "tiles"; });
 await page.click("#tabSheetBtn");
 await page.evaluate(() => preparePrint());
 const back = await page.pdf({ preferCSSPageSize: true });
 ok("작업지시서 탭으로 돌아오면 인쇄는 다시 A4 가로 1장", mediaBoxes(back).length === 1 && !isPortrait(mediaBoxes(back)[0]));
 
+/* 8-2. 작업 저장 → 새 페이지에서 열기, 자동 저장 → 이어서 하기, 위험한 글자는 글자로만 */
+await page.evaluate(() => {
+  document.getElementById("tabSheetBtn").click();
+  const s = document.getElementById("oTemplate"); s.value = "pouch"; s.dispatchEvent(new Event("change"));
+  document.getElementById("fBrand").textContent = "겸이네 공방";
+  document.getElementById("fFactory").textContent = '<img src=x onerror="window.__xss=1">';
+  const tr = [...document.querySelectorAll("#specTable tr")].find((r) => r.children[1]?.textContent === "가로"); tr.querySelector("td.base").textContent = "21.5";
+  document.getElementById("sewList").innerHTML = "<li>첫째 줄 테스트</li><li>둘째 줄 테스트</li>";
+  const c = document.getElementById("oColor"); c.value = "아이보리"; c.dispatchEvent(new Event("input"));
+});
+const job = await page.evaluate(() => JSON.stringify(snapshot()));
+fs.writeFileSync(new URL_("job.json", OUT), job);
+const p3 = await browser.newPage(); const p3err = [];
+p3.on("pageerror", (e) => p3err.push(e.message));
+await p3.evaluateOnNewDocument(() => { try { localStorage.removeItem("wo_autosave"); } catch (e) {} });
+await p3.goto(URL, { waitUntil: "networkidle0" });
+await (await p3.$("#jobFile")).uploadFile(new URL_("job.json", OUT).pathname);
+await p3.waitForFunction(() => /작업 파일을 열었습니다|열지 못했습니다/.test(document.getElementById("status").textContent), { timeout: 10000 });
+const opened = await p3.evaluate(() => ({ t: state.opt.template, brand: document.getElementById("fBrand").textContent, fac: document.getElementById("fFactory").textContent,
+  xss: !!window.__xss || !!document.querySelector("#fFactory img"), A: [...document.querySelectorAll("#specTable tr")].find((r) => r.children[1]?.textContent === "가로").querySelector("td.base").textContent,
+  sew: document.getElementById("sewList").children.length, color: document.getElementById("oColor").value, sizes: document.getElementById("fSizes").textContent }));
+ok("작업 저장 → 새 페이지에서 작업 열기: 품목·머리 정보·치수 수정·봉제·컬러 그대로", opened.t === "pouch" && opened.brand === "겸이네 공방" && opened.A === "21.5" && opened.sew === 2 && opened.color === "아이보리" && opened.sizes === "S / M / L", JSON.stringify(opened));
+ok("작업 파일 속 HTML·스크립트는 글자로만 들어감 (실행 안 됨)", !opened.xss && opened.fac.includes("<img"));
+await p3.close();
+await new Promise((r) => setTimeout(r, 900));   // 자동 저장(0.7초 지연) 기다림
+const p4 = await browser.newPage();
+await p4.goto(URL, { waitUntil: "networkidle0" });
+const bar = await p4.$eval("#restoreBar", (n) => !n.hidden && n.textContent.includes("이전 작업"));
+await p4.click("#restoreBtn");
+await p4.waitForFunction(() => /이전 작업을 불러왔습니다/.test(document.getElementById("status").textContent), { timeout: 10000 });
+const resumed = await p4.evaluate(() => [state.opt.template, document.getElementById("fBrand").textContent]);
+ok("자동 저장: 다시 열면 '이어서 하기' → 이전 작업 복원", bar && resumed[0] === "pouch" && resumed[1] === "겸이네 공방", JSON.stringify(resumed));
+await p4.close();
+await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
+
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });
 ok("모바일 375px 가로 스크롤 없음", await page.evaluate(() => document.documentElement.scrollWidth <= 376), String(await page.evaluate(() => document.documentElement.scrollWidth)));
+await page.evaluate(() => fitScreen());
+const mob = await page.evaluate(() => { const r = document.getElementById("sheet").getBoundingClientRect(); return { w: Math.round(r.width), zoom: getComputedStyle(document.getElementById("sheet")).zoom }; });
+ok("휴대폰: 작업지시서가 화면 폭에 맞게 축소되어 다 보임", mob.w <= 375 && +mob.zoom < 0.5, JSON.stringify(mob));
+await page.evaluate(() => preparePrint());
+const mobPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
+ok("휴대폰 화면에서 인쇄해도 작업지시서는 A4 가로 1장", mobPdf.length === 1 && !isPortrait(mobPdf[0]), mobPdf.join(" "));
 await page.setViewport({ width: 1500, height: 1000 });
 await page.screenshot({ path: new URL_("desktop.png", OUT).pathname, fullPage: true });
 

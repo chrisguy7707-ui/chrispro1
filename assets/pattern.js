@@ -283,10 +283,8 @@
   /* A4 세로 분할: 인쇄 가능 19.6 × 28.3cm, 1cm 겹침. 조각이 하나도 안 걸리는 장은 뺌 */
   const TILE = { w: 19.6, h: 28.3, overlap: 1 };
   /* 세로·가로 A4 중 장수가 적은 쪽 (같으면 세로) */
-  function tiles(lay) {
-    const port = tilesFor(lay, TILE.w, TILE.h, false), land = tilesFor(lay, TILE.h, TILE.w, true);
-    return land.length < port.length ? land : port;
-  }
+  /* A4 세로만 씀: 인쇄 직전에 @page를 하나만 정하면 되므로 사파리 등에서도 방향이 섞이지 않음 */
+  function tiles(lay) { return tilesFor(lay, TILE.w, TILE.h, false); }
   function tilesFor(lay, TW, TH, landscape) {
     const sx = TW - TILE.overlap, sy = TH - TILE.overlap;
     // 직사각형 조각(measureOnly)은 자로 재서 자르면 되므로 분할 인쇄 범위에서 뺌
@@ -311,6 +309,6 @@
   }
 
   const curveLen = (pts) => pts.reduce((s, p, i) => (i ? s + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), 0);
-  window.Pattern = { TYPES, draft, svg, TILE, _offset: offset, _area: area, draftSkirt,
+  window.Pattern = { TYPES, draft, svg, TILE, _offset: offset, _area: area, draftSkirt, draftPouch,
     h: { bez, chain, yOnCurve, r1, bbox, curveLen, area } };
 })();

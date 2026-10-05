@@ -72,6 +72,13 @@ h3 { font-size: 18px; margin: 0 0 6px; }
 @media (max-width: 860px) { .steps { grid-template-columns: 1fr 1fr; } .cards { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
 
+.persona { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.persona .card { display: flex; flex-direction: column; }
+.persona ol { margin: 10px 0 16px; padding-left: 20px; color: var(--ink-soft); font-size: 15px; }
+.persona ol li { margin: 3px 0; }
+.persona .btn { align-self: flex-start; margin-top: auto; }
+.btn.small { padding: 9px 16px; font-size: 14px; }
+@media (max-width: 860px) { .persona { grid-template-columns: 1fr; } }
 .faq details { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
 .faq summary { cursor: pointer; font-weight: 700; }
 .faq details p { margin: 10px 0 0; color: var(--ink-soft); }

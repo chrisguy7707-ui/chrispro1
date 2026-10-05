@@ -46,6 +46,7 @@
   :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   *, *::before, *::after { box-sizing: inherit; }
+  [hidden] { display: none !important; }   /* display를 정한 요소(.seg, .chips 등)도 hidden이면 숨김 */
   body { margin: 0; font-family: var(--font); background: var(--page-bg); color: var(--ink); font-variant-numeric: tabular-nums; }
 
   .app { display: grid; grid-template-columns: 360px 1fr; min-height: 100vh; }
@@ -64,6 +65,10 @@
   .brand { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; }
   .brand h1 { font-size: 21px; font-weight: 700; margin: 0; letter-spacing: -0.02em; white-space: nowrap; }
   .brand h1 a { color: inherit; text-decoration: none; }
+  .restore { background: var(--tape); color: var(--mat-deep); border-radius: 10px; padding: 10px 12px; margin: 0 0 14px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .restore span { flex: 1 1 100%; font-weight: 700; }
+  .restore button { border: 1px solid var(--mat-deep); background: transparent; color: var(--mat-deep); border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  .restore button:first-of-type { background: var(--mat-deep); color: #fff; }
   .mini-nav { display: flex; gap: 14px; margin: -8px 0 6px; font-size: 13px; }
   .mini-nav a { color: var(--mat-ink); opacity: .8; }
   .mini-nav a:hover { opacity: 1; }
@@ -116,6 +121,8 @@
 
   /* ---------- 오른쪽: 작업지시서 미리보기 ---------- */
   .stage { padding: 24px; overflow-x: auto; }
+  @media screen { .sheet { zoom: var(--fit, 1); } }
+  @media (max-width: 960px) { .stage { padding: 14px 10px; } }
   .stage-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; max-width: 1123px; }
   .stage-bar button { border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
   .stage-bar button.primary { background: var(--mat); color: #fff; border-color: var(--mat); }
@@ -128,6 +135,7 @@
   .sheet th { background: #f1f1ee; font-weight: 500; white-space: nowrap; }
   .sheet [contenteditable]:hover { background: #fffbe6; }
   .sheet [contenteditable]:focus { background: #fff6cc; outline: none; }
+  .sheet td[contenteditable][data-ph]:empty::before { content: attr(data-ph); color: #b5b5ae; font-size: 11px; }   /* 빈 칸 안내 (인쇄에는 안 나옴) */
   .head { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: stretch; }
   .title-cell { border: 2px solid var(--ink); display: grid; place-items: center; font-size: 26px; font-weight: 700; letter-spacing: .25em; }
   .body { display: grid; grid-template-columns: 1.25fr 1fr; gap: 12px; margin-top: 10px; }
@@ -162,6 +170,10 @@
   .pat-form input, .pat-form select { width: 100%; margin-top: 3px; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 7px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
   .pat-form .wide { grid-column: span 2; }
   .pat-warn { color: var(--mark); font-size: 13px; margin: 8px 0 0; }
+  .pat-beta { margin: 10px 0 0; padding: 8px 12px; border: 1.5px solid var(--mark); border-radius: 8px; font-size: 13px; line-height: 1.6; }
+  .pat-beta summary { cursor: pointer; }
+  .pat-beta b { color: var(--mark); }
+  .pat-beta ol { margin: 6px 0 0; padding-left: 20px; }
   .pat-note { margin: 10px 0 0; padding: 9px 12px; border-left: 4px solid var(--tape); background: #fff8dc; font-size: 13px; line-height: 1.55; }
   .pat-view { margin-top: 12px; border: 1px solid var(--ink); }
   .pat-view svg { display: block; width: 100%; height: auto; max-height: 720px; }
@@ -175,20 +187,21 @@
   #patPrint { display: none; }
 
   @media print {
-    @page { size: A4 landscape; margin: 7mm; }
     body { background: #fff; }
     .panel, .stage-bar, .ad-slot { display: none !important; }
     .app { display: block; }
     .stage { padding: 0; overflow: visible; }
     .sheet { box-shadow: none; width: 1123px; min-height: 0; padding: 0; zoom: var(--print-zoom, .93); }
     .sheet [contenteditable]:hover { background: none; }
+    .sheet td[contenteditable][data-ph]:empty::before { content: none; }
     .tabs { display: none !important; }
     body.print-pattern .sheet, body.print-pattern .pat { display: none !important; }
     body.print-pattern #patPrint { display: block; }
-    .pat-page { page: pat; break-after: page; width: 196mm; height: 283mm; overflow: hidden; position: relative; font-family: var(--font); color: #1d1d1b; }
+    .pat-page { break-after: page; width: 196mm; height: 283mm; overflow: hidden; position: relative; font-family: var(--font); color: #1d1d1b; }
     .pat-page:last-child { break-after: auto; }
-    .pat-page.l { page: patL; width: 283mm; height: 196mm; }
-    .pat-page.big { page: patBig; }
+    .pat-page .beta { position: absolute; right: 3mm; top: 2mm; font-size: 8pt; font-weight: 700; color: #c62828; background: #fff; padding: 0 2mm; }
+    .pat-page.big .info { position: absolute; left: 10mm; top: 10mm; width: 90mm; background: #fff; border: .4mm solid #1d1d1b; padding: 3mm; font-size: 9pt; line-height: 1.5; }
+    .pat-page.big .info .chk { float: none; margin: 3mm 0 0; }
     .pat-page svg { display: block; }
     .pat-page .lab { position: absolute; left: 3mm; top: 2mm; font-size: 9pt; font-weight: 700; background: #fff; padding: 0 2mm; }
     .pat-page .ov-r { position: absolute; right: 0; top: 0; width: 10mm; height: 100%; background: rgba(242,194,48,.12); border-left: .3mm dashed #b08a10; }
@@ -200,8 +213,7 @@
     .pat-cover table { border-collapse: collapse; width: 100%; font-size: 8.5pt; margin-top: 2mm; }
     .pat-cover th, .pat-cover td { border: .25mm solid #1d1d1b; padding: 1mm 1.5mm; text-align: left; }
   }
-  @page pat { size: A4 portrait; margin: 7mm; }
-  @page patL { size: A4 landscape; margin: 7mm; }
+
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -210,6 +222,10 @@
   <!-- ================= 입력 패널 ================= -->
   <aside class="panel" aria-label="작업지시서 입력">
     <div class="brand"><h1><a href="./" title="옷만들기 도면 메이커 홈">옷만들기 도면 메이커</a></h1><div class="ruler" aria-hidden="true"></div></div>
+    <div class="restore" id="restoreBar" role="status" hidden>
+      <span id="restoreTxt">이전 작업이 있습니다.</span>
+      <button id="restoreBtn">이어서 하기</button><button id="restoreNo">새로 시작</button>
+    </div>
     <nav class="mini-nav" aria-label="사이트"><a href="./">홈</a><a href="guide.html">작업지시서 작성법</a><a href="about.html">소개</a></nav>
 
     <section class="step">
@@ -250,7 +266,7 @@
         <input type="text" id="gModel" placeholder="모델명 (기본 gemini-3-flash-preview)" />
         <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 기기 안 인식을 씁니다.</p>
       </details>
-      <p class="hint" id="manualHint" hidden>사진을 올리면 <b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않고, 처음 한 번 인식 모델(약 23MB)을 받습니다.</p>
+      <p class="hint" id="manualHint" hidden><b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않습니다. 처음 한 번은 버튼을 눌러 인식 모델(약 23MB)을 받고, 그다음부터는 사진을 올리면 바로 인식합니다.</p>
       <div class="status" id="status" role="status"></div>
       <div class="chips" id="guess" aria-label="인식 후보" hidden></div>
     </section>
@@ -269,6 +285,7 @@
             <option value="shorts">반바지</option>
             <option value="skirt">스커트</option>
             <option value="dress">원피스</option>
+            <option value="pouch">파우치 (잡화)</option>
           </select>
         </label>
         <label class="f">핏
@@ -309,11 +326,14 @@
   <main class="stage">
     <div class="tabs" role="tablist" aria-label="화면">
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
-      <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도</button>
+      <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
     </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
-      <button id="saveHtmlBtn" data-tab="sheet">작업지시서 파일 저장</button>
+      <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업)">작업 저장</button>
+      <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
+      <input type="file" id="jobFile" accept=".json,application/json" hidden />
+      <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
       <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
       <button id="savePatBtn" data-tab="pat" hidden>패턴 SVG 저장 (실물 크기)</button>
       <select id="patPrintMode" data-tab="pat" hidden aria-label="패턴 인쇄 방식" style="border:1px solid var(--rule);border-radius:8px;padding:8px;font:inherit;font-size:14px;background:#fff;color:var(--ink)">
@@ -329,7 +349,7 @@
         <div class="title-cell">작업지시서</div>
         <table>
           <tr>
-            <th>브랜드</th><td contenteditable id="fBrand"></td>
+            <th>브랜드</th><td contenteditable id="fBrand" data-ph="브랜드명 (학생은 학교·과목)"></td>
             <th>스타일 No.</th><td contenteditable id="fStyle"></td>
             <th>시즌</th><td contenteditable id="fSeason"></td>
             <th>작성일</th><td contenteditable id="fDate"></td>
@@ -341,8 +361,8 @@
             <th>납기</th><td contenteditable id="fDue"></td>
           </tr>
           <tr>
-            <th>디자이너</th><td contenteditable id="fDesigner"></td>
-            <th>공장</th><td contenteditable id="fFactory"></td>
+            <th>디자이너</th><td contenteditable id="fDesigner" data-ph="이름 (학생은 이름·학번)"></td>
+            <th>공장</th><td contenteditable id="fFactory" data-ph="맡길 공장 (학생은 비워도 됨)"></td>
             <th>컬러</th><td contenteditable id="fColor" colspan="3"></td>
           </tr>
         </table>
@@ -352,8 +372,8 @@
         <section class="box">
           <div class="cap"><span>도식화</span><span class="mk">● 치수 기호는 아래 치수표와 연결</span></div>
           <div class="flats">
-            <figure><div id="svgFront"></div><figcaption>앞판 FRONT</figcaption></figure>
-            <figure><div id="svgBack"></div><figcaption>뒤판 BACK</figcaption></figure>
+            <figure><div id="svgFront"></div><figcaption id="capFront">앞판 FRONT</figcaption></figure>
+            <figure><div id="svgBack"></div><figcaption id="capBack">뒤판 BACK</figcaption></figure>
           </div>
         </section>
         <section style="display:grid; gap:10px; align-content:start">
@@ -375,7 +395,7 @@
 
       <div class="lower">
         <section class="box">
-          <div class="cap"><span>치수표 (단위 cm, 단면 기준)</span><span id="specMeta"></span></div>
+          <div class="cap"><span id="specCap">치수표 (단위 cm, 단면 기준)</span><span id="specMeta"></span></div>
           <table class="spec" id="specTable"></table>
         </section>
         <section class="box sew">
@@ -394,6 +414,16 @@
         <label class="wide">사이즈 프리셋<select id="patPreset"></select></label>
         <div id="patFields" style="display:contents"></div>
       </div>
+      <details class="pat-beta" open>
+        <summary><b>베타</b> · 이 패턴은 표준 공식으로 계산한 참고용이며, 실제 재단·봉제로 검증되지 않았습니다. 본 원단을 자르기 전에 꼭 가봉하세요.</summary>
+        <ol>
+          <li>배율 100%로 인쇄하고 첫 장의 50mm 확인 네모를 자로 재기</li>
+          <li>값싼 광목(무명)으로 재단해 시침질·가봉하기</li>
+          <li>완성품을 작업지시서 치수표와 같은 방법으로 실측 (허용 ±1cm)</li>
+          <li>앞뒤 옆선·진동둘레와 소매산·허리밴드 길이가 서로 맞는지 확인</li>
+          <li>다른 점은 이 탭의 치수 칸을 고치고, 결과를 문의 게시판에 알려 주시면 공식을 고칩니다</li>
+        </ol>
+      </details>
       <p class="pat-note" id="patNote" role="status" hidden></p>
       <p class="pat-warn" id="patWarn" role="status"></p>
       <div class="pat-view" id="patView"></div>
@@ -408,7 +438,7 @@
       </div>
     </section>
     <div id="patPrint" aria-hidden="true"></div>
-    <style id="patPageStyle"></style>
+    <style id="pageStyle">@page { size: A4 landscape; margin: 7mm; }</style>
   </main>
 </div>
 
@@ -423,6 +453,8 @@
    ====================================================================== */
 const SIZES = { m: ["80", "85", "90", "95", "100", "105", "110"], f: ["44", "55", "66", "77", "88"] };
 const BASE  = { m: "100", f: "66" };
+/* 가방·잡화(kind: "bag")는 성별 호칭 대신 S·M·L */
+const BAG_SIZES = ["S", "M", "L"], BAG_BASE = "M";
 /* 하의 허리 인치 호칭 (참고). T의 허리단면×2÷2.54 와 ±1인치 안에서 맞도록 잡은 값 */
 const INCH  = { m: { 80: 28, 85: 29, 90: 30, 95: 31, 100: 32, 105: 34, 110: 36 },
                 f: { 44: 24, 55: 26, 66: 28, 77: 30, 88: 32 } };
@@ -498,6 +530,13 @@ const T = {
     ["L","허리단면","허리 절개선",[46,2.5],[37,2.5]],
     ["D","밑단단면","밑단 끝 직선",[70,2.5],[64,2.5]],
     ["E","소매길이","어깨점~소매끝",[20,0.5],[18,0.5]] ] },
+  /* 잡화: 완성 치수(둘레 아님). S·M·L = 미니 15.5×9.5×4.5 · 중 20×12×6 · 대 24.5×14.5×7.5 */
+  pouch: { name: "파우치", kind: "bag", rows: [
+    ["A","가로","바닥 완성 가로 (마치 제외)",[20,4.5],[20,4.5]],
+    ["B","높이","바닥~지퍼 중심",[12,2.5],[12,2.5]],
+    ["C","마치","바닥 폭 (옆면)",[6,1.5],[6,1.5]],
+    ["D","지퍼 길이","테이프 길이 = 가로 + 마치",[26,6],[26,6]],
+    ["E","고리 탭","웨빙 2.5cm, 접기 전 길이",[7,0],[7,0]] ] },
 };
 
 /* 핏에 따른 보정 (cm, 측정부위 이름 기준) */
@@ -513,12 +552,18 @@ const DEFAULT_SEW = {
   pants: ["허리밴드 심지 접착, 상침 0.2cm", "앞 지퍼 J 스티치, 앞 주머니 상침 0.6cm", "옆선·인심 오버록 후 가름솔 또는 쌍침", "뒷 요크·뒷 주머니 쌍침 0.6cm", "밑단 3cm 접어 상침", "벨트고리 5개 (앞 2·옆 2·뒤 중심 1)"],
   skirt: ["허리밴드 심지 접착, 상침 0.2cm", "뒤 중심 콘솔 지퍼 20cm", "옆선 오버록 후 가름솔", "밑단 3cm 접어 공그르기 또는 상침"],
 };
+DEFAULT_SEW.bag = ["겉감 뒷면에 접착솜 부착 후 퀼팅(선택), 안감은 그대로", "지퍼 양 끝 탭 처리 (웨빙 또는 겉감 3cm 접어 박기)",
+  "겉감·지퍼·안감 겹쳐 지퍼 박기 후 겉에서 상침 0.2cm, 반대쪽 지퍼도 같은 방법", "고리 탭(웨빙)을 반 접어 한쪽 옆선 지퍼 아래 2cm에 끼움",
+  "지퍼를 반쯤 열고 겉감끼리·안감끼리 옆선 박기 1cm (안감 한쪽에 창구멍 8cm)", "마치 홈 맞붙여 박기 (겉감·안감 각각)",
+  "창구멍으로 뒤집고 공그르기 또는 상침 0.2cm", "모서리 시접 정리, 다리미로 형태 잡기"];
 const DEFAULT_NOTES = ["원단 수축률 확인 후 재단 (세탁 후 수축 3% 이내)", "기준 사이즈 샘플 승인 후 메인 작업 진행", "실 컬러는 원단 컬러와 동일 계열", "포장: 개별 OPP 비닐, 사이즈 스티커 부착"];
 const DEFAULT_TRIMS = {
   top: [["원단","겉감","",""],["시보리","목·소매·밑단","겉감 동색",""],["실","봉제사","40수 2합, 동색",""],["라벨","메인·케어·사이즈","","각 1"]],
   shirt: [["원단","겉감","",""],["심지","칼라·커프스·앞단","접착 심지",""],["단추","앞단·커프스","4구 11.5mm","8~10"],["실","봉제사","60수, 동색",""],["라벨","메인·케어·사이즈","","각 1"]],
   pants: [["원단","겉감","",""],["주머니감","T/C 포켓감","백색 또는 동색",""],["지퍼","앞 지퍼","YKK 메탈 또는 코일 18cm","1"],["단추","허리 단추","도넛 단추 17mm","1"],["라벨","메인·케어·사이즈","","각 1"]],
   skirt: [["원단","겉감","",""],["지퍼","콘솔 지퍼","20cm 동색","1"],["심지","허리밴드","접착 심지",""],["라벨","메인·케어·사이즈","","각 1"]],
+  bag: [["원단","겉감","",""],["원단","안감","폴리 안감 또는 면 20수",""],["심지","접착솜(선택)","2~3oz",""],["지퍼","코일 지퍼 5호","길이 = 치수표 D, 슬라이더 1","1"],
+        ["웨빙","고리 탭","2.5cm, 길이 7cm","1"],["금속","개고리·D링","니켈 또는 건메탈 25mm","각 1"],["라벨","메인 라벨","옆선 끼움","1"]],
 };
 
 /* 원단 프리셋 (4단계 직접 선택용): [이름, 원단, 혼용률, 중량·조직, 어울리는 품목] */
@@ -530,9 +575,11 @@ const FABRICS = [
   ["옥스포드", "면 옥스포드 40수", "면 100%", "옥스포드 평직", ["shirt"]],
   ["포플린", "면 포플린 60수", "면 100%", "포플린 평직", ["shirt", "dress", "skirt"]],
   ["린넨", "린넨", "린넨 100%", "평직 (세탁 수축 주의)", ["shirt", "dress", "skirt", "shorts"]],
-  ["데님 12oz", "데님 12oz", "면 100%", "12oz 3/1 트윌", ["pants", "shorts", "skirt", "jacket"]],
+  ["데님 12oz", "데님 12oz", "면 100%", "12oz 3/1 트윌", ["pants", "shorts", "skirt", "jacket", "pouch"]],
   ["면 트윌 (치노)", "면 스판 트윌", "면 97% / 폴리우레탄 3%", "260g/㎡ 2/1 트윌", ["pants", "shorts", "skirt", "jacket"]],
-  ["나일론 태슬란", "나일론 태슬란", "나일론 100%", "태슬란, 발수 가공", ["jacket", "shorts"]],
+  ["나일론 태슬란", "나일론 태슬란", "나일론 100%", "태슬란, 발수 가공", ["jacket", "shorts", "pouch"]],
+  ["나일론 옥스포드 (가방)", "나일론 옥스포드 420D", "나일론 100%", "420D 옥스포드, PU 코팅", ["pouch", "jacket"]],
+  ["캔버스 10수", "면 캔버스 10수", "면 100%", "10수 평직 (약 340g/㎡)", ["pouch", "skirt"]],
   ["폴리 스판 (기능성)", "폴리 스판 저지", "폴리에스터 90% / 폴리우레탄 10%", "180g/㎡ 기능성 저지", ["top_short", "top_long", "pants", "shorts"]],
 ];
 
@@ -551,9 +598,18 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const r05 = (v) => Math.round(v * 2) / 2;
 const isBottom = () => ["pants", "skirt"].includes(T[state.opt.template].kind);
+const isBag = () => T[state.opt.template].kind === "bag";
+const sizeList = () => (isBag() ? BAG_SIZES : SIZES[state.gender]);
+/* 의류 ↔ 잡화로 바뀌면 사이즈 체계를 맞춤 */
+function ensureSizeSystem() {
+  const list = sizeList();
+  if (list.includes(state.base) && [...state.sizes].every((x) => list.includes(x))) return;
+  state.base = isBag() ? BAG_BASE : BASE[state.gender];
+  state.sizes = new Set(isBag() ? BAG_SIZES : state.gender === "m" ? ["90", "95", "100", "105", "110"] : ["44", "55", "66", "77", "88"]);
+}
 /* 사이즈 표기: 하의일 때만 인치 호칭을 붙임. html=true 이면 병기 시 두 줄 */
 function sizeLabel(s, html = false) {
-  const inch = INCH[state.gender][s];
+  const inch = !isBag() && INCH[state.gender][s];
   if (!isBottom() || state.label === "num" || !inch) return s;
   if (state.label === "inch") return String(inch);
   return html ? `${s}<br><small>(${inch})</small>` : `${s}(${inch})`;
@@ -563,7 +619,7 @@ function sizeLabel(s, html = false) {
 function renderSizeChips() {
   const box = $("sizeChips");
   box.innerHTML = "";
-  for (const s of SIZES[state.gender]) {
+  for (const s of sizeList()) {
     const b = document.createElement("button");
     b.className = "chip" + (s === state.base ? " base" : "");
     b.textContent = sizeLabel(s);
@@ -591,7 +647,7 @@ function setGender(g) {
 /* ====================================================================== 치수표 */
 function specValues() {
   const t = T[state.opt.template];
-  const list = SIZES[state.gender];
+  const list = sizeList();
   const bi = list.indexOf(state.base);
   const chosen = list.filter((s) => state.sizes.has(s));
   const fit = FIT[state.opt.fit] || {};
@@ -611,7 +667,7 @@ function renderSpec() {
   const body = rows.map((r) => `<tr><td class="mk">${r.code}</td><td class="l">${r.part}</td><td class="l" style="color:var(--ink-soft)">${r.how}</td>${
     r.vals.map((v, i) => `<td contenteditable class="${chosen[i] === state.base ? "base" : ""}">${v}</td>`).join("")}<td>±${r.grade}</td></tr>`).join("");
   $("specTable").innerHTML = head + body;
-  $("specMeta").textContent = `${state.gender === "m" ? "남성" : "여성"} · 기준 ${state.base} · ${({ regular: "레귤러", oversize: "오버핏", slim: "슬림" })[state.opt.fit]}${
+  $("specMeta").textContent = isBag() ? `잡화 · 기준 ${state.base} · 완성 치수` : `${state.gender === "m" ? "남성" : "여성"} · 기준 ${state.base} · ${({ regular: "레귤러", oversize: "오버핏", slim: "슬림" })[state.opt.fit]}${
     isBottom() && state.label !== "num" ? " · 허리 인치 호칭" : ""}`;
   $("fSizes").textContent = chosen.map((s) => sizeLabel(s)).join(" / ");
 }
@@ -781,9 +837,36 @@ function drawSkirt(view, o, startY = 30, withBand = true) {
   return { svg: out, lenY, wL, wR, flare, top };
 }
 
+/* 파우치: 앞면(지퍼·슬라이더·끝 탭·고리 탭+개고리) / 옆면(마치) */
+function drawPouch(view) {
+  let out = "";
+  if (view === "front") {
+    const x0 = 62, x1 = 238, y0 = 70, y1 = 196, r = 16;
+    out += P(`M${x0 + r},${y0} H${x1 - r} Q${x1},${y0} ${x1},${y0 + r} V${y1 - r} Q${x1},${y1} ${x1 - r},${y1} H${x0 + r} Q${x0},${y1} ${x0},${y1 - r} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} Z`);
+    out += ST(`M${x0 + 6},${y0 + 14} H${x1 - 6}`);
+    out += `<path d="M${x0 + 4},${y0 + 7} H${x1 - 4}" stroke="#1d1d1b" stroke-width="5" stroke-dasharray="1.2 1.4" fill="none" opacity=".7"/>`;
+    out += L(`M${x0 + 4},${y0 + 4} H${x1 - 4}`) + L(`M${x0 + 4},${y0 + 10} H${x1 - 4}`);
+    for (const x of [x0 - 10, x1]) out += P(`M${x},${y0 + 2} h10 v11 h-10 Z`);           // 지퍼 끝 탭
+    out += `<rect x="${x1 - 46}" y="${y0 + 1}" width="12" height="12" rx="2" fill="#fff" stroke="#1d1d1b" stroke-width="1.2"/>`;
+    out += P(`M${x1 - 43},${y0 + 13} h6 l2,20 h-10 Z`);                                       // 지퍼 고리
+    out += P(`M${x1},${y0 + 22} h12 v14 h-12 Z`) + ST(`M${x1 + 3},${y0 + 24} v10`);           // 고리 탭 (웨빙)
+    out += `<circle cx="${x1 + 20}" cy="${y0 + 29}" r="7" fill="none" stroke="#1d1d1b" stroke-width="1.6"/>`;
+    out += `<path d="M${x1 + 22},${y0 + 36} q10,4 8,22 q-2,14 -10,14 q-8,0 -9,-12 q0,-10 6,-14" fill="none" stroke="#1d1d1b" stroke-width="2"/>`; // 개고리
+    out += ST(`M${x0 + 6},${y1 - 6} H${x1 - 6}`);
+    return { svg: out, x0, x1, y0, y1 };
+  }
+  const x0 = 120, x1 = 180, y0 = 70, y1 = 196;
+  out += P(`M${x0 + 10},${y0} H${x1 - 10} L${x1},${y0 + 30} V${y1} H${x0} V${y0 + 30} Z`);
+  out += L(`M${x0},${y1 - 0.5} H${x1}`, 'stroke-width="1.6"');
+  out += P(`M${(x0 + x1) / 2 - 5},${y0 - 8} h10 v12 h-10 Z`);                                  // 지퍼 끝 탭
+  out += ST(`M${(x0 + x1) / 2},${y0 + 4} V${y1 - 4}`) + ST(`M${x0 + 4},${y0 + 32} V${y1 - 4}`) + ST(`M${x1 - 4},${y0 + 32} V${y1 - 4}`);
+  out += P(`M${x1 - 2},${y0 + 22} h12 v14 h-12 Z`);
+  return { svg: out, x0, x1, y0, y1 };
+}
+
 function buildSVG(view) {
   const o = state.opt, t = T[o.template];
-  const vb = t.kind === "dress" ? "0 -20 340 345" : t.kind === "top" ? "0 -20 340 270" : "0 -20 340 350";
+  const vb = t.kind === "dress" ? "0 -20 340 345" : t.kind === "top" || t.kind === "bag" ? "0 -20 340 270" : "0 -20 340 350";
   let inner = "", dims = "";
   const front = view === "front";
   if (t.kind === "top" || t.kind === "dress") {
@@ -801,6 +884,17 @@ function buildSVG(view) {
       dims += dim(r.cx - r.bw, r.hemY + 10, r.cx + r.bw, r.hemY + 10, "D", r.cx, r.hemY + 22);
     } else {
       dims += dim(r.cx + r.bw + 18, 32, r.cx + r.bw + 18, r.hemY, "A", r.cx + r.bw + 18, (32 + r.hemY) / 2);
+    }
+  } else if (t.kind === "bag") {
+    const r = drawPouch(view);
+    inner += r.svg;
+    if (front) {
+      dims += dim(r.x0, r.y1 + 14, r.x1, r.y1 + 14, "A", 150, r.y1 + 26);
+      dims += dim(r.x0 - 22, r.y0, r.x0 - 22, r.y1, "B", r.x0 - 22, (r.y0 + r.y1) / 2);
+      dims += dim(r.x0 - 10, r.y0 - 14, r.x1 + 10, r.y0 - 14, "D", 150, r.y0 - 26);
+    } else {
+      dims += dim(r.x0, r.y1 + 14, r.x1, r.y1 + 14, "C", 150, r.y1 + 26);
+      dims += dim(r.x1 + 26, r.y0 + 22, r.x1 + 26, r.y0 + 36, "E", r.x1 + 40, r.y0 + 29);
     }
   } else if (t.kind === "pants") {
     const r = drawPants(view, o);
@@ -821,14 +915,18 @@ function buildSVG(view) {
       dims += dim(r.wL - r.flare, r.lenY + 12, r.wR + r.flare, r.lenY + 12, "C", 150, r.lenY + 24);
     }
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" role="img" aria-label="${t.name} ${front ? "앞판" : "뒤판"} 도식화">${DEFS}${inner}${dims}</svg>`;
+  const cap = t.kind === "bag" ? (front ? "앞면" : "옆면") : front ? "앞판" : "뒤판";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" role="img" aria-label="${t.name} ${cap} 도식화">${DEFS}${inner}${dims}</svg>`;
 }
 
-function renderFlats() { $("svgFront").innerHTML = buildSVG("front"); $("svgBack").innerHTML = buildSVG("back"); }
+function renderFlats() {
+  $("svgFront").innerHTML = buildSVG("front"); $("svgBack").innerHTML = buildSVG("back");
+  $("capFront").textContent = isBag() ? "앞면 FRONT" : "앞판 FRONT"; $("capBack").textContent = isBag() ? "옆면 SIDE (마치)" : "뒤판 BACK";
+}
 
 /* ====================================================================== 원단·부자재 / 봉제 / 주의 */
 function trimGroup() { const k = T[state.opt.template].kind; const tp = state.opt.template;
-  return tp === "shirt" ? "shirt" : k === "pants" ? "pants" : k === "skirt" ? "skirt" : "top"; }
+  return tp === "shirt" ? "shirt" : k === "pants" ? "pants" : k === "skirt" ? "skirt" : k === "bag" ? "bag" : "top"; }
 function renderTrims() {
   const rows = state.ai?.trims?.length ? state.ai.trims.map((x) => [x.type, x.name, x.spec, x.qty]) : DEFAULT_TRIMS[trimGroup()];
   $("trimTable").querySelector("tbody").innerHTML = rows.map((r) => `<tr>${r.map((c) => `<td contenteditable>${esc(c)}</td>`).join("")}</tr>`).join("")
@@ -836,7 +934,7 @@ function renderTrims() {
 }
 function renderSew() {
   const g = trimGroup();
-  const sew = state.ai?.sewing?.length ? state.ai.sewing : DEFAULT_SEW[g === "skirt" ? "skirt" : g === "pants" ? "pants" : g === "shirt" ? "shirt" : "top"];
+  const sew = state.ai?.sewing?.length ? state.ai.sewing : DEFAULT_SEW[g];
   $("sewList").innerHTML = sew.map((s) => `<li>${esc(s)}</li>`).join("");
   const notes = state.ai?.notes?.length ? [...state.ai.notes, ...DEFAULT_NOTES.slice(0, 2)] : DEFAULT_NOTES;
   $("noteList").innerHTML = notes.map((s) => `<li>${esc(s)}</li>`).join("");
@@ -849,12 +947,20 @@ function renderLabelBox() {
 /* 인쇄 배율: 기본 .93, 내용이 길면 A4 가로 1장(인쇄 가능 높이 약 740px)에 맞게 더 줄임 */
 const PRINT_H = 705;
 function fitPrint() {
-  const sh = $("sheet"), foot = sh.querySelector(".foot");
-  const h = foot.getBoundingClientRect().bottom - sh.getBoundingClientRect().top - parseFloat(getComputedStyle(sh).paddingTop);
+  const sh = $("sheet"), foot = sh.querySelector(".foot"), z = parseFloat(getComputedStyle(sh).zoom) || 1;   // 화면 축소 배율은 되돌려서 잼
+  const h = (foot.getBoundingClientRect().bottom - sh.getBoundingClientRect().top) / z - parseFloat(getComputedStyle(sh).paddingTop);
   if (!(h > 0)) return;
   sh.style.setProperty("--print-zoom", Math.min(0.93, PRINT_H / h).toFixed(3));
 }
-function renderAll() { renderSizeChips(); renderLabelBox(); renderSpec(); renderFlats(); fitPrint(); }
+/* 잡화는 성별 버튼과 옷 전용 선택(핏·넥라인·밑단·스커트 모양·주머니)을 숨김 */
+function renderKindControls() {
+  const bag = isBag();
+  document.querySelector('.seg[aria-label="성별"]').hidden = bag;
+  for (const id of ["oFit", "oNeck", "oRib", "oShape"]) $(id).closest("label").hidden = bag;
+  document.querySelector('.checks[aria-label="주머니"]').hidden = bag;
+  $("specCap").textContent = bag ? "치수표 (단위 cm, 완성 치수)" : "치수표 (단위 cm, 단면 기준)";
+}
+function renderAll() { ensureSizeSystem(); renderKindControls(); renderSizeChips(); renderLabelBox(); renderSpec(); renderFlats(); fitPrint(); }
 function renderContent() { renderTrims(); renderSew(); fitPrint(); }
 
 /* ====================================================================== 옵션 입력 연결 */
@@ -866,7 +972,8 @@ function syncControls() {
 }
 for (const [id, k] of Object.entries(optMap)) $(id).addEventListener("change", () => {
   state.opt[k] = $(id).value;
-  if (k === "template") applyTemplateDefaults();
+  // 품목을 직접 바꾸면 이전 품목의 AI 부자재·봉제 사양은 맞지 않으므로 그 품목 기본값으로
+  if (k === "template") { applyTemplateDefaults(); state.ai = null; }
   renderAll(); if (k === "template") { $("fItem").textContent = $("oItem").value || T[state.opt.template].name; renderFabricOptions(); renderContent(); }
 });
 for (const [id, k] of Object.entries(chkMap)) $(id).addEventListener("change", () => { state.opt[k] = $(id).checked; renderFlats(); });
@@ -883,6 +990,7 @@ function applyTemplateDefaults() {
     shorts:    { side: true, back: true },
     skirt:     { shape: "a" },
     dress:     { neck: "crew", closure: "none", rib: "plain", shape: "a", chest: false, kangaroo: false, patch: false },
+    pouch:     { fit: "regular", closure: "zip", chest: false, kangaroo: false, patch: false, side: false, back: false },
   }[state.opt.template] || {};
   Object.assign(state.opt, D);
   syncControls();
@@ -905,6 +1013,13 @@ $("oColor").addEventListener("input", () => { $("fColor").textContent = $("oColo
 $("oItem").addEventListener("input", () => { $("fItem").textContent = $("oItem").value || T[state.opt.template].name; });
 
 $("sheet").addEventListener("input", fitPrint);
+/* 화면 폭이 A4 가로(1123px)보다 좁으면 작업지시서를 축소해 보여 줌. 인쇄 배율과는 별개 */
+function fitScreen() {
+  const st = document.querySelector(".stage"), cs = getComputedStyle(st);
+  const avail = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  document.documentElement.style.setProperty("--fit", Math.min(1, avail / 1123).toFixed(3));
+}
+window.addEventListener("resize", fitScreen);
 window.addEventListener("beforeprint", () => preparePrint());
 
 $("gM").addEventListener("click", () => setGender("m"));
@@ -929,7 +1044,8 @@ async function takeFile(file) {
     $("sheetPhoto").innerHTML = `<img src="${state.photo.dataUrl}" alt="참고 사진" />`;
     $("sheetPhoto").querySelector("img").addEventListener("load", fitPrint);
     $("guess").hidden = true;
-    if (localMode()) analyze();   // 키가 없으면 바로 기기 안 인식 (비용 없음)
+    if (localMode() && modelReady()) analyze();   // 모델을 이미 받은 브라우저면 바로 기기 안 인식
+    else if (localMode()) setStatus(`사진을 불러왔습니다. 자동 인식을 쓰려면 위 노란 버튼을 누르세요. 처음 한 번 인식 모델 약 ${LOCAL.sizeMB}MB를 받습니다 (Wi-Fi 권장). 인식 없이 4단계에서 직접 골라도 됩니다.`);
     else setStatus("사진을 불러왔습니다. '사진으로 도식화·작업지시서 만들기'를 누르세요.");
   } catch (e) { setStatus("사진을 읽지 못했습니다. 다른 파일로 시도해 주세요.", true); }
 }
@@ -950,7 +1066,7 @@ const PROMPT = `당신은 한국 의류 생산 현장(동대문 공장)의 작�
 
 {
   "itemName": "한국어 품명 (예: 오버핏 크루넥 반팔 티셔츠)",
-  "template": "top_short | top_long | shirt | hoodie | jacket | pants | shorts | skirt | dress 중 하나",
+  "template": "top_short | top_long | shirt | hoodie | jacket | pants | shorts | skirt | dress | pouch 중 하나 (pouch = 지퍼 파우치·작은 가방)",
   "fit": "regular | oversize | slim",
   "neck": "crew | v | collar | hood | mock",
   "closure": "none | buttons | zip | half_zip",
@@ -1014,7 +1130,16 @@ async function analyzeWithGemini() {
    MobileCLIP S0 사진 모델을 브라우저에서 돌리고, 미리 계산한 글자 임베딩(assets/clip-labels.json,
    scripts/build-clip-labels.mjs)과 비교해 품목·디테일·컬러를 고릅니다. 사진은 기기 밖으로 나가지 않습니다.
    q8 양자화 모델은 결과가 망가져서 fp16(23MB)을 씀. */
-const LOCAL = { lib: "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js", labels: "assets/clip-labels.json", dtype: "fp16" };
+/* 모델은 Hugging Face 커밋에 고정 (저장소가 바뀌어도 같은 파일). 바꿀 때는 npm run clip-labels와 정확도 재확인 */
+const LOCAL = { lib: "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0/dist/transformers.min.js", labels: "assets/clip-labels.json",
+  dtype: "fp16", revision: "757d59c9c6870a76a4b0306f05f5061bca15c39f", sizeMB: 23 };
+/* 모델을 한 번 받은 브라우저인지 (처음에는 데이터 사용을 묻고 받음) */
+const modelReady = () => { try { return localStorage.getItem("wo_model_ok") === LOCAL.revision; } catch (e) { return false; } };
+/* 확신도: 퍼센트 대신 높음·보통·낮음 (1·2순위 차이도 봄). 실제 정확도는 깨끗한 단일 의류 사진에서 약 90% */
+function confLabel(tpl) {
+  const p = tpl[0].p, gap = p - (tpl[1]?.p || 0);
+  return p >= 0.85 && gap >= 0.6 ? "높음" : p >= 0.55 && gap >= 0.25 ? "보통" : "낮음";
+}
 const localMode = () => geminiMode() && !$("gKey").value.trim();
 let localModel = null;
 function loadLocal() {
@@ -1029,10 +1154,12 @@ function loadLocal() {
       const [l, t] = Object.values(seen).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
       if (t > 1e6) setStatus(`인식 모델을 받는 중… ${Math.round(l / 1e6)} / ${Math.round(t / 1e6)}MB (처음 한 번만)`);
     };
-    const processor = await lib.AutoProcessor.from_pretrained(labels.model, { progress_callback });
+    const rev = { revision: LOCAL.revision, progress_callback };
+    const processor = await lib.AutoProcessor.from_pretrained(labels.model, rev);
     let vision;
-    try { vision = await lib.CLIPVisionModelWithProjection.from_pretrained(labels.model, { dtype: LOCAL.dtype, progress_callback }); }
-    catch (e) { vision = await lib.CLIPVisionModelWithProjection.from_pretrained(labels.model, { dtype: "fp32", progress_callback }); }
+    try { vision = await lib.CLIPVisionModelWithProjection.from_pretrained(labels.model, { ...rev, dtype: LOCAL.dtype }); }
+    catch (e) { vision = await lib.CLIPVisionModelWithProjection.from_pretrained(labels.model, { ...rev, dtype: "fp32" }); }
+    try { localStorage.setItem("wo_model_ok", LOCAL.revision); } catch (e) {}
     return { lib, labels, processor, vision };
   })().catch((e) => { localModel = null; throw e; });
   return localModel;
@@ -1077,7 +1204,7 @@ function applyLocal({ tpl, color, emb, labels }, template = tpl[0].c) {
   if (color.p >= 0.3 && (!oc.value.trim() || oc.value === oc.dataset.auto)) { oc.value = oc.dataset.auto = color.c; $("fColor").textContent = color.c; }
   // 후보 버튼: 틀렸을 때 바로 바꿀 수 있게
   const g = $("guess"); g.hidden = false;
-  g.innerHTML = tpl.slice(0, 3).map((x) => `<button class="chip" data-t="${x.c}" aria-pressed="${x.c === template}">${T[x.c].name}<small>${Math.round(x.p * 100)}%</small></button>`).join("");
+  g.innerHTML = tpl.slice(0, 3).map((x, i) => `<button class="chip" data-t="${x.c}" aria-pressed="${x.c === template}">${T[x.c].name}<small>${i + 1}순위</small></button>`).join("");
   g.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { applyLocal({ tpl, color, emb, labels }, b.dataset.t); setStatus(`품목을 ${T[b.dataset.t].name}(으)로 바꿨습니다.`); }));
 }
 
@@ -1090,7 +1217,8 @@ async function analyze() {
       const r = await analyzeLocal();
       applyLocal(r);
       const top = r.tpl[0];
-      setStatus(`기기 안에서 인식했습니다: ${T[top.c].name} (확신 ${Math.round(top.p * 100)}%)${r.color.p >= 0.3 ? " · " + r.color.c : ""}. 틀리면 아래 후보를 누르거나 4단계에서 고르세요.`);
+      const conf = confLabel(r.tpl);
+      setStatus(`기기 안에서 인식했습니다: ${T[top.c].name} (확신 ${conf})${r.color.p >= 0.3 ? " · " + r.color.c : ""}. ${conf === "낮음" ? "확신이 낮습니다. 아래 후보 중에서 맞는 품목을 골라 주세요." : "틀리면 아래 후보를 누르거나 4단계에서 고르세요."}`);
       return;
     }
     let r;
@@ -1166,7 +1294,7 @@ function setTab(t) {
   $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat");
   $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat";
   document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
-  if (t === "pat") syncPatternToTemplate();
+  if (t === "pat") { syncPatternToTemplate(); applyPendingPattern(); }
 }
 $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
@@ -1217,24 +1345,26 @@ $("patPreset").addEventListener("change", () => {
 function buildPatPrint() {
   const d = patDraft, ts = d.tiles, title = `${d.name} · ${($("fStyle").textContent || "").trim()}`;
   const order = ts.map((t) => t.label).join(" · ");
-  let html = `<div class="pat-page pat-cover"><h1>${esc(d.name)} 패턴</h1>
+  let html = `<div class="pat-page pat-cover"><h1>${esc(d.name)} 패턴 <span style="font-size:10pt;color:#c62828;border:.4mm solid #c62828;padding:0 2mm;border-radius:2mm;vertical-align:middle">베타 · 가봉 확인 전</span></h1>
     <p>${esc($("fStyle").textContent)} · ${esc($("fDate").textContent)} · 입력 치수: ${Pattern.TYPES[d.type].fields.filter(([k]) => d.v[k] != null).map(([k, label]) => `${esc(label.replace(/ \(.*\)/, ""))} ${d.v[k]}`).join(", ")}</p>
     ${Pattern.svg(d, d.lay, "view", title)}
     <table><tr><th>계산 항목</th><th>식</th><th>값(cm)</th></tr>${d.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`).join("")}</table>
     <p style="margin-top:2mm">${esc(d.seam)}</p>
     <div class="chk">배율 확인<br>이 네모가 가로·세로 50mm여야 합니다. 다르면 프린터 배율을 100%(실제 크기)로 바꿔 다시 인쇄하세요.</div>
     <ul style="margin:2mm 0 0;padding-left:5mm"><li>다음 장부터 실물 크기입니다. 프린터 설정에서 <b>배율 100% (실제 크기)</b>로 인쇄하고, 오른쪽 확인 네모가 50mm인지 자로 재세요.</li>
-    <li>${ts.length}장(A4 ${ts[0].landscape ? "가로" : "세로"})을 ${ts[0].rows}줄 × ${ts[0].cols}칸 순서(${esc(order)})로 놓고, 노란 겹침 띠(1cm)를 겹쳐 붙이세요.</li></ul></div>`;
+    <li>${ts.length}장(A4 세로)을 ${ts[0].rows}줄 × ${ts[0].cols}칸 순서(${esc(order)})로 놓고, 노란 겹침 띠(1cm)를 겹쳐 붙이세요.</li></ul></div>`;
   if ($("patPrintMode").value === "one") {
-    // 대형 출력: 패턴 전체를 실물 크기 한 장으로 (용지 크기 = 패턴 크기)
-    const W = d.lay.w * 10, H = d.lay.h * 10;
-    html = html.replace(/<li>\d+장\(A4[^<]*<\/li>/, `<li>다음 장은 패턴 전체 실물 크기 한 장(${W / 10} × ${H / 10}cm)입니다. 출력소·플로터에 PDF로 맡기세요.</li>`);
-    html += `<div class="pat-page big" style="width:${W}mm;height:${H}mm">${Pattern.svg(d, d.lay, "real", title)}</div>`;
-    $("patPageStyle").textContent = `@page patBig { size: ${W}mm ${H}mm; margin: 0; }`;
-    $("patPrint").innerHTML = html; return;
+    // 대형 출력: 표지 없이 패턴 전체를 실물 크기 한 장으로 (용지 크기 = 패턴 크기 + 여백)
+    const W = d.lay.w * 10, H = d.lay.h * 10 + 70;
+    $("pageStyle").textContent = `@page { size: ${W}mm ${H}mm; margin: 0; }`;
+    $("patPrint").innerHTML = `<div class="pat-page big" style="width:${W}mm;height:${H}mm"><div style="height:70mm"></div>${Pattern.svg(d, d.lay, "real", title)}
+      <div class="info"><b>${esc(d.name)} 패턴 · 베타</b><br>${esc($("fStyle").textContent)} · ${esc($("fDate").textContent)}<br>실물 크기 ${W / 10} × ${H / 10}cm. 출력소·플로터에 배율 100%로 맡기세요.
+      <div class="chk">배율 확인<br>이 네모가 가로·세로 50mm여야 합니다.</div></div></div>`;
+    return;
   }
+  $("pageStyle").textContent = "@page { size: A4 portrait; margin: 7mm; }";
   ts.forEach((t, i) => {
-    html += `<div class="pat-page${t.landscape ? " l" : ""}">${Pattern.svg(d, d.lay, t, title)}<div class="lab">${t.label} (${i + 1}/${ts.length}) · ${esc(d.name)}</div>`
+    html += `<div class="pat-page">${Pattern.svg(d, d.lay, t, title)}<div class="lab">${t.label} (${i + 1}/${ts.length}) · ${esc(d.name)}</div><div class="beta">베타 · 가봉 확인 전</div>`
       + (t.col < t.cols - 1 ? '<div class="ov-r"></div>' : "") + (t.row < t.rows - 1 ? '<div class="ov-b"></div>' : "")
       + "</div>";
   });
@@ -1242,12 +1372,95 @@ function buildPatPrint() {
 }
 function preparePrint() {
   document.body.classList.toggle("print-pattern", activeTab === "pat");
-  if (activeTab === "pat") buildPatPrint(); else fitPrint();
+  if (activeTab === "pat") buildPatPrint();
+  else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
 $("savePatBtn").addEventListener("click", () => {
   const d = patDraft; if (!d) return;
   saveFile(`패턴_${d.type}_${styleNo()}.svg`, Pattern.svg(d, d.lay, "real", `${d.name} · ${$("fStyle").textContent}`), "image/svg+xml");
 });
+
+/* ====================================================================== 작업 저장 · 열기 · 자동 저장
+   저장 내용: 선택 상태, 작업지시서 글자(머리 정보·치수표 수정·부자재·봉제·주의), 4단계 입력, 사진, 패턴 탭 입력.
+   다시 열 때는 글자만 넣고(textContent) HTML은 받지 않음 → 다른 사람이 준 파일도 안전하게 열 수 있음 */
+const JOB = { app: "옷만들기 도면 메이커", v: 1 };
+const lines = (n) => n.innerText.split("\n").map((x) => x.trim()).filter(Boolean);
+function snapshot(withPhoto = true) {
+  return { ...JOB, savedAt: new Date().toISOString(),
+    state: { gender: state.gender, sizes: [...state.sizes], base: state.base, label: state.label, opt: { ...state.opt }, ai: state.ai },
+    inputs: { oColor: $("oColor").value, oItem: $("oItem").value, oFabric: $("oFabric").value },
+    fields: Object.fromEntries([...$("sheet").querySelectorAll("td[contenteditable][id]")].map((n) => [n.id, n.textContent])),
+    spec: [...$("specTable").querySelectorAll("tr")].slice(1).map((tr) => [...tr.querySelectorAll("td[contenteditable]")].map((td) => td.textContent)),
+    trims: [...$("trimTable").querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((td) => td.textContent)),
+    sew: lines($("sewList")), notes: lines($("noteList")),
+    photo: withPhoto && state.photo ? state.photo.dataUrl : null,
+    pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null };
+}
+const str = (x, max = 300) => String(x ?? "").slice(0, max);
+async function restore(j) {
+  if (!j || j.app !== JOB.app) throw new Error("이 앱에서 저장한 작업 파일이 아닙니다.");
+  const st = j.state || {};
+  if (["m", "f"].includes(st.gender)) state.gender = st.gender;
+  const o = st.opt || {};
+  for (const k of Object.keys(ALLOWED)) if (ALLOWED[k].includes(o[k])) state.opt[k] = o[k];
+  for (const k of ["chest", "kangaroo", "patch", "side", "back"]) if (typeof o[k] === "boolean") state.opt[k] = o[k];
+  if (["num", "both", "inch"].includes(st.label)) state.label = st.label;
+  const list = sizeList();
+  state.base = list.includes(st.base) ? st.base : isBag() ? BAG_BASE : BASE[state.gender];
+  const sz = (st.sizes || []).filter((x) => list.includes(x));
+  state.sizes = new Set(sz.length ? sz.concat(state.base) : list);
+  const ai = st.ai;
+  state.ai = ai && typeof ai === "object" ? {
+    trims: Array.isArray(ai.trims) ? ai.trims.slice(0, 10).map((x) => ({ type: str(x?.type), name: str(x?.name), spec: str(x?.spec), qty: str(x?.qty) })) : [],
+    sewing: Array.isArray(ai.sewing) ? ai.sewing.slice(0, 12).map((x) => str(x)) : [], notes: Array.isArray(ai.notes) ? ai.notes.slice(0, 6).map((x) => str(x)) : [] } : null;
+  syncControls(); renderAll(); renderFabricOptions(); renderContent();
+  const inp = j.inputs || {};
+  $("oColor").value = str(inp.oColor, 60); $("oItem").value = str(inp.oItem, 80);
+  if ([...$("oFabric").options].some((x) => x.value === inp.oFabric)) $("oFabric").value = inp.oFabric;
+  for (const [id, v] of Object.entries(j.fields || {})) { const n = document.getElementById(id); if (n && n.matches("#sheet td[contenteditable]")) n.textContent = str(v); }
+  const rows = [...$("specTable").querySelectorAll("tr")].slice(1);
+  (j.spec || []).forEach((vals, i) => { const tds = rows[i] ? [...rows[i].querySelectorAll("td[contenteditable]")] : []; if (Array.isArray(vals) && vals.length === tds.length) tds.forEach((td, k) => (td.textContent = str(vals[k], 12))); });
+  if (Array.isArray(j.trims)) $("trimTable").querySelector("tbody").innerHTML = j.trims.slice(0, 20).map((r) => `<tr>${[0, 1, 2, 3].map((k) => `<td contenteditable>${esc(str(r?.[k]))}</td>`).join("")}</tr>`).join("");
+  if (Array.isArray(j.sew)) $("sewList").innerHTML = j.sew.slice(0, 30).map((x) => `<li>${esc(str(x))}</li>`).join("");
+  if (Array.isArray(j.notes)) $("noteList").innerHTML = j.notes.slice(0, 20).map((x) => `<li>${esc(str(x))}</li>`).join("");
+  if (typeof j.photo === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(j.photo)) {
+    const blob = await (await fetch(j.photo)).blob();
+    state.photo = { blob, dataUrl: j.photo };
+    $("dropImg").src = j.photo; $("dropImg").hidden = false; $("dropTxt").textContent = "다른 사진으로 바꾸려면 누르세요";
+    $("sheetPhoto").innerHTML = ""; const im = new Image(); im.alt = "참고 사진"; im.src = j.photo; im.addEventListener("load", fitPrint); $("sheetPhoto").append(im);
+  }
+  pendingPattern = j.pattern && Pattern.TYPES[j.pattern.type] ? j.pattern : null;
+  if (activeTab === "pat") applyPendingPattern();
+  fitPrint();
+}
+/* 저장된 패턴 입력은 패턴 탭을 열 때 넣음 (작업지시서 값으로 덮어쓰지 않게) */
+let pendingPattern = null;
+function applyPendingPattern() {
+  const pp = pendingPattern; if (!pp) return; pendingPattern = null;
+  $("patType").value = pp.type; buildPatForm();
+  for (const [k, v] of Object.entries(pp.values || {})) { const n = $("patFields").querySelector(`[data-k="${k}"]`); if (n && (v === "" || Number.isFinite(+v))) n.value = v; }
+  if (["tiles", "one"].includes(pp.mode)) $("patPrintMode").value = pp.mode;
+  patSyncedTemplate = state.opt.template; patFilledKey = patKey(); $("patPreset").value = "";
+  renderPattern();
+}
+$("saveJobBtn").addEventListener("click", () => saveFile(`작업_${styleNo()}.json`, JSON.stringify(snapshot()), "application/json"));
+$("openJobBtn").addEventListener("click", () => $("jobFile").click());
+$("jobFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try { await restore(JSON.parse(await f.text())); setStatus(`작업 파일을 열었습니다: ${f.name}`); }
+  catch (err) { setStatus("작업 파일을 열지 못했습니다. " + (err.message || ""), true); }
+});
+/* 자동 저장: 이 브라우저에만 (localStorage). 사진까지 넣다가 용량이 넘치면 사진 없이 */
+let saveTimer = null, autosaveOn = false;
+function scheduleSave() {
+  if (!autosaveOn) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem("wo_autosave", JSON.stringify(snapshot())); }
+    catch (e) { try { localStorage.setItem("wo_autosave", JSON.stringify(snapshot(false))); } catch (e2) {} }
+  }, 700);
+}
+["input", "change", "click"].forEach((ev) => document.addEventListener(ev, scheduleSave));
 
 /* ====================================================================== 시작 */
 (function init() {
@@ -1258,7 +1471,17 @@ $("savePatBtn").addEventListener("click", () => {
   $("fItem").textContent = T[state.opt.template].name;
   $("footStamp").textContent = "옷만들기 도면 메이커로 작성";
   try { $("gKey").value = localStorage.getItem("wo_gkey") || ""; $("gModel").value = localStorage.getItem("wo_gmodel") || ""; } catch (e) {}
-  syncControls(); renderFabricOptions(); renderAll(); renderContent();
+  syncControls(); renderFabricOptions(); renderAll(); renderContent(); fitScreen();
+  let prev = null;
+  try { prev = JSON.parse(localStorage.getItem("wo_autosave") || "null"); } catch (e) {}
+  if (prev && prev.app === JOB.app) {
+    const t = new Date(prev.savedAt);
+    $("restoreTxt").textContent = `이전 작업이 있습니다 (${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} · ${T[prev.state?.opt?.template]?.name || ""})`;
+    $("restoreBar").hidden = false;
+    $("restoreBtn").addEventListener("click", async () => { $("restoreBar").hidden = true; await restore(prev); setStatus("이전 작업을 불러왔습니다."); scheduleSave(); });
+    $("restoreNo").addEventListener("click", () => { $("restoreBar").hidden = true; scheduleSave(); });
+  }
+  autosaveOn = true;
 
   // claude.ai 안에서 열리면 Claude로 분석, 아니면 Gemini 키 사용
   if (window.claude && typeof window.claude.use === "function") {
