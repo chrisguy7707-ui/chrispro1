@@ -412,6 +412,46 @@ const olzPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
 ok("외곽선 탭에서 인쇄하면 작업지시서 A4 가로 1장", olzPdf.length === 1 && !isPortrait(olzPdf[0]), olzPdf.join(" "));
 await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
 
+/* 8-4. Gemini 키 받기 탭: 강조 표시, 안내·공식 링크, 키 확인 (Google 응답은 가짜로 대체, 실제 요청 없음) */
+const pk = await browser.newPage();
+await pk.setRequestInterception(true);
+let keySeen = null;
+pk.on("request", (r) => {
+  if (r.url().startsWith("https://generativelanguage.googleapis.com/v1beta/models")) {
+    const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "x-goog-api-key, content-type", "access-control-allow-methods": "GET, POST" };
+    if (r.method() === "OPTIONS") return r.respond({ status: 204, headers: cors });   // 키 헤더 때문에 브라우저가 먼저 보내는 사전 확인
+    keySeen = r.headers()["x-goog-api-key"];
+    if (keySeen === "AIzaBADBADBADBADBADBADBAD") return r.respond({ status: 400, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { message: "API key not valid" } }) });
+    return r.respond({ status: 200, contentType: "application/json", headers: cors,
+      body: JSON.stringify({ models: [{ name: "models/gemini-3.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }, { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }] }) });
+  }
+  r.continue();
+});
+await pk.evaluateOnNewDocument(() => { try { localStorage.removeItem("wo_gkey"); localStorage.removeItem("wo_gmodel"); } catch (e) {} });
+await pk.goto(URL, { waitUntil: "networkidle0" });
+const keyTab = await pk.evaluate(() => {
+  const b = document.getElementById("tabKeyBtn"), bg = getComputedStyle(b).backgroundColor;
+  b.click();
+  const g = document.getElementById("keyGuide");
+  return { hl: bg !== "rgba(0, 0, 0, 0)" && b.classList.contains("hl"), shown: !g.hidden && document.getElementById("sheet").hidden,
+    steps: g.querySelectorAll(".key-steps li").length, studio: !!g.querySelector('a[href="https://aistudio.google.com/app/apikey"]'), notes: g.querySelector(".key-notes").textContent.includes("무료 등급") };
+});
+ok("Gemini 키 받기 탭: 강조 색, 4단계 안내, AI Studio 링크, 무료 등급 데이터 안내", keyTab.hl && keyTab.shown && keyTab.steps === 4 && keyTab.studio && keyTab.notes, JSON.stringify(keyTab));
+await pk.evaluate(() => { document.getElementById("keyInput").value = "짧음"; document.getElementById("keyCheck").click(); });
+const badShape = await pk.$eval("#keyResult", (n) => n.className === "err" && n.textContent.includes("키 모양"));
+await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaBADBADBADBADBADBADBAD"; document.getElementById("keyCheck").click(); });
+await pk.waitForFunction(() => document.getElementById("keyResult").className === "err" && /올바르지/.test(document.getElementById("keyResult").textContent), { timeout: 5000 });
+await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaTESTTESTTESTTESTTESTTESTTEST"; document.getElementById("keyCheck").click(); });
+await pk.waitForFunction(() => document.getElementById("keyResult").className === "ok", { timeout: 5000 });
+const keyOk = await pk.evaluate(() => ({ gkey: document.getElementById("gKey").value, model: document.getElementById("gModel").value, stored: localStorage.getItem("wo_gkey"),
+  msg: document.getElementById("keyResult").textContent, gem: !localMode(), inJob: JSON.stringify(snapshot()).includes("AIzaTEST") }));
+ok("키 확인: 모양 검사 → 잘못된 키 안내 → 올바른 키 저장, 없는 기본 모델은 쓸 수 있는 Flash로 교체, 3단계가 Gemini로 전환",
+  badShape && keySeen === "AIzaTESTTESTTESTTESTTESTTESTTEST" && keyOk.gkey === keySeen && keyOk.stored === keySeen && keyOk.model === "gemini-3.5-flash" && keyOk.gem && /바꿨습니다/.test(keyOk.msg), JSON.stringify(keyOk).slice(0, 200));
+ok("API 키는 작업 저장 파일에 들어가지 않음", !keyOk.inJob);
+await pk.evaluate(() => document.getElementById("keyForget").click());
+ok("키 지우기 → 기기 안 인식으로 돌아감", await pk.evaluate(() => localMode() && !localStorage.getItem("wo_gkey")));
+await pk.close();
+
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });
 ok("모바일 375px 가로 스크롤 없음", await page.evaluate(() => document.documentElement.scrollWidth <= 376), String(await page.evaluate(() => document.documentElement.scrollWidth)));

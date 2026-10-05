@@ -162,6 +162,10 @@
   .tabs { display: flex; gap: 4px; margin-bottom: 12px; max-width: 1123px; border-bottom: 2px solid var(--mat); }
   .tabs button { border: 0; background: transparent; color: var(--ink-soft); font: inherit; font-size: 15px; font-weight: 700; padding: 9px 16px; border-radius: 8px 8px 0 0; cursor: pointer; }
   .tabs button[aria-selected="true"] { background: var(--mat); color: #fff; }
+  .tabs { flex-wrap: wrap; }
+  .tabs button.hl { margin-left: auto; background: var(--tape); color: var(--mat-deep); box-shadow: 0 0 0 2px var(--tape); }
+  .tabs button.hl[aria-selected="true"] { background: var(--mat-deep); color: var(--tape); }
+  @media (max-width: 600px) { .tabs button.hl { margin-left: 0; } }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button:not([aria-selected="true"]) { color: #b8c2bc; } }
   :root[data-theme="dark"] .tabs button:not([aria-selected="true"]) { color: #b8c2bc; }
   .pat { width: 1123px; max-width: 100%; background: var(--paper); color: var(--ink); padding: 18px 20px; box-shadow: 0 2px 18px rgba(0,0,0,.18); }
@@ -185,6 +189,17 @@
   .pat-calc p { margin: 0 0 6px; font-size: 12px; line-height: 1.6; }
   .pat-legend span { display: inline-block; margin-right: 12px; }
   #patPrint { display: none; }
+  .key-guide h2 { margin: 0 0 6px; font-size: 22px; } .key-guide h2 small { font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+  .key-guide .lead { margin: 0 0 12px; font-size: 14px; line-height: 1.65; }
+  .key-steps { counter-reset: k; list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }
+  .key-steps li { counter-increment: k; position: relative; padding: 10px 12px 10px 46px; border: 1px solid var(--rule); border-radius: 10px; font-size: 14px; line-height: 1.6; }
+  .key-steps li::before { content: counter(k); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--tape); color: var(--mat-deep); font-weight: 700; display: grid; place-items: center; font-size: 13px; }
+  .key-steps a, .key-notes a { color: var(--mat); font-weight: 700; }
+  .key-box { background: #fff8dc; border: 1.5px solid var(--tape); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+  .key-row { display: flex; gap: 8px; margin-top: 6px; } .key-row input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; }
+  .key-row .olz-btn { width: auto; margin: 0; padding: 9px 16px; }
+  #keyResult { margin: 8px 0 4px; font-size: 13px; line-height: 1.5; } #keyResult.ok { color: var(--mat); font-weight: 700; } #keyResult.err { color: var(--mark); }
+  .key-guide h3 { font-size: 15px; margin: 6px 0; } .key-notes { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; }
   .olz-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; margin-top: 12px; align-items: start; }
   @media (max-width: 960px) { .olz-grid { grid-template-columns: 1fr; } }
   .olz-view { border: 1px solid var(--ink); background: #f4f4f1; }
@@ -205,7 +220,7 @@
   .olz-table th { white-space: nowrap; }
   .olz-table td.n { text-align: right; font-weight: 700; white-space: nowrap; }
   .olz-table small { color: var(--ink-soft); display: block; font-size: 11px; }
-  @media print { #olz { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
+  @media print { #olz, #keyGuide { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
   @media print {
     body { background: #fff; }
@@ -285,7 +300,7 @@
         <summary>Gemini API 키 (이 사이트를 직접 호스팅할 때)</summary>
         <input type="password" id="gKey" placeholder="AIza..." autocomplete="off" />
         <input type="text" id="gModel" placeholder="모델명 (기본 gemini-3-flash-preview)" />
-        <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 기기 안 인식을 씁니다.</p>
+        <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 기기 안 인식을 씁니다. <a href="#" id="keyGuideLink" style="color:var(--tape);font-weight:700">키 받는 법 →</a></p>
       </details>
       <p class="hint" id="manualHint" hidden><b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않습니다. 처음 한 번은 버튼을 눌러 인식 모델(약 23MB)을 받고, 그다음부터는 사진을 올리면 바로 인식합니다.</p>
       <div class="status" id="status" role="status"></div>
@@ -349,6 +364,7 @@
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
       <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
       <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">외곽선 <small style="font-weight:500;opacity:.8">시험</small></button>
+      <button role="tab" id="tabKeyBtn" class="hl" aria-selected="false" aria-controls="keyGuide">🔑 Gemini 키 받기</button>
     </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
@@ -488,6 +504,32 @@
           <p class="pat-warn" id="olzWarn" role="status"></p>
         </div>
       </div>
+    </section>
+    <section class="pat key-guide" id="keyGuide" role="tabpanel" aria-label="Gemini API 키 받는 법" hidden>
+      <h2>Gemini API 키 무료로 받기 <small>약 3분</small></h2>
+      <p class="lead">키가 없어도 기기 안 인식으로 품목·디테일·컬러는 고를 수 있습니다. Gemini 키를 연결하면 사진을 보고 <b>원단·혼용률·중량 추정, 부자재, 봉제 사양 문장</b>까지 채워 줍니다.</p>
+      <ol class="key-steps">
+        <li><b>Google AI Studio 열기</b> — <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> 에 접속해 구글 계정으로 로그인합니다.</li>
+        <li><b>약관 동의</b> — 처음 쓰는 계정이면 이용약관에 동의하면 기본 프로젝트와 API 키가 자동으로 만들어집니다.
+          키가 안 보이면 <b>Create API key (API 키 만들기)</b>를 누르세요.</li>
+        <li><b>키 복사</b> — 키 옆의 복사 버튼을 누릅니다. 보통 <code>AIza</code>로 시작하는 긴 글자입니다.</li>
+        <li><b>아래 칸에 붙여넣고 '키 확인'</b> — 확인되면 이 브라우저에 저장되고, 3단계 버튼이 Gemini 분석으로 바뀝니다.</li>
+      </ol>
+      <div class="key-box">
+        <label for="keyInput"><b>Gemini API 키</b></label>
+        <div class="key-row"><input type="password" id="keyInput" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+          <button id="keyCheck" class="olz-btn primary">키 확인</button></div>
+        <p id="keyResult" role="status"></p>
+        <button id="keyForget" class="olz-btn">이 브라우저에서 키 지우기</button>
+      </div>
+      <h3>꼭 알아 두세요</h3>
+      <ul class="key-notes">
+        <li><b>키는 비밀번호처럼</b> — 다른 사람에게 보내거나 게시판·단톡방에 올리지 마세요. 이 사이트는 키를 서버에 저장하지 않고 이 브라우저에만 저장합니다.</li>
+        <li><b>키를 Gemini 전용으로 제한</b> — AI Studio의 API 키 목록에서 키를 'Gemini API만 사용'으로 제한해 두면 유출돼도 피해가 줄어듭니다.</li>
+        <li><b>무료 등급의 데이터</b> — Google은 무료 등급으로 보낸 내용을 제품 개선에 쓸 수 있다고 안내합니다. 아직 공개 전인 디자인이 걱정되면 키 없이 기기 안 인식만 쓰거나 유료 등급을 쓰세요.</li>
+        <li><b>사용 한도</b> — 무료 등급은 분당·하루 요청 수 제한이 있습니다. '요청이 많습니다'가 뜨면 잠시 후 다시 누르세요.</li>
+        <li>공식 안내: <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" rel="noopener">Gemini API 키 사용법</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">무료 등급과 요금</a></li>
+      </ul>
     </section>
     <div id="patPrint" aria-hidden="true"></div>
     <style id="pageStyle">@page { size: A4 landscape; margin: 7mm; }</style>
@@ -1344,8 +1386,9 @@ function fillFromWorksheet() {
 }
 function setTab(t) {
   activeTab = t;
-  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz");
-  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz";
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabKeyBtn").setAttribute("aria-selected", t === "key");
+  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("keyGuide").hidden = t !== "key";
+  if (t === "key") $("keyInput").value = $("gKey").value;
   if (t === "olz") runOutline();
   document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
   if (t === "pat") { syncPatternToTemplate(); applyPendingPattern(); }
@@ -1353,6 +1396,8 @@ function setTab(t) {
 $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
 $("tabOlzBtn").addEventListener("click", () => setTab("olz"));
+$("tabKeyBtn").addEventListener("click", () => setTab("key"));
+$("keyGuideLink").addEventListener("click", (e) => { e.preventDefault(); setTab("key"); document.querySelector(".tabs").scrollIntoView({ behavior: "smooth" }); });
 
 /* 패턴 탭을 열 때마다 작업지시서 품목을 확인: 패턴이 있으면 그 품목으로, 없으면 안내 */
 function syncPatternToTemplate() {
@@ -1427,13 +1472,52 @@ function buildPatPrint() {
 }
 function preparePrint() {
   document.body.classList.toggle("print-pattern", activeTab === "pat");
-  document.body.classList.toggle("print-olz", activeTab === "olz");   // 외곽선 탭에서 인쇄하면 작업지시서를 인쇄
+  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "key");   // 외곽선·키 탭에서 인쇄하면 작업지시서를 인쇄
   if (activeTab === "pat") buildPatPrint();
   else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
 $("savePatBtn").addEventListener("click", () => {
   const d = patDraft; if (!d) return;
   saveFile(`패턴_${d.type}_${styleNo()}.svg`, Pattern.svg(d, d.lay, "real", `${d.name} · ${$("fStyle").textContent}`), "image/svg+xml");
+});
+
+/* ====================================================================== Gemini 키 확인
+   모델 목록을 받아 키가 유효한지 확인. 기본 모델이 목록에 없으면(미리보기 종료 등) 쓸 수 있는 Flash 모델로 바꿈 */
+const GEMINI_DEFAULT = "gemini-3-flash-preview";
+async function checkGeminiKey() {
+  const key = $("keyInput").value.trim(), out = $("keyResult");
+  out.className = ""; out.textContent = "확인하는 중…";
+  if (!/^[A-Za-z0-9_\-]{20,}$/.test(key)) { out.className = "err"; out.textContent = "키 모양이 아닙니다. AI Studio에서 복사한 키 전체를 붙여 넣으세요 (보통 AIza로 시작)."; return; }
+  try {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      out.className = "err";
+      out.textContent = res.status === 400 || res.status === 403 ? "키가 올바르지 않거나 사용이 제한되었습니다. 키를 다시 복사하거나 AI Studio에서 새로 만드세요." : `확인에 실패했습니다 (${res.status}). ${data?.error?.message || ""}`;
+      return;
+    }
+    const names = (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => m.name.replace(/^models\//, ""));
+    const cur = $("gModel").value.trim() || GEMINI_DEFAULT;
+    let model = cur, note = "";
+    if (!names.includes(cur)) {
+      const flash = names.filter((n) => /flash/.test(n) && !/lite|image|tts|audio|live|embedding/.test(n));
+      model = flash.find((n) => !/preview|exp/.test(n)) || flash[0] || names[0];
+      note = model ? ` 기본 모델(${cur})을 쓸 수 없어 ${model}(으)로 바꿨습니다.` : "";
+    }
+    $("gKey").value = key; if (model && model !== GEMINI_DEFAULT) $("gModel").value = model;
+    try { localStorage.setItem("wo_gkey", key); localStorage.setItem("wo_gmodel", $("gModel").value.trim()); } catch (e) {}
+    out.className = "ok"; out.textContent = `키가 확인되었습니다. 이제 사진 분석에 Gemini를 씁니다 (모델: ${$("gModel").value.trim() || GEMINI_DEFAULT}).${note}`;
+    $("manualHint").hidden = true;
+    if (state.photo) setStatus("Gemini 키가 연결되었습니다. 3단계 '사진으로 도식화·작업지시서 만들기'를 누르면 Gemini가 분석합니다.");
+  } catch (e) { out.className = "err"; out.textContent = "인터넷 연결을 확인하고 다시 눌러 주세요."; }
+}
+$("keyCheck").addEventListener("click", checkGeminiKey);
+$("keyInput").addEventListener("keydown", (e) => { if (e.key === "Enter") checkGeminiKey(); });
+$("keyForget").addEventListener("click", () => {
+  $("keyInput").value = ""; $("gKey").value = ""; $("gModel").value = "";
+  try { localStorage.removeItem("wo_gkey"); localStorage.removeItem("wo_gmodel"); } catch (e) {}
+  $("keyResult").className = ""; $("keyResult").textContent = "이 브라우저에서 키를 지웠습니다. 사진 분석은 기기 안 인식으로 돌아갑니다.";
+  if (geminiMode()) $("manualHint").hidden = false;
 });
 
 /* ====================================================================== 외곽선 분석 (시험, assets/outline.js)
