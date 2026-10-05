@@ -298,7 +298,7 @@
       <button class="btn" id="analyzeBtn">사진으로 도식화·작업지시서 만들기</button>
       <details class="key" id="keyBox" hidden>
         <summary>Gemini API 키 (이 사이트를 직접 호스팅할 때)</summary>
-        <input type="password" id="gKey" placeholder="AIza..." autocomplete="off" />
+        <input type="password" id="gKey" placeholder="AQ.... 또는 AIza..." autocomplete="off" />
         <input type="text" id="gModel" placeholder="모델명 (기본 gemini-3-flash-preview)" />
         <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 기기 안 인식을 씁니다. <a href="#" id="keyGuideLink" style="color:var(--tape);font-weight:700">키 받는 법 →</a></p>
       </details>
@@ -512,12 +512,12 @@
         <li><b>Google AI Studio 열기</b> — <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> 에 접속해 구글 계정으로 로그인합니다.</li>
         <li><b>약관 동의</b> — 처음 쓰는 계정이면 이용약관에 동의하면 기본 프로젝트와 API 키가 자동으로 만들어집니다.
           키가 안 보이면 <b>Create API key (API 키 만들기)</b>를 누르세요.</li>
-        <li><b>키 복사</b> — 키 옆의 복사 버튼을 누릅니다. 보통 <code>AIza</code>로 시작하는 긴 글자입니다.</li>
+        <li><b>키 복사</b> — 키 옆의 복사 버튼을 누릅니다. 새 키는 <code>AQ.</code>로, 예전 키는 <code>AIza</code>로 시작하는 긴 글자입니다 (둘 다 쓸 수 있음).</li>
         <li><b>아래 칸에 붙여넣고 '키 확인'</b> — 확인되면 이 브라우저에 저장되고, 3단계 버튼이 Gemini 분석으로 바뀝니다.</li>
       </ol>
       <div class="key-box">
         <label for="keyInput"><b>Gemini API 키</b></label>
-        <div class="key-row"><input type="password" id="keyInput" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+        <div class="key-row"><input type="password" id="keyInput" placeholder="AQ.... 또는 AIza..." autocomplete="off" spellcheck="false" />
           <button id="keyCheck" class="olz-btn primary">키 확인</button></div>
         <p id="keyResult" role="status"></p>
         <button id="keyForget" class="olz-btn">이 브라우저에서 키 지우기</button>
@@ -528,6 +528,7 @@
         <li><b>키를 Gemini 전용으로 제한</b> — AI Studio의 API 키 목록에서 키를 'Gemini API만 사용'으로 제한해 두면 유출돼도 피해가 줄어듭니다.</li>
         <li><b>무료 등급의 데이터</b> — Google은 무료 등급으로 보낸 내용을 제품 개선에 쓸 수 있다고 안내합니다. 아직 공개 전인 디자인이 걱정되면 키 없이 기기 안 인식만 쓰거나 유료 등급을 쓰세요.</li>
         <li><b>사용 한도</b> — 무료 등급은 분당·하루 요청 수 제한이 있습니다. '요청이 많습니다'가 뜨면 잠시 후 다시 누르세요.</li>
+        <li><b>새 AQ. 키가 거부될 때</b> — 2026년부터 AI Studio는 AQ.로 시작하는 인증 키만 발급합니다. 일부 계정에서는 Google 쪽 문제로 이 키가 거부(401)되는 사례가 보고되어 있습니다. 새 프로젝트에서 다시 발급해 보고, 그래도 안 되면 키 없이 기기 안 인식을 쓰세요.</li>
         <li>공식 안내: <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" rel="noopener">Gemini API 키 사용법</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">무료 등급과 요금</a></li>
       </ul>
     </section>
@@ -1487,13 +1488,20 @@ const GEMINI_DEFAULT = "gemini-3-flash-preview";
 async function checkGeminiKey() {
   const key = $("keyInput").value.trim(), out = $("keyResult");
   out.className = ""; out.textContent = "확인하는 중…";
-  if (!/^[A-Za-z0-9_\-]{20,}$/.test(key)) { out.className = "err"; out.textContent = "키 모양이 아닙니다. AI Studio에서 복사한 키 전체를 붙여 넣으세요 (보통 AIza로 시작)."; return; }
+  // 새 키는 'AQ.'(인증 키), 예전 키는 'AIza'로 시작. 점(.)·밑줄·하이픈이 들어갈 수 있어 공백만 없으면 통과
+  if (!/^\S{20,}$/.test(key)) { out.className = "err"; out.textContent = "키 모양이 아닙니다. AI Studio에서 복사한 키 전체를 붙여 넣으세요 (보통 AQ. 또는 AIza로 시작, 공백 없이)."; return; }
   try {
     const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       out.className = "err";
-      out.textContent = res.status === 400 || res.status === 403 ? "키가 올바르지 않거나 사용이 제한되었습니다. 키를 다시 복사하거나 AI Studio에서 새로 만드세요." : `확인에 실패했습니다 (${res.status}). ${data?.error?.message || ""}`;
+      const reason = (data?.error?.details || []).map((d) => d.reason).join(",");
+      if (res.status === 401 && /ACCESS_TOKEN_TYPE_UNSUPPORTED/.test(reason + (data?.error?.message || "")))
+        // AI Studio의 새 'AQ.' 인증 키가 일부 계정에서 Google 쪽 문제로 거부되는 사례 (2026년 공식 포럼에 다수 보고)
+        out.innerHTML = `Google이 이 키를 거부했습니다 (401 ACCESS_TOKEN_TYPE_UNSUPPORTED). 키를 잘못 넣은 게 아니라, 새 <b>AQ.</b> 키가 일부 계정에서 거부되는 <b>Google 쪽 문제</b>로 알려져 있습니다.
+          <br>· AI Studio에서 <b>새 프로젝트를 만들어 키를 다시 발급</b>해 보세요 · 해결될 때까지는 키 없이 <b>기기 안 인식</b>을 쓸 수 있습니다
+          · <a href="https://discuss.ai.google.dev/c/gemini-api/4" target="_blank" rel="noopener">Google AI 포럼</a>에서 같은 문제를 확인·신고할 수 있습니다`;
+      else out.textContent = res.status === 400 || res.status === 401 || res.status === 403 ? "키가 올바르지 않거나 사용이 제한되었습니다. 키 전체를 다시 복사하거나 AI Studio에서 새로 만드세요." : `확인에 실패했습니다 (${res.status}). ${data?.error?.message || ""}`;
       return;
     }
     const names = (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => m.name.replace(/^models\//, ""));

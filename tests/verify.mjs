@@ -422,6 +422,8 @@ pk.on("request", (r) => {
     if (r.method() === "OPTIONS") return r.respond({ status: 204, headers: cors });   // 키 헤더 때문에 브라우저가 먼저 보내는 사전 확인
     keySeen = r.headers()["x-goog-api-key"];
     if (keySeen === "AIzaBADBADBADBADBADBADBAD") return r.respond({ status: 400, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { message: "API key not valid" } }) });
+    if (keySeen === "AQ.Ab8RN6BROKENBROKENBROKEN") return r.respond({ status: 401, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 401, status: "UNAUTHENTICATED",
+      message: "Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.", details: [{ reason: "ACCESS_TOKEN_TYPE_UNSUPPORTED" }] } }) });
     return r.respond({ status: 200, contentType: "application/json", headers: cors,
       body: JSON.stringify({ models: [{ name: "models/gemini-3.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }, { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }] }) });
   }
@@ -441,12 +443,20 @@ await pk.evaluate(() => { document.getElementById("keyInput").value = "짧음"; 
 const badShape = await pk.$eval("#keyResult", (n) => n.className === "err" && n.textContent.includes("키 모양"));
 await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaBADBADBADBADBADBADBAD"; document.getElementById("keyCheck").click(); });
 await pk.waitForFunction(() => document.getElementById("keyResult").className === "err" && /올바르지/.test(document.getElementById("keyResult").textContent), { timeout: 5000 });
-await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaTESTTESTTESTTESTTESTTESTTEST"; document.getElementById("keyCheck").click(); });
+// 새 형식 AQ. 키: 모양 검사 통과 → Google 쪽 401 ACCESS_TOKEN_TYPE_UNSUPPORTED 이면 원인과 대안 안내
+await pk.evaluate(() => { document.getElementById("keyInput").value = "AQ.Ab8RN6BROKENBROKENBROKEN"; document.getElementById("keyCheck").click(); });
+await pk.waitForFunction(() => /ACCESS_TOKEN_TYPE_UNSUPPORTED/.test(document.getElementById("keyResult").textContent), { timeout: 5000 });
+const aqBroken = await pk.evaluate(() => { const t = document.getElementById("keyResult").textContent; return t.includes("Google 쪽 문제") && t.includes("기기 안 인식"); }).catch(() => false);
+await pk.evaluate(() => { document.getElementById("keyInput").value = "AQ.Ab8RN6TESTTESTTESTTEST-_x"; document.getElementById("keyCheck").click(); });
 await pk.waitForFunction(() => document.getElementById("keyResult").className === "ok", { timeout: 5000 });
+const aqOk = keySeen === "AQ.Ab8RN6TESTTESTTESTTEST-_x" && await pk.evaluate(() => /바꿨습니다/.test(document.getElementById("keyResult").textContent));
+ok("새 AQ. 키: 점(.) 포함 키도 받고 그대로 전송, Google 쪽 401(ACCESS_TOKEN_TYPE_UNSUPPORTED)이면 원인·대안 안내", aqOk && aqBroken, JSON.stringify({ aqOk, aqBroken }));
+await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaTESTTESTTESTTESTTESTTESTTEST"; document.getElementById("keyCheck").click(); });
+await pk.waitForFunction(() => document.getElementById("keyResult").className === "ok" && /AIzaTEST/.test(document.getElementById("gKey").value), { timeout: 5000 });
 const keyOk = await pk.evaluate(() => ({ gkey: document.getElementById("gKey").value, model: document.getElementById("gModel").value, stored: localStorage.getItem("wo_gkey"),
   msg: document.getElementById("keyResult").textContent, gem: !localMode(), inJob: JSON.stringify(snapshot()).includes("AIzaTEST") }));
 ok("키 확인: 모양 검사 → 잘못된 키 안내 → 올바른 키 저장, 없는 기본 모델은 쓸 수 있는 Flash로 교체, 3단계가 Gemini로 전환",
-  badShape && keySeen === "AIzaTESTTESTTESTTESTTESTTESTTEST" && keyOk.gkey === keySeen && keyOk.stored === keySeen && keyOk.model === "gemini-3.5-flash" && keyOk.gem && /바꿨습니다/.test(keyOk.msg), JSON.stringify(keyOk).slice(0, 200));
+  badShape && keySeen === "AIzaTESTTESTTESTTESTTESTTESTTEST" && keyOk.gkey === keySeen && keyOk.stored === keySeen && keyOk.model === "gemini-3.5-flash" && keyOk.gem, JSON.stringify(keyOk).slice(0, 200));
 ok("API 키는 작업 저장 파일에 들어가지 않음", !keyOk.inJob);
 await pk.evaluate(() => document.getElementById("keyForget").click());
 ok("키 지우기 → 기기 안 인식으로 돌아감", await pk.evaluate(() => localMode() && !localStorage.getItem("wo_gkey")));

@@ -58,6 +58,8 @@
 
 ## Gemini 키 받기 탭 ('🔑 Gemini 키 받기', 강조)
 - `checkGeminiKey()`: `GET v1beta/models`(헤더 x-goog-api-key)로 키 확인 → `gKey`·localStorage 저장. 기본 모델 `GEMINI_DEFAULT`가 목록에 없으면 lite·image 등을 뺀 Flash(정식 우선)로 바꿈.
+- 키 모양 검사는 공백 없는 20자 이상만 봄: 2026년부터 AI Studio는 **`AQ.`로 시작하는 인증 키**만 발급(예전 `AIza`도 허용). 점(.)을 막으면 새 키가 전부 막힘.
+- 401 `ACCESS_TOKEN_TYPE_UNSUPPORTED`: 일부 계정에서 AQ. 키가 Google 쪽 문제로 거부되는 사례(공식 포럼 다수 보고, 헤더·?key=·Bearer 모두 실패) → 원인과 대안(새 프로젝트로 재발급, 기기 안 인식) 안내.
 - 키는 작업 저장 파일(snapshot)에 넣지 않음. 안내 문구의 사실(자동 프로젝트·키 생성, 무료 등급 데이터 사용)은 ai.google.dev 공식 문서 기준 — 바뀌면 함께 고칠 것.
 
 ## 규칙
