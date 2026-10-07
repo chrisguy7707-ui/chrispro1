@@ -33,7 +33,15 @@ const PAGES = [
   { file: "contact.html", loc: "contact.html", priority: "0.3" },
   { file: "privacy.html", loc: "privacy.html", priority: "0.2" },
   { file: "terms.html", loc: "terms.html", priority: "0.2" },
+  /* 영어판 (en/). ko = 같은 내용의 한국어 페이지 → 양쪽에 hreflang 링크 */
+  { file: "en/index.html", loc: "en/", priority: "0.8", lang: "en", ko: "index.html" },
+  { file: "en/guide.html", loc: "en/guide.html", priority: "0.6", lang: "en", ko: "guide.html" },
+  { file: "en/about.html", loc: "en/about.html", priority: "0.4", lang: "en", ko: "about.html" },
+  { file: "en/contact.html", loc: "en/contact.html", priority: "0.3", lang: "en", ko: "contact.html" },
+  { file: "en/privacy.html", loc: "en/privacy.html", priority: "0.2", lang: "en", ko: "privacy.html" },
+  { file: "en/terms.html", loc: "en/terms.html", priority: "0.2", lang: "en", ko: "terms.html" },
 ];
+const enOf = (koFile) => PAGES.find((p) => p.ko === koFile);
 const OTHER = ["404.html"];
 
 const attr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -44,17 +52,21 @@ function headBlock(html, page) {
   const desc = pick(html, /<meta name="description" content="([^"]*)"/);
   const lines = [];
   if (page) {
-    const url = base + page.loc;
-    lines.push(`<link rel="canonical" href="${url}" />`,
+    const url = base + page.loc, en = page.lang === "en";
+    const pair = en ? [PAGES.find((p) => p.file === page.ko), page] : [page, enOf(page.file)];
+    lines.push(`<link rel="canonical" href="${url}" />`);
+    if (pair[1]) lines.push(`<link rel="alternate" hreflang="ko" href="${base + pair[0].loc}" />`, `<link rel="alternate" hreflang="en" href="${base + pair[1].loc}" />`,
+      `<link rel="alternate" hreflang="x-default" href="${base + pair[1].loc}" />`);   // 한국어도 영어도 아닌 방문자에게는 영어판
+    lines.push(
       `<meta property="og:type" content="website" />`,
-      `<meta property="og:site_name" content="${attr(cfg.siteName)}" />`,
+      `<meta property="og:site_name" content="${en ? "Jakji" : attr(cfg.siteName)}" />`,
       `<meta property="og:title" content="${title}" />`,
       `<meta property="og:description" content="${desc}" />`,
       `<meta property="og:url" content="${url}" />`,
-      `<meta property="og:image" content="${base}assets/og.png" />`,
+      `<meta property="og:image" content="${base}assets/og${en ? "-en" : ""}.png" />`,
       `<meta property="og:image:width" content="1200" />`,
       `<meta property="og:image:height" content="630" />`,
-      `<meta property="og:locale" content="ko_KR" />`,
+      `<meta property="og:locale" content="${en ? "en_US" : "ko_KR"}" />`, ...(pair[1] ? [`<meta property="og:locale:alternate" content="${en ? "ko_KR" : "en_US"}" />`] : []),
       `<meta name="twitter:card" content="summary_large_image" />`);
   } else {
     // 404는 없는 하위 경로에서도 열리므로 상대 경로 기준을 사이트 루트로 고정
@@ -77,8 +89,9 @@ function headBlock(html, page) {
   return lines.join("\n");
 }
 
-function contactBlock() {
+function contactBlock(en) {
   const mail = (cfg.contactEmail || "").trim();
+  if (en) return mail ? `<p>Email: <a href="mailto:${attr(mail)}">${attr(mail)}</a></p>` : `<p class="note">Email contact is not ready yet. Please use the GitHub issue board below.</p>`;
   return mail
     ? `<p>이메일: <a href="mailto:${attr(mail)}">${attr(mail)}</a></p>`
     : `<p class="note">이메일 문의 창구는 준비 중입니다. 아래 GitHub 문의 게시판을 이용해 주세요.</p>`;
@@ -97,7 +110,7 @@ for (const f of [...PAGES.map((p) => p.file), ...OTHER]) {
   const html = fs.readFileSync(fp, "utf8");
   if (!html.includes("<!-- SITE:HEAD-START -->")) throw new Error(`${f}에 SITE:HEAD 표시가 없습니다`);
   let out = swap(html, "HEAD", headBlock(html, PAGES.find((p) => p.file === f)));
-  out = swap(out, "CONTACT", contactBlock());
+  out = swap(out, "CONTACT", contactBlock(f.startsWith("en/")));
   if (out !== html) { fs.writeFileSync(fp, out); changed++; }
 }
 

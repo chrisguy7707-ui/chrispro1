@@ -7,7 +7,8 @@
     "configure": "node scripts/configure.mjs",
     "images": "node scripts/render-images.mjs",
     "test": "node tests/verify.mjs && node tests/site.mjs",
-    "clip-labels": "node scripts/build-clip-labels.mjs"
+    "clip-labels": "node scripts/build-clip-labels.mjs",
+    "i18n-missing": "node scripts/i18n-missing.mjs"
   },
   "devDependencies": {
     "@huggingface/transformers": "^4.3.0",

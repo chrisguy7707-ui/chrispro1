@@ -756,6 +756,56 @@ ok("휴대폰 화면에서 인쇄해도 작업지시서는 A4 가로 1장", mobP
 await page.setViewport({ width: 1500, height: 1000 });
 await page.screenshot({ path: new URL_("desktop.png", OUT).pathname, fullPage: true });
 
+/* 10. 영어 화면 (?lang=en): 사전 번역 0건 누락, 작업지시서·인쇄·파일·CSV 영어, 측정 부위로 찾는 기능 유지, 언어 기억·되돌리기 */
+const pe = await browser.newPage();
+pe.on("pageerror", (e) => errors.push("en pageerror: " + e.message));
+pe.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push("en console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pe.setRequestInterception(true); pe.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pe.setViewport({ width: 1500, height: 1000 });
+await pe.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); } catch (e) {} });
+await pe.goto(URL + "?lang=en", { waitUntil: "networkidle0" });
+const en = await pe.evaluate(async () => {
+  const r = {}, HAN = /[가-힣]/, tick = async () => { I18N.flush(); await new Promise((x) => setTimeout(x, 0)); I18N.flush(); };
+  r.lang = document.documentElement.lang === "en" && !!window.I18N && localStorage.getItem("jakji_lang") === "en";
+  r.title = !HAN.test(document.title);
+  for (const g of ["gM", "gF"]) for (const id of Object.keys(STYLES)) {
+    document.getElementById("tabSheetBtn").click(); document.getElementById(g).click(); chooseStyle(id); await tick();
+    for (const t of ["tabEditBtn", "tabProdBtn", "tabPatBtn"]) { document.getElementById(t).click(); await tick(); }
+    preparePrint(); await tick();
+  }
+  document.getElementById("tabSheetBtn").click(); document.getElementById("gM").click(); chooseStyle("hoodie"); await tick();
+  r.miss = [...I18N.miss];
+  const vis = (root) => [...root.querySelectorAll("*")].filter((n) => n.offsetParent || n.closest("svg")).flatMap((n) => [...n.childNodes].filter((c) => c.nodeType === 3 && HAN.test(c.nodeValue)).map((c) => c.nodeValue.trim())).filter((x) => !/^(🌐 )?(한국어|작지)$/.test(x));
+  r.panelKo = vis(document.querySelector(".app")).slice(0, 5);
+  r.chip = [...document.querySelectorAll("#sizeChips .chip")].map((b) => b.textContent).join(",") === "XXS (80),XS (85),S (90),M (95),L (100),XL (105),XXL (110)";
+  r.head = document.querySelector("#specTable tr").textContent.includes("Point of measure");
+  // 화면 글자가 번역돼도 측정 부위(원문)로 찾음: 치수 바꾸기·패턴 반영
+  setBaseValue("가슴단면", 62); document.getElementById("tabPatBtn").click(); await tick();
+  r.part = patDraft.v.C === 62 && baseVals()["가슴단면"] === 62;
+  document.getElementById("tabSheetBtn").click(); await tick();
+  r.csv = (() => { const c = buildCSV(); return !HAN.test(c) && c.includes("[Size spec]") ? true : c.match(/[^\n]*[가-힣][^\n]*/)?.[0]; })();
+  const saved = []; window.saveFile = async (n, d) => saved.push([n, d]);
+  r.html = (() => { const h = I18N.markup(sheetHTML(), "text/html"); return !HAN.test(h.replace(/<style>[\s\S]*?<\/style>/g, "")) && /<html lang="en"/.test(h) ? true : h.replace(/<style>[\s\S]*?<\/style>/g, "").match(/.{20}[가-힣]+.{20}/)?.[0]; })();
+  r.svg = (() => { const v = I18N.markup(Pattern.svg(patDraft, patDraft.lay, "real", "x"), "image/svg+xml"); return !HAN.test(v) ? true : v.match(/.{20}[가-힣]+.{20}/)?.[0]; })();
+  // 공유 링크에 ?lang=en, 언어 바꾸기 링크
+  shareSrc = snapshot(false); await makeShareUrl(); r.share = /app\.html\?lang=en#v1=/.test(document.getElementById("shareUrl").value);
+  const sw = document.querySelector(".mini-nav .lang-sw"); r.sw = sw.textContent === "한국어" && sw.dataset.lang === "ko";
+  // 케어라벨 미리보기·기본값 영어
+  document.getElementById("tabProdBtn").click(); document.querySelector('.prod-nav [data-p="care"]').click(); await tick();
+  r.care = !HAN.test(document.getElementById("careOut").textContent) && document.querySelector('[data-k="country"]').value === "Republic of Korea";
+  return r;
+});
+await pe.evaluate(() => preparePrint());
+const enPdf = mediaBoxes(await pe.pdf({ preferCSSPageSize: true }));
+ok("영어 화면: 소분류 34종 × 남녀 × 편집·생산·패턴·인쇄를 그려도 번역 누락 0건, 화면에 한국어 없음", en.lang && en.title && en.miss.length === 0 && en.panelKo.length === 0, JSON.stringify({ miss: en.miss.slice(0, 5), ko: en.panelKo }));
+ok("영어 화면: 알파벳 사이즈 병기, 치수표 영어, 측정 부위 찾기(치수 바꾸기→패턴) 정상", en.chip && en.head && en.part, JSON.stringify({ chip: en.chip, head: en.head, part: en.part }));
+ok("영어 화면: CSV·HTML·패턴 SVG 저장 파일과 케어라벨이 영어", en.csv === true && en.html === true && en.svg === true && en.care, JSON.stringify({ csv: en.csv, html: en.html, svg: en.svg, care: en.care }));
+ok("영어 화면: 인쇄 A4 가로 1장, 공유 링크는 ?lang=en, 한국어로 돌아가는 링크", enPdf.length === 1 && !isPortrait(enPdf[0]) && en.share && en.sw, JSON.stringify({ pdf: enPdf.length, share: en.share, sw: en.sw }));
+await pe.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+ok("?lang=ko로 돌아오면 한국어(사전 안 불러옴), 선택 기억", await pe.evaluate(() => document.documentElement.lang === "ko" && !window.I18N && localStorage.getItem("jakji_lang") === "ko" && document.getElementById("tabSheetBtn").textContent === "작업지시서"));
+await pe.evaluate(() => localStorage.removeItem("jakji_lang"));
+await pe.close();
+
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));
 await browser.close();
 const fail = results.filter((r) => !r.pass).length;

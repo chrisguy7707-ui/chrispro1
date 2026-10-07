@@ -54,6 +54,7 @@ header.mat::after { width: 380px; height: 380px; left: -140px; bottom: -180px; b
 .nav a { text-decoration: none; padding: 6px 14px; border-radius: 999px; transition: background .15s; }
 .nav a:hover { background: var(--lemon-soft); }
 .nav a[aria-current="page"] { background: var(--ink); color: var(--bg); }
+.nav a.lang-link { border: 1px solid var(--rule); font-weight: 700; }   /* 한국어 ↔ English */
 
 .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-top: 44px; padding-bottom: 72px; }
 .hero .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 18px; padding: 6px 14px 6px 8px; background: var(--paper); border: 1px solid var(--rule); border-radius: 999px; font-weight: 700; font-size: 14px; box-shadow: var(--shadow); }
@@ -77,6 +78,7 @@ header.mat::after { width: 380px; height: 380px; left: -140px; bottom: -180px; b
 .hero figure { position: relative; margin: 0; background: var(--paper); border-radius: 20px; padding: 10px; border: 1px solid var(--rule); box-shadow: 0 30px 60px -20px rgba(23,23,28,.35); transform: rotate(1.5deg); transition: transform .3s; }
 .hero figure:hover { transform: rotate(0) scale(1.01); }
 .hero figure::before { content: "A4 한 장"; position: absolute; left: -18px; top: -18px; z-index: 1; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: var(--coral); color: #fff; font-weight: 800; font-size: 15px; transform: rotate(-12deg); box-shadow: 0 8px 20px rgba(255,107,74,.4); }
+html[lang="en"] .hero figure::before { content: "One A4"; }
 .hero figure img { display: block; border-radius: 12px; }
 .hero figcaption { font-size: 12px; color: var(--ink-soft); text-align: center; padding-top: 8px; }
 @media (max-width: 860px) { .hero { grid-template-columns: 1fr; padding-top: 24px; padding-bottom: 48px; gap: 36px; } .hero figure { transform: none; } .hero figure::before { left: auto; right: -6px; width: 70px; height: 70px; font-size: 13px; } }
@@ -158,6 +160,7 @@ h3 { font-size: 18px; margin: 0 0 6px; letter-spacing: -0.02em; }
 .ad-slot { display: none; }
 .ad-slot.on { display: block; margin: 8px auto; padding: 8px 16px; min-height: 100px; max-width: 1120px; }
 .ad-slot.on::before { content: "광고"; display: block; font-size: 11px; color: var(--ink-soft); margin-bottom: 4px; }
+html[lang="en"] .ad-slot.on::before { content: "Ad"; }
 
 /* ---------- 바닥 ---------- */
 footer.mat { background: var(--dark); color: var(--dark-ink); border-radius: 28px 28px 0 0; margin-top: 24px; }

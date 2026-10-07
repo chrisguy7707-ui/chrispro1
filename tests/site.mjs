@@ -10,7 +10,10 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.SITE_URL || "http://localhost:8766/";
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
-const PAGES = ["index.html", "app.html", "guide.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html"];
+const PAGES = ["index.html", "app.html", "guide.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html",
+  "en/index.html", "en/guide.html", "en/about.html", "en/contact.html", "en/privacy.html", "en/terms.html"];
+const EN_PAGES = PAGES.filter((f) => f.startsWith("en/"));
+const locOf = (f) => f.replace(/(^|\/)index\.html$/, "$1");
 
 const results = [];
 const ok = (name, pass, detail = "") => { results.push(pass); console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`); };
@@ -56,9 +59,9 @@ for (const f of PAGES) {
   if (res.status() !== 200) problems.push("상태 " + res.status());
   if (info.title.length < 10 || info.title.length > 60) problems.push(`제목 길이 ${info.title.length}`);
   if (info.desc.length < 50 || info.desc.length > 160) problems.push(`설명 길이 ${info.desc.length}`);
-  if (info.canonical !== cfg.url + (f === "index.html" ? "" : f)) problems.push("canonical " + info.canonical);
-  if (!info.ogImage.endsWith("assets/og.png") || !info.ogTitle) problems.push("og 태그");
-  if (info.lang !== "ko") problems.push("lang");
+  if (info.canonical !== cfg.url + locOf(f)) problems.push("canonical " + info.canonical);
+  if (!info.ogImage.endsWith(f.startsWith("en/") ? "assets/og-en.png" : "assets/og.png") || !info.ogTitle) problems.push("og 태그");
+  if (info.lang !== (f.startsWith("en/") ? "en" : "ko")) problems.push("lang");
   if (info.h1 !== 1) problems.push(`h1 ${info.h1}개`);
   if (!info.ld) problems.push("JSON-LD 오류");
   if (info.imgsNoAlt) problems.push("alt 없는 이미지");
@@ -81,12 +84,52 @@ const broken = [];
 // 브라우저로 확인 (Node fetch는 python http.server와 연결 종료 처리가 맞지 않아 가끔 멈춤)
 const status = (u) => page.evaluate(async (u) => (await fetch(u, { cache: "no-store" })).status, u);
 for (const l of links) { const st = await status(l); if (st !== 200) broken.push(`${l} ${st}`); }
-for (const f of ["assets/og.png", "assets/preview.png", "assets/favicon.svg", "assets/clip-labels.json", "sitemap.xml", "robots.txt"]) { const st = await status(BASE + f); if (st !== 200) broken.push(`${f} ${st}`); }
-ok(`내부 링크·파일 ${links.size + 6}개 모두 열림`, broken.length === 0, broken.join(", "));
+for (const f of ["assets/og.png", "assets/og-en.png", "assets/preview.png", "assets/preview-en.png", "assets/preview-en.webp", "assets/i18n.js", "assets/i18n-en.js", "assets/favicon.svg", "assets/clip-labels.json", "sitemap.xml", "robots.txt"]) { const st = await status(BASE + f); if (st !== 200) broken.push(`${f} ${st}`); }
+ok(`내부 링크·파일 ${links.size + 11}개 모두 열림`, broken.length === 0, broken.join(", "));
 
 /* 3. sitemap · robots */
 const sm = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
-ok("sitemap.xml에 공개 페이지 8개, 404 제외", PAGES.every((f) => sm.includes(`<loc>${cfg.url}${f === "index.html" ? "" : f}</loc>`)) && !sm.includes("404"));
+ok(`sitemap.xml에 공개 페이지 ${PAGES.length}개(영어판 포함), 404 제외`, PAGES.every((f) => sm.includes(`<loc>${cfg.url}${locOf(f)}</loc>`)) && !sm.includes("404"));
+/* 3-1. 영어판: hreflang 짝(서로 가리킴), 한국어 페이지마다 English 링크, 영어 본문에 한국어 없음(용어 괄호·한국어 링크 제외) */
+const hreflang = [], enText = [], enLink = [];
+for (const f of PAGES.filter((x) => x !== "app.html")) {
+  await page.goto(BASE + f, { waitUntil: "networkidle0" });
+  const r = await page.evaluate(() => ({ alt: Object.fromEntries([...document.querySelectorAll('link[rel="alternate"][hreflang]')].map((l) => [l.hreflang, l.href])),
+    en: [...document.querySelectorAll('a[data-lang="en"]')].filter((a) => a.offsetParent).map((a) => a.href),
+    text: (() => { const b = document.body.cloneNode(true); b.querySelectorAll('[lang="ko"], script, style').forEach((n) => n.remove());
+      return b.textContent.replace(/\([^)]*\)/g, "").replace(/작지/g, "").match(/[가-힣]+/g) || []; })() }));
+  const me = cfg.url + locOf(f);
+  if (f.startsWith("en/")) {
+    if (r.text.length) enText.push(`${f}: ${r.text.slice(0, 5).join(" ")}`);
+    if (r.alt.en !== me || !r.alt.ko || r.alt["x-default"] !== me) hreflang.push(f);
+  } else {
+    if (!r.en.length) enLink.push(f);
+    if (r.alt.ko && (r.alt.ko !== me || !r.alt.en)) hreflang.push(f);
+  }
+}
+ok(`영어판 ${EN_PAGES.length}쪽: hreflang ko·en·x-default가 서로 맞음`, hreflang.length === 0, hreflang.join(", "));
+ok("한국어 페이지마다 English 링크(메뉴·바닥)", enLink.length === 0, enLink.join(", "));
+ok("영어 페이지 본문에 한국어가 남지 않음", enText.length === 0, enText.slice(0, 3).join(" | "));
+/* 3-2. 브라우저 언어가 한국어가 아니면 영어판 안내 띠 (자동 이동 없음), 닫으면 기억 */
+const lb = await browser.newPage();
+await lb.evaluateOnNewDocument(() => { Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] }); });
+await lb.goto(BASE + "guide.html", { waitUntil: "networkidle0" });
+await lb.evaluate(() => localStorage.removeItem("jakji_lang")); await lb.reload({ waitUntil: "networkidle0" });
+const bar1 = await lb.evaluate(() => ({ url: location.pathname, go: document.querySelector(".lang-bar .lang-go")?.getAttribute("href") }));
+await lb.evaluate(() => document.querySelector(".lang-bar .lang-x").click()); await lb.reload({ waitUntil: "networkidle0" });
+const bar2 = await lb.evaluate(() => !!document.querySelector(".lang-bar"));
+await lb.evaluate(() => localStorage.removeItem("jakji_lang"));
+await lb.goto(BASE + "app.html", { waitUntil: "networkidle0" });
+const bar3 = await lb.evaluate(() => { history.replaceState(null, "", "#v1=abc"); const g = document.querySelector(".lang-bar .lang-go"); g?.dispatchEvent(new Event("focus")); return g?.getAttribute("href"); });
+await lb.goto(BASE + "en/guide.html", { waitUntil: "networkidle0" });
+const bar4 = await lb.evaluate(() => !!document.querySelector(".lang-bar"));
+const kb = await browser.newPage();
+await kb.evaluateOnNewDocument(() => { Object.defineProperty(navigator, "languages", { get: () => ["ko-KR", "en-US"] }); try { localStorage.removeItem("jakji_lang"); } catch (e) {} });
+await kb.goto(BASE + "guide.html", { waitUntil: "networkidle0" });
+const bar5 = await kb.evaluate(() => !!document.querySelector(".lang-bar"));
+await lb.evaluate(() => localStorage.removeItem("jakji_lang")); await lb.close(); await kb.close();
+ok("영어 브라우저: 한국어 페이지에 영어판 안내 띠(이동은 하지 않음), 닫으면 다시 안 뜸, 도구는 #공유 내용 유지, 한국어 브라우저·영어 페이지엔 없음",
+  bar1.url === "/guide.html" && bar1.go === "en/guide.html" && !bar2 && bar3 === "?lang=en#v1=abc" && !bar4 && !bar5, JSON.stringify({ bar1, bar2, bar3, bar4, bar5 }));
 ok("robots.txt가 sitemap을 가리킴", fs.readFileSync(path.join(root, "robots.txt"), "utf8").includes(`Sitemap: ${cfg.url}sitemap.xml`));
 ok("404 페이지는 검색 제외(noindex)", fs.readFileSync(path.join(root, "404.html"), "utf8").includes('content="noindex"'));
 ok("애드센스 미설정 시 ads.txt 없음", !fs.existsSync(path.join(root, "ads.txt")) || !!cfg.adsenseClient);
@@ -170,6 +213,17 @@ const fb = await page.evaluate(async () => {
   return r;
 });
 ok("비밀 의견 보내기: 문의 페이지 양식·바닥 링크·짧은 글 막기·메일 방식·폼 서비스 방식", Object.values(fb).every(Boolean), JSON.stringify(fb));
+await page.goto(BASE + "en/contact.html#feedback", { waitUntil: "networkidle0" });
+const fbEn = await page.evaluate(async () => {
+  window.JAKJI_NO_MAILTO = true; const sent = []; const realFetch = window.fetch;
+  window.fetch = async (u, o) => { if (o && o.method === "POST") { sent.push(String(u)); return { ok: true }; } return realFetch(u, o); };
+  const f = document.querySelector("[data-feedback] form");
+  const r = { en: !!f && /only the operator/i.test(f.textContent) && !/[가-힣]/.test(f.textContent), mail: /mailto:/.test(document.querySelector("main").innerHTML) && /Email:/.test(document.querySelector("main").textContent) };
+  f.querySelector("textarea").value = "hi"; f.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 100));
+  r.short = /at least 5/.test(f.querySelector(".fb-msg").textContent) && sent.length === 0; window.fetch = realFetch;
+  return r;
+});
+ok("영어 문의 페이지: 의견 양식·안내 문구·이메일이 영어", Object.values(fbEn).every(Boolean), JSON.stringify(fbEn));
 
 await browser.close();
 const fail = results.filter((r) => !r).length;

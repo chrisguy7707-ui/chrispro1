@@ -18,4 +18,10 @@
   <url><loc>https://jakji.app/contact.html</loc><lastmod>2026-10-07</lastmod><priority>0.3</priority></url>
   <url><loc>https://jakji.app/privacy.html</loc><lastmod>2026-10-07</lastmod><priority>0.2</priority></url>
   <url><loc>https://jakji.app/terms.html</loc><lastmod>2026-10-07</lastmod><priority>0.2</priority></url>
+  <url><loc>https://jakji.app/en/</loc><lastmod>2026-10-07</lastmod><priority>0.8</priority></url>
+  <url><loc>https://jakji.app/en/guide.html</loc><lastmod>2026-10-07</lastmod><priority>0.6</priority></url>
+  <url><loc>https://jakji.app/en/about.html</loc><lastmod>2026-10-07</lastmod><priority>0.4</priority></url>
+  <url><loc>https://jakji.app/en/contact.html</loc><lastmod>2026-10-07</lastmod><priority>0.3</priority></url>
+  <url><loc>https://jakji.app/en/privacy.html</loc><lastmod>2026-10-07</lastmod><priority>0.2</priority></url>
+  <url><loc>https://jakji.app/en/terms.html</loc><lastmod>2026-10-07</lastmod><priority>0.2</priority></url>
 </urlset>
