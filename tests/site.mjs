@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.SITE_URL || "http://localhost:8766/";
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
-const PAGES = ["index.html", "app.html", "guide.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "about.html", "privacy.html", "terms.html", "contact.html"];
+const PAGES = ["index.html", "app.html", "guide.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html"];
 
 const results = [];
 const ok = (name, pass, detail = "") => { results.push(pass); console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`); };
