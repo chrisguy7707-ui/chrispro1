@@ -54,6 +54,7 @@
       var fb = $("#" + id + "f");
       fb.hidden = false; fb.querySelector(".fb-mail").textContent = to; fb.querySelector("textarea").value = body;
       status.className = "fb-msg"; status.textContent = "메일 앱을 열었습니다. 보내기를 눌러야 전달됩니다.";
+      if (window.JAKJI_NO_MAILTO) return;   // 자동 테스트가 이 컴퓨터의 메일 앱을 열지 않게 하는 스위치
       location.href = "mailto:" + to + "?subject=" + encodeURIComponent("[작지 비밀 의견] " + kind) + "&body=" + encodeURIComponent(body);
     });
     $(".fb-copy").addEventListener("click", function () {

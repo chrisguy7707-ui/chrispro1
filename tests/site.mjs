@@ -133,6 +133,7 @@ ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3)
 await page.setViewport({ width: 1280, height: 900 });
 await page.goto(BASE + "contact.html#feedback", { waitUntil: "networkidle0" });
 const fb = await page.evaluate(async () => {
+  window.JAKJI_NO_MAILTO = true;   // 테스트 중 메일 앱이 열리지 않게
   const r = {};
   const f = document.querySelector("[data-feedback] form");
   r.form = !!f && /운영자만/.test(f.textContent) && !!f.querySelector("textarea") && !!f.querySelector("input[type=email]");
