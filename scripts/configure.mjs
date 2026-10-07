@@ -52,12 +52,15 @@ function headBlock(html, page) {
   }
   if (cfg.googleSiteVerification) lines.push(`<meta name="google-site-verification" content="${attr(cfg.googleSiteVerification)}" />`);
   if (cfg.naverSiteVerification) lines.push(`<meta name="naver-site-verification" content="${attr(cfg.naverSiteVerification)}" />`);
+  const site = { contactEmail: (cfg.contactEmail || "").trim(), feedbackEndpoint: /^https:\/\//.test(cfg.feedbackEndpoint || "") ? cfg.feedbackEndpoint.trim() : "" };
   if (client) {
     lines.push(`<meta name="google-adsense-account" content="${client}" />`,
       `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous"></script>`);
-    const slots = Object.fromEntries(Object.entries(cfg.adSlots || {}).filter(([, v]) => String(v).trim()));
-    lines.push(`<script>window.SITE = ${JSON.stringify({ adClient: client, adSlots: slots })};</script>`);
+    site.adClient = client;
+    site.adSlots = Object.fromEntries(Object.entries(cfg.adSlots || {}).filter(([, v]) => String(v).trim()));
   }
+  // 광고·문의 메일·비밀 의견 주소 (assets/site.js, assets/feedback.js 가 읽음)
+  lines.push(`<script>window.SITE = ${JSON.stringify(site).replace(/</g, "\\u003c")};</script>`);
   return lines.join("\n");
 }
 

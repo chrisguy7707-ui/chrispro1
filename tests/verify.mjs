@@ -617,6 +617,90 @@ const prodPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
 ok("생산 준비 탭에서 인쇄하면 작업지시서 A4 가로 1장", prodPdf.length === 1 && !isPortrait(prodPdf[0]), prodPdf.join(" "));
 await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
 
+/* 8-6. 내 스타일 목록(IndexedDB) · 공유 링크(# 뒤 압축, 서버 없음) */
+const pj = await browser.newPage(); const pjErr = []; pj.on("pageerror", (e) => pjErr.push(e.message));
+const pjSent = []; pj.on("request", (r) => { if (r.method() !== "GET") pjSent.push(r.method() + " " + r.url()); });
+await pj.setViewport({ width: 1400, height: 900 });
+await pj.goto(URL, { waitUntil: "networkidle0" });
+await pj.evaluate(async () => { localStorage.clear(); for (const r of await Jobs.all()) await Jobs.del(r.id); });
+await pj.goto(URL, { waitUntil: "networkidle0" });
+const jobs = await pj.evaluate(async () => {
+  const r = {}, sel = (id, v) => { const n = document.getElementById(id); n.value = v; n.dispatchEvent(new Event("change")); };
+  // 스타일 A 저장
+  sel("oTemplate", "hoodie"); document.getElementById("fStyle").textContent = "SS26-A"; document.getElementById("fBrand").textContent = "작지 샘플";
+  state.prod.cost = { fab: 9000, yield: 1.6, price: 59000 };
+  document.getElementById("jobsBtn").click(); await new Promise((x) => setTimeout(x, 200));
+  r.dlgOpen = document.getElementById("jobsDlg").open;
+  document.getElementById("jobName").value = "후드 A"; document.getElementById("jobSaveCur").click(); await new Promise((x) => setTimeout(x, 300));
+  const idA = cur.id;
+  // 복제 → 2개
+  document.querySelector(`#jobList li[data-id="${idA}"] [data-act=copy]`).click(); await new Promise((x) => setTimeout(x, 300));
+  r.two = (await Jobs.all()).length === 2 && document.querySelectorAll("#jobList li[data-id]").length === 2 && document.getElementById("jobsCount").textContent === "(2)";
+  // 지금 작업 고치면 목록에도 자동 저장
+  document.getElementById("fStyle").textContent = "SS26-A2"; scheduleSave(); await new Promise((x) => setTimeout(x, 1000));
+  r.autosaved = (await Jobs.get(idA)).data.fields.fStyle === "SS26-A2";
+  // 복제본 열기 → 화면이 복제본(SS26-A), 지금 작업 표시 바뀜
+  const copy = (await Jobs.all()).find((x) => x.id !== idA);
+  document.querySelector(`#jobList li[data-id="${copy.id}"] [data-act=open]`).click(); await new Promise((x) => setTimeout(x, 500));
+  r.opened = cur.id === copy.id && document.getElementById("fStyle").textContent === "SS26-A" && state.opt.template === "hoodie" && !document.getElementById("jobsDlg").open;
+  // 삭제 (confirm 자동 승인)
+  const oc = window.confirm; window.confirm = () => true;
+  document.getElementById("jobsBtn").click(); await new Promise((x) => setTimeout(x, 200));
+  document.querySelector(`#jobList li[data-id="${copy.id}"] [data-act=del]`).click(); await new Promise((x) => setTimeout(x, 300));
+  window.confirm = oc; document.getElementById("jobsDlg").close();
+  r.deleted = (await Jobs.all()).length === 1 && cur.id === null;
+  // 공유 링크: 원가 기본 제외, 사진 제외
+  await openShareDlg(snapshot()); const url = document.getElementById("shareUrl").value;
+  const back = await unpackJob(new globalThis.URL(url).hash);
+  r.share = /#v1=/.test(url) && back.fields.fStyle === "SS26-A" && !back.photo && !back.prod.cost.price && url.length < 12000;
+  document.getElementById("shareCost").checked = true; await makeShareUrl();
+  r.shareCost = (await unpackJob(new globalThis.URL(document.getElementById("shareUrl").value).hash)).prod.cost.price === 59000;
+  document.getElementById("shareCost").checked = false; await makeShareUrl();
+  document.getElementById("shareDlg").close();
+  r.url = document.getElementById("shareUrl").value; r.len = r.url.length;
+  return r;
+});
+const shareUrl = jobs.url; delete jobs.url;
+// 공유 링크를 다른 브라우저(새 사용자)에서 열기: 읽기 전용, 자동 저장이 기존 작업을 덮지 않음
+const ctx2 = await browser.createBrowserContext(); const pv = await ctx2.newPage(); const pvErr = []; pv.on("pageerror", (e) => pvErr.push(e.message));
+await pv.setViewport({ width: 1400, height: 900 });
+await pv.goto(URL, { waitUntil: "networkidle0" });
+await pv.evaluate(() => { localStorage.setItem("wo_autosave", JSON.stringify({ app: "작지", savedAt: new Date().toISOString(), state: { opt: { template: "pants" } }, fields: { fStyle: "MY-OWN" } })); });
+await pv.goto("about:blank"); await pv.goto(shareUrl, { waitUntil: "networkidle0" }); await new Promise((x) => setTimeout(x, 500));
+const view = await pv.evaluate(async () => ({
+  viewOnly: document.body.classList.contains("view-only") && !document.getElementById("viewBar").hidden,
+  panelHidden: getComputedStyle(document.querySelector(".panel")).display === "none",
+  same: document.getElementById("fStyle").textContent === "SS26-A" && document.getElementById("fBrand").textContent === "작지 샘플" && state.opt.template === "hoodie",
+  readOnly: document.getElementById("fStyle").getAttribute("contenteditable") === "false",
+  noCost: !state.prod.cost.price,
+  ownKept: JSON.parse(localStorage.getItem("wo_autosave")).fields.fStyle === "MY-OWN",
+}));
+await new Promise((x) => setTimeout(x, 900));
+view.ownKeptAfter = await pv.evaluate(() => JSON.parse(localStorage.getItem("wo_autosave")).fields.fStyle === "MY-OWN");
+await pv.evaluate(() => preparePrint());
+const viewPdf = mediaBoxes(await pv.pdf({ preferCSSPageSize: true }));
+view.print1 = viewPdf.length === 1 && !isPortrait(viewPdf[0]);
+// '내 스타일에 저장해서 고치기' → 주소에서 공유 내용이 빠지고, 목록에 생기고, 편집 가능한 화면으로 열림
+await Promise.all([pv.waitForNavigation({ waitUntil: "networkidle0" }), pv.click("#viewSave")]);
+await new Promise((x) => setTimeout(x, 500));
+const saved = await pv.evaluate(async () => ({ hash: location.hash, list: (await Jobs.all()).map((x) => x.name), cur: cur.id, edit: !document.body.classList.contains("view-only") && document.getElementById("fStyle").getAttribute("contenteditable") !== "false", style: document.getElementById("fStyle").textContent }));
+view.savedToList = saved.hash === "" && saved.list.length === 1 && /공유받음/.test(saved.list[0]) && !!saved.cur && saved.edit && saved.style === "SS26-A";
+// 손상된 링크
+await pv.goto("about:blank"); await pv.goto(URL.split("#")[0] + "#v1=AAAAbroken___", { waitUntil: "networkidle0" });
+view.broken = await pv.evaluate(() => /공유 링크를 열지 못했습니다/.test(document.getElementById("status").textContent) && !document.body.classList.contains("view-only"));
+await ctx2.close();
+ok("내 스타일: 저장·복제·자동 저장·열기·삭제 (이 브라우저 IndexedDB)", jobs.dlgOpen && jobs.two && jobs.autosaved && jobs.opened && jobs.deleted, JSON.stringify(jobs));
+ok("공유 링크: 내용은 # 뒤에 압축(서버 전송 없음), 사진·원가 기본 제외, 원가는 고를 때만", jobs.share && jobs.shareCost && pjSent.length === 0, `길이 ${jobs.len}자 · POST ${pjSent.length}건`);
+ok("공유 링크 열기: 읽기 전용 작업지시서, 내 작업 덮어쓰지 않음, 인쇄 A4 1장, 내 스타일에 저장해 고치기, 손상 링크 안내", Object.values(view).every(Boolean) && pvErr.length === 0, JSON.stringify(view) + (pvErr[0] || ""));
+const fbApp = await pj.evaluate(async () => {
+  document.getElementById("fbBtn").click(); await new Promise((x) => setTimeout(x, 200));
+  const d = document.getElementById("fbDlg"); const ok1 = d.open && !!d.querySelector("form textarea");
+  const ctx = window.JAKJI_CONTEXT(); d.close();
+  return ok1 && /품목 .+ · (남|여) \d+ · 탭 /.test(ctx) && !/data:image/.test(ctx);
+});
+ok("도구 화면 '의견 보내기': 비밀 의견 창이 열리고, 붙는 정보는 품목·사이즈·탭뿐", fbApp);
+await pj.close();
+
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });
 ok("모바일 375px 가로 스크롤 없음", await page.evaluate(() => document.documentElement.scrollWidth <= 376), String(await page.evaluate(() => document.documentElement.scrollWidth)));

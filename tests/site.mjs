@@ -125,6 +125,33 @@ ok("도구 화면 광고 자리 보이고, 인쇄에는 안 나오며 1장 유�
 fs.rmSync(tmp, { recursive: true, force: true });
 
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));
+/* 비밀 의견 보내기: 문의 페이지 양식 · 메일 방식 · 폼 서비스 방식(가짜 주소) */
+await page.setViewport({ width: 1280, height: 900 });
+await page.goto(BASE + "contact.html#feedback", { waitUntil: "networkidle0" });
+const fb = await page.evaluate(async () => {
+  const r = {};
+  const f = document.querySelector("[data-feedback] form");
+  r.form = !!f && /운영자만/.test(f.textContent) && !!f.querySelector("textarea") && !!f.querySelector("input[type=email]");
+  r.footer = [...document.querySelectorAll(".foot .links a")].some((a) => a.getAttribute("href") === "contact.html#feedback");
+  // 짧은 내용은 막음
+  f.querySelector("textarea").value = "짧"; f.querySelector(".fb-send").click();
+  r.short = /5자 이상/.test(f.querySelector(".fb-msg").textContent);
+  // 메일 방식: 내용이 채워진 대체 상자
+  f.querySelector("select").value = "오류 제보"; f.querySelector("textarea").value = "스커트 도식화가 휴대폰에서 작게 보여요";
+  f.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 300));
+  const body = f.querySelector(".fb-fallback textarea").value;
+  r.mail = !f.querySelector(".fb-fallback").hidden && body.includes("[종류] 오류 제보") && body.includes("휴대폰에서 작게") && body.includes("[기기 정보]") && f.querySelector(".fb-mail").textContent === window.SITE.contactEmail;
+  // 폼 서비스 방식: 가짜 fetch 로 보내는 내용 확인
+  const sent = []; const of = window.fetch; window.fetch = async (u, o) => { sent.push([u, [...o.body.entries()]]); return { ok: true }; };
+  window.SITE.feedbackEndpoint = "https://forms.example.test/abc"; const box = document.createElement("div"); document.querySelector("main").append(box); window.JakjiFeedback.mount(box);
+  const g = box.querySelector("form"); g.querySelector("textarea").value = "공유 링크 기능 좋아요!"; g.querySelector("input[type=email]").value = "me@example.com"; g.querySelector("input[type=checkbox]").checked = false;
+  g.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 300)); window.fetch = of;
+  const e = Object.fromEntries(sent[0]?.[1] || []);
+  r.endpoint = sent.length === 1 && sent[0][0] === "https://forms.example.test/abc" && e["내용"] === "공유 링크 기능 좋아요!" && e.email === "me@example.com" && !("기기 정보" in e) && /전달했습니다/.test(g.querySelector(".fb-msg").textContent);
+  return r;
+});
+ok("비밀 의견 보내기: 문의 페이지 양식·바닥 링크·짧은 글 막기·메일 방식·폼 서비스 방식", Object.values(fb).every(Boolean), JSON.stringify(fb));
+
 await browser.close();
 const fail = results.filter((r) => !r).length;
 console.log(`\n${results.length - fail}/${results.length} 통과`);

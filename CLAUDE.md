@@ -78,6 +78,17 @@
 - 상태 메시지 `setStatus()`는 패널 아래 `#status`와 사진 탭 `#status2` 두 곳에 같이 씀.
 - 탭: 작업지시서 · 도식화 편집 · 생산 준비 · 패턴 제도(베타) · 사진 분석(시험). 편집·생산 준비·사진 분석 탭에서 인쇄하면 작업지시서.
 
+## 내 스타일 · 공유 링크 (서버 없음)
+- 목록: IndexedDB `jakji`/`jobs` {id, name, item, updatedAt, thumb, data=snapshot}. `cur`={id,name}, 자동 저장이 목록의 지금 작업도 갱신. `Jobs.all/get/put/del`.
+- 공유: `packJob()` JSON→deflate-raw→base64url → `app.html#v1=…`(압축 불가 시 #v0=). 사진·원가 기본 제외(`shareSnapshot`). 받은 쪽은 `openShared()` 읽기 전용(body.view-only), **자동 저장 끔**(받은 사람 작업 보호). ‘내 스타일에 저장해서 고치기’ → sessionStorage `jk_open`. hashchange 시 새로 읽음.
+- 다음 단계: Firebase 로그인·기기 간 동기화·짧은 링크(로드맵 2단계).
+
+## 비밀 의견 보내기 (`assets/feedback.js`)
+- `[data-feedback]` 자리(문의 페이지 #feedback)와 도구의 '🔒 의견 보내기' 대화 상자에 양식을 그림. 운영자만 읽음(공개 게시판 아님).
+- `site.config.json`의 `feedbackEndpoint`(https, Formspree 같은 폼 서비스)가 있으면 POST로 바로 접수, 없으면 `contactEmail`로 내용이 채워진 mailto + 복사 대체 상자.
+- configure가 모든 페이지 head에 `window.SITE = {contactEmail, feedbackEndpoint, (adClient, adSlots)}`를 넣음. 도구는 `window.JAKJI_CONTEXT()`로 품목·사이즈·탭만 붙임(사진·작업 내용 X).
+- 폼 서비스로 바꾸면 privacy.html '의견 보내기'에 서비스 이름·보관 기간을 먼저 적을 것.
+
 ## 생산 준비 탭 (`#prod`, 1인 브랜드·학생용)
 - 상태 `state.prod` = { cost, colors, qty{"컬러|사이즈"}, care, careOpts, sample{name, meas, memo}, samples[] }. `snapshot().prod` ↔ `cleanProd()`(숫자·글자만, 길이 제한).
   - snapshot에서 도식화 표시는 `marks`(예전 파일의 `notes` 객체도 읽음), `notes`는 주의사항 줄 목록 — 이름 겹쳐 주의사항이 사라지던 문제 고침.
@@ -98,7 +109,7 @@
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 10개 품목 × 남/여 모두 렌더링 확인.
 - 잡화(`kind: "bag"`, 지금은 `pouch`)는 성별 호칭 대신 `BAG_SIZES` S·M·L(기준 M), 치수는 완성 치수. `sizeList()`·`ensureSizeSystem()`·`renderKindControls()` 참고.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 71개, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 23개, factory 포함: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 75개, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 24개, factory·비밀 의견 포함: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).

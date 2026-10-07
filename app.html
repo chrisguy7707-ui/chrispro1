@@ -19,6 +19,7 @@
 <meta property="og:image:height" content="630" />
 <meta property="og:locale" content="ko_KR" />
 <meta name="twitter:card" content="summary_large_image" />
+<script>window.SITE = {"contactEmail":"chris7707@naver.com","feedbackEndpoint":""};</script>
 <!-- SITE:HEAD-END -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
@@ -267,6 +268,36 @@
   .flash { outline: 3px solid var(--tape) !important; outline-offset: 1px; }
   @media print { #olz, #edit, #prod { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
+  /* 내 스타일 목록 · 공유 링크 (대화 상자) */
+  dialog.dlg { width: min(720px, calc(100vw - 24px)); max-height: calc(100vh - 40px); border: 0; border-radius: 24px; padding: 0; background: #fff; color: var(--ink); box-shadow: 0 30px 80px rgba(23,23,28,.35); }
+  dialog.dlg::backdrop { background: rgba(23,23,28,.45); }
+  .dlg-in { padding: 20px 22px 22px; display: grid; gap: 12px; }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .dlg-head h2 { margin: 0; font-size: 20px; letter-spacing: -0.03em; }
+  .dlg-x { border: 0; background: rgba(127,127,127,.12); width: 34px; height: 34px; border-radius: 50%; font-size: 18px; cursor: pointer; color: var(--ink); }
+  .dlg .note2 { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; }
+  .dlg .row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .dlg .row2 input[type=text] { flex: 1 1 220px; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
+  .dlg button.b { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .dlg button.b.pri { background: var(--mat); border-color: var(--mat); color: #fff; }
+  .dlg button.b.del { color: var(--mark); }
+  .job-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 46vh; overflow: auto; }
+  .job-list li { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 16px; }
+  .job-list li.cur { border-color: var(--tape); background: var(--lemon-soft); }
+  .job-list .thumb { width: 52px; height: 52px; border-radius: 12px; background: #f4f1ea center / cover no-repeat; display: grid; place-items: center; font-size: 11px; color: var(--ink-soft); }
+  .job-list .meta { min-width: 0; } .job-list .meta b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .job-list .meta small { color: var(--ink-soft); font-size: 12px; }
+  .job-list .acts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+  .job-list .acts button { padding: 6px 10px; font-size: 12.5px; }
+  @media (max-width: 560px) { .job-list li { grid-template-columns: 44px 1fr; } .job-list .thumb { width: 44px; height: 44px; } .job-list .acts { grid-column: 1 / -1; justify-content: flex-start; } }
+  .empty-jobs { padding: 18px; text-align: center; color: var(--ink-soft); font-size: 14px; border: 1px dashed var(--line); border-radius: 16px; }
+  #shareUrl { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  .view-bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; max-width: 1123px; margin-bottom: 14px; padding: 12px 16px; border-radius: 18px; background: var(--tape); color: #17171c; font-size: 14px; }
+  .view-bar b { flex: 1 1 260px; }
+  .view-bar button { border: 1px solid #17171c; background: transparent; color: #17171c; border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .view-bar button.pri { background: #17171c; color: #fff; }
+  body.view-only .app { grid-template-columns: 1fr; }
+  body.view-only .panel, body.view-only .tabs, body.view-only .stage-bar, body.view-only .jump, body.view-only .ad-slot { display: none !important; }
+  @media print { .view-bar, dialog.dlg { display: none !important; } }
   /* 휴대폰: 입력 패널과 결과(탭) 사이를 오가는 떠 있는 버튼 */
   .jump { display: none; }
   @media (max-width: 960px) {
@@ -423,11 +454,19 @@
       <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
       <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">사진 분석 <small style="font-weight:500;opacity:.8">시험</small></button>
     </div>
+    <div class="view-bar" id="viewBar" hidden>
+      <b id="viewTxt">공유받은 작업지시서입니다 (읽기 전용 · 사진 제외)</b>
+      <button class="pri" id="viewPrint">인쇄 · PDF 저장</button>
+      <button id="viewSave">내 스타일에 저장해서 고치기</button>
+    </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
       <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업)">작업 저장</button>
       <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
       <input type="file" id="jobFile" accept=".json,application/json" hidden />
+      <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
+      <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
+      <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
       <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
       <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
       <button id="savePatBtn" data-tab="pat" hidden>패턴 SVG 저장 (실물 크기)</button>
@@ -690,6 +729,38 @@
     </section>
     <div id="patPrint" aria-hidden="true"></div>
     <button class="jump" id="jumpBtn" type="button">결과 보기 ↓</button>
+    <dialog class="dlg" id="jobsDlg" aria-labelledby="jobsTitle">
+      <div class="dlg-in">
+        <div class="dlg-head"><h2 id="jobsTitle">내 스타일</h2><button class="dlg-x" data-close aria-label="닫기">×</button></div>
+        <p class="note2">이 브라우저 안에만 저장됩니다 (사진 포함, 서버로 보내지 않음). 브라우저 기록을 지우면 사라지니, 중요한 작업은 ‘작업 저장’ 파일로도 받아 두세요. 다른 기기로 옮길 때는 ‘공유’ 링크를 쓰세요.</p>
+        <div class="row2">
+          <input type="text" id="jobName" maxlength="60" placeholder="지금 작업 이름 (예: 반팔티 SS26-01)" aria-label="지금 작업 이름" />
+          <button class="b pri" id="jobSaveCur">지금 작업 저장</button>
+          <button class="b" id="jobNew">+ 새 스타일</button>
+        </div>
+        <p class="note2" id="jobMsg" role="status"></p>
+        <ul class="job-list" id="jobList"></ul>
+      </div>
+    </dialog>
+    <dialog class="dlg" id="fbDlg" aria-labelledby="fbTitle">
+      <div class="dlg-in">
+        <div class="dlg-head"><h2 id="fbTitle">의견 보내기</h2><button class="dlg-x" data-close aria-label="닫기">×</button></div>
+        <div id="fbBox"></div>
+      </div>
+    </dialog>
+    <dialog class="dlg" id="shareDlg" aria-labelledby="shareTitle">
+      <div class="dlg-in">
+        <div class="dlg-head"><h2 id="shareTitle">공유 링크</h2><button class="dlg-x" data-close aria-label="닫기">×</button></div>
+        <p class="note2">작업지시서 내용을 <b>링크 주소 안에 압축해 담습니다.</b> 서버에 저장하지 않으며, <b>링크를 받은 사람은 누구나</b> 이 작업지시서를 읽기 전용으로 보고 인쇄할 수 있습니다. 사진은 들어가지 않습니다.</p>
+        <label class="note2" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="shareCost" /> 원가·마진 정보도 넣기 <span style="color:var(--ink-soft)">(내 다른 기기로 옮길 때만 켜세요. 공장에 보낼 때는 끄기)</span></label>
+        <div class="row2">
+          <input type="text" id="shareUrl" readonly aria-label="공유 링크" />
+          <button class="b pri" id="shareCopy">링크 복사</button>
+          <button class="b" id="shareSend" hidden>보내기</button>
+        </div>
+        <p class="note2" id="shareMsg" role="status"></p>
+      </div>
+    </dialog>
     <style id="pageStyle">@page { size: A4 landscape; margin: 7mm; }</style>
   </main>
 </div>
@@ -2396,6 +2467,156 @@ function cleanProd(p) {
   return out;
 }
 
+/* ====================================================================== 내 스타일 목록 (IndexedDB) · 공유 링크 (주소 # 뒤에 압축)
+   서버 없음. 목록은 이 브라우저에만, 공유 링크는 내용이 주소 안에 들어 있어 받은 사람 누구나 읽기 전용으로 봄 (사진 제외) */
+const cur = { id: null, name: "" };      // 지금 화면의 작업이 목록의 어느 항목인지
+let viewOnly = false;
+function setCur(id, name) { cur.id = typeof id === "string" && /^[a-z0-9-]{6,40}$/.test(id) ? id : null; cur.name = str(name, 60); }
+const Jobs = (() => {
+  let dbp = null;
+  const db = () => dbp || (dbp = new Promise((ok, no) => {
+    const r = indexedDB.open("jakji", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("jobs", { keyPath: "id" });
+    r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+  }));
+  const tx = async (mode, fn) => { const d = await db(); return new Promise((ok, no) => { const t = d.transaction("jobs", mode); const st = t.objectStore("jobs"); const r = fn(st); t.oncomplete = () => ok(r && r.result); t.onerror = () => no(t.error); }); };
+  return { all: () => tx("readonly", (st) => st.getAll()), get: (id) => tx("readonly", (st) => st.get(id)), put: (rec) => tx("readwrite", (st) => st.put(rec)), del: (id) => tx("readwrite", (st) => st.delete(id)) };
+})();
+const newId = () => Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+const defaultName = (snap) => [snap?.fields?.fStyle, snap?.fields?.fItem].filter((x) => x && String(x).trim()).join(" · ").slice(0, 60) || "이름 없는 스타일";
+function jobRecord(id, name, snap) {
+  return { id, name: name || defaultName(snap), item: str(snap?.fields?.fItem, 40), updatedAt: Date.now(), thumb: snap?.photo || null, data: snap };
+}
+async function refreshJobsCount() { try { const n = (await Jobs.all()).length; $("jobsCount").textContent = n ? `(${n})` : ""; } catch (e) { $("jobsCount").textContent = ""; } }
+const fmtDate = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+async function renderJobs() {
+  let list = [];
+  try { list = (await Jobs.all()).sort((a, b) => b.updatedAt - a.updatedAt); } catch (e) { $("jobMsg").textContent = "이 브라우저에서는 목록 저장을 쓸 수 없습니다 (사생활 보호 모드 등). ‘작업 저장’ 파일을 써 주세요."; }
+  if (document.activeElement !== $("jobName")) $("jobName").value = cur.name || "";
+  $("jobSaveCur").textContent = cur.id ? "이름 저장" : "지금 작업 저장";
+  $("jobList").innerHTML = !list.length ? `<li class="empty-jobs" style="display:block">아직 저장한 스타일이 없습니다. 위에서 ‘지금 작업 저장’을 누르세요.</li>`
+    : list.map((r) => `<li class="${r.id === cur.id ? "cur" : ""}" data-id="${esc(r.id)}">
+        <span class="thumb" ${typeof r.thumb === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(r.thumb) ? `style="background-image:url('${r.thumb}')"` : ""}>${r.thumb ? "" : "사진 없음"}</span>
+        <span class="meta"><b>${esc(r.name)}</b><small>${esc(T[r.data?.state?.opt?.template]?.name || "")} · ${fmtDate(r.updatedAt)}${r.id === cur.id ? " · 지금 작업" : ""}</small></span>
+        <span class="acts"><button class="b" data-act="open">열기</button><button class="b" data-act="copy">복제</button><button class="b" data-act="share">공유</button><button class="b del" data-act="del">삭제</button></span></li>`).join("");
+  refreshJobsCount();
+}
+async function saveCurrent(name) {
+  const snap = snapshot();
+  if (!cur.id) setCur(newId(), name || defaultName(snap)); else if (name) cur.name = str(name, 60);
+  snap.jobId = cur.id; snap.jobName = cur.name;
+  await Jobs.put(jobRecord(cur.id, cur.name, snap));
+  try { localStorage.setItem("wo_autosave", JSON.stringify(snap)); } catch (e) {}
+}
+async function openJob(rec) {
+  await restore(rec.data); setCur(rec.id, rec.name);
+  setStatus(`‘${rec.name}’을(를) 열었습니다.`); scheduleSave();
+}
+// 지금 작업이 목록에 없으면 바꾸기 전에 물어봄
+async function keepCurrentFirst() {
+  if (cur.id) { await saveCurrent(); return true; }
+  if (confirm("지금 화면의 작업은 아직 ‘내 스타일’에 없습니다.\n목록에 저장한 뒤 바꿀까요?\n\n[확인] 저장하고 바꾸기   [취소] 저장하지 않고 바꾸기")) await saveCurrent($("jobName").value.trim());
+  return true;
+}
+$("jobsBtn").addEventListener("click", async () => { $("jobMsg").textContent = ""; await renderJobs(); $("jobsDlg").showModal(); });
+document.querySelectorAll("dialog.dlg [data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
+$("jobSaveCur").addEventListener("click", async () => {
+  try { await saveCurrent($("jobName").value.trim()); $("jobMsg").textContent = `‘${cur.name}’으로 저장했습니다. 이제 고치는 내용이 자동으로 저장됩니다.`; renderJobs(); }
+  catch (e) { $("jobMsg").textContent = "저장하지 못했습니다. 브라우저 저장 공간이 부족하거나 막혀 있을 수 있습니다."; }
+});
+$("jobNew").addEventListener("click", async () => {
+  await keepCurrentFirst();
+  try { localStorage.removeItem("wo_autosave"); } catch (e) {}
+  location.href = location.pathname;   // 처음 상태로 새로 시작
+});
+$("jobList").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const id = btn.closest("li").dataset.id, rec = await Jobs.get(id); if (!rec) return renderJobs();
+  const act = btn.dataset.act;
+  if (act === "open") { if (id !== cur.id) { await keepCurrentFirst(); await openJob(rec); } $("jobsDlg").close(); }
+  if (act === "copy") { const c = { ...rec, id: newId(), name: (rec.name + " 복사본").slice(0, 60), updatedAt: Date.now(), data: { ...rec.data } }; c.data.jobId = c.id; c.data.jobName = c.name; await Jobs.put(c); $("jobMsg").textContent = `‘${c.name}’을(를) 만들었습니다.`; renderJobs(); }
+  if (act === "share") { $("jobsDlg").close(); openShareDlg(rec.data); }
+  if (act === "del") {
+    if (!confirm(`‘${rec.name}’을(를) 목록에서 지울까요? 되돌릴 수 없습니다.`)) return;
+    await Jobs.del(id); if (id === cur.id) setCur(null, ""); $("jobMsg").textContent = "지웠습니다."; renderJobs();
+  }
+});
+
+/* 공유 링크: JSON → deflate-raw 압축 → base64url → #v1=…  (압축을 못 쓰는 브라우저는 #v0=, 압축 없이) */
+const b64u = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const unb64u = (t) => { const s = atob(t.replace(/-/g, "+").replace(/_/g, "/")); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+function shareSnapshot(src, withCost) {
+  const j = JSON.parse(JSON.stringify(src));
+  delete j.photo; delete j.jobId; delete j.jobName;
+  if (!withCost && j.prod) j.prod.cost = {};
+  return j;
+}
+async function packJob(obj) {
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream === "function") {
+    const out = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+    return "v1=" + b64u(out);
+  }
+  return "v0=" + b64u(bytes);
+}
+async function unpackJob(hash) {
+  const m = /^#?(v[01])=([A-Za-z0-9_-]{10,400000})$/.exec(hash); if (!m) throw new Error("형식이 맞지 않음");
+  let bytes = unb64u(m[2]);
+  if (m[1] === "v1") {
+    if (typeof DecompressionStream !== "function") throw new Error("이 브라우저는 압축 링크를 열 수 없음");
+    bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+  }
+  if (bytes.length > 3e6) throw new Error("너무 큼");
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+let shareSrc = null;
+async function makeShareUrl() {
+  const h = await packJob(shareSnapshot(shareSrc, $("shareCost").checked));
+  const url = location.origin + location.pathname + "#" + h;
+  $("shareUrl").value = url;
+  $("shareMsg").textContent = `링크 길이 ${url.length.toLocaleString("ko-KR")}자${url.length > 8000 ? " · 길어서 일부 메신저에서 잘릴 수 있습니다. 잘리면 ‘작업 저장’ 파일로 보내 주세요." : ""}`;
+}
+async function openShareDlg(src) {
+  shareSrc = src; $("shareCost").checked = false; $("shareUrl").value = "만드는 중…"; $("shareMsg").textContent = "";
+  $("shareSend").hidden = !navigator.share;
+  $("shareDlg").showModal(); await makeShareUrl();
+}
+$("shareBtn").addEventListener("click", () => openShareDlg(snapshot(false)));
+$("shareCost").addEventListener("change", makeShareUrl);
+$("shareCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("shareUrl").value); $("shareMsg").textContent = "링크를 복사했습니다. 카카오톡·메일에 붙여 넣어 보내세요."; }
+  catch (e) { $("shareUrl").select(); $("shareMsg").textContent = "자동 복사가 막혀 있습니다. 선택된 링크를 직접 복사(Ctrl·Cmd+C)해 주세요."; }
+});
+$("shareSend").addEventListener("click", async () => { try { await navigator.share({ title: `작업지시서 ${txt("fStyle")}`, url: $("shareUrl").value }); } catch (e) {} });
+$("shareUrl").addEventListener("focus", (e) => e.target.select());
+
+/* 공유 링크로 열었을 때: 읽기 전용 보기 */
+let sharedSnap = null;
+async function openShared(hash) {
+  const j = await unpackJob(hash);
+  await restore(j);
+  sharedSnap = j; viewOnly = true;
+  document.body.classList.add("view-only");
+  $("sheet").querySelectorAll("[contenteditable]").forEach((n) => n.setAttribute("contenteditable", "false"));
+  $("viewTxt").textContent = `공유받은 작업지시서입니다: ${txt("fStyle") || ""} ${txt("fItem") || ""} (읽기 전용 · 사진 제외)`;
+  $("viewBar").hidden = false;
+  fitScreen(); fitPrint();
+}
+$("viewPrint").addEventListener("click", () => $("printBtn").click());
+/* 비밀 의견: assets/feedback.js. 오류 확인용으로 지금 품목·탭만 붙임 (작업 내용·사진은 보내지 않음) */
+window.JAKJI_CONTEXT = () => `품목 ${itemName()} · ${state.gender === "m" ? "남" : "여"} ${state.base} · 탭 ${activeTab}`;
+let fbReady = false;
+$("fbBtn").addEventListener("click", () => { if (!fbReady && window.JakjiFeedback) { window.JakjiFeedback.mount($("fbBox")); fbReady = true; } $("fbDlg").showModal(); });
+// 앱이 열린 탭에 공유 링크를 붙여 넣으면 주소의 # 뒤만 바뀌어 새로 읽지 않음 → 새로 읽어 공유 보기로
+window.addEventListener("hashchange", () => { if (/^#v[01]=/.test(location.hash)) location.reload(); });
+$("viewSave").addEventListener("click", async () => {
+  const id = newId(), name = (defaultName(sharedSnap) + " (공유받음)").slice(0, 60);
+  const data = { ...sharedSnap, jobId: id, jobName: name };
+  try { await Jobs.put(jobRecord(id, name, data)); sessionStorage.setItem("jk_open", id); }
+  catch (e) { setStatus("이 브라우저에는 저장할 수 없습니다. 사생활 보호 모드인지 확인해 주세요.", true); return; }
+  location.href = location.pathname;   // 주소에서 공유 내용을 지우고, 저장한 스타일로 다시 열기
+});
+
 /* ====================================================================== 작업 저장 · 열기 · 자동 저장
    저장 내용: 선택 상태, 작업지시서 글자(머리 정보·치수표 수정·부자재·봉제·주의), 4단계 입력, 사진, 패턴 탭 입력.
    다시 열 때는 글자만 넣고(textContent) HTML은 받지 않음 → 다른 사람이 준 파일도 안전하게 열 수 있음 */
@@ -2403,7 +2624,7 @@ const JOB = { app: "작지", v: 1 };
 const JOB_OLD = ["옷만들기 도면 메이커", "마름"];   // 이름을 바꾸기 전에 저장한 작업 파일도 열기
 const lines = (n) => n.innerText.split("\n").map((x) => x.trim()).filter(Boolean);
 function snapshot(withPhoto = true) {
-  return { ...JOB, savedAt: new Date().toISOString(),
+  return { ...JOB, savedAt: new Date().toISOString(), jobId: cur.id, jobName: cur.name,
     state: { gender: state.gender, sizes: [...state.sizes], base: state.base, label: state.label, opt: { ...state.opt }, ai: state.ai },
     inputs: { oColor: $("oColor").value, oItem: $("oItem").value, oFabric: $("oFabric").value },
     fields: Object.fromEntries([...$("sheet").querySelectorAll("td[contenteditable][id]")].map((n) => [n.id, n.textContent])),
@@ -2484,17 +2705,19 @@ $("jobFile").addEventListener("change", async (e) => {
 /* 자동 저장: 이 브라우저에만 (localStorage). 사진까지 넣다가 용량이 넘치면 사진 없이 */
 let saveTimer = null, autosaveOn = false;
 function scheduleSave() {
-  if (!autosaveOn) return;
+  if (!autosaveOn || viewOnly) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    try { localStorage.setItem("wo_autosave", JSON.stringify(snapshot())); }
+    const snap = snapshot();
+    try { localStorage.setItem("wo_autosave", JSON.stringify(snap)); }
     catch (e) { try { localStorage.setItem("wo_autosave", JSON.stringify(snapshot(false))); } catch (e2) {} }
+    if (cur.id) Jobs.put(jobRecord(cur.id, cur.name, snap)).catch(() => {});
   }, 700);
 }
 ["input", "change", "click"].forEach((ev) => document.addEventListener(ev, scheduleSave));
 
 /* ====================================================================== 시작 */
-(function init() {
+(async function init() {
   const d = new Date();
   $("fDate").textContent = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
   $("fStyle").textContent = `WO-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-01`;
@@ -2510,17 +2733,6 @@ function scheduleSave() {
     new IntersectionObserver(([e]) => { atStage = e.isIntersecting; jb.textContent = atStage ? "↑ 사이즈·디테일" : "결과 보기 ↓"; jb.classList.toggle("up", atStage); }, { rootMargin: "0px 0px -40% 0px" }).observe(document.querySelector(".stage"));
     jb.addEventListener("click", () => (atStage ? document.querySelector(".panel") : document.querySelector(".stage")).scrollIntoView({ behavior: "smooth", block: "start" }));
   }
-  let prev = null;
-  try { prev = JSON.parse(localStorage.getItem("wo_autosave") || "null"); } catch (e) {}
-  if (prev && prev.app === JOB.app) {
-    const t = new Date(prev.savedAt);
-    $("restoreTxt").textContent = `이전 작업이 있습니다 (${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} · ${T[prev.state?.opt?.template]?.name || ""})`;
-    $("restoreBar").hidden = false;
-    $("restoreBtn").addEventListener("click", async () => { $("restoreBar").hidden = true; await restore(prev); setStatus("이전 작업을 불러왔습니다."); scheduleSave(); });
-    $("restoreNo").addEventListener("click", () => { $("restoreBar").hidden = true; scheduleSave(); });
-  }
-  autosaveOn = true;
-
   // claude.ai 안에서 열리면 Claude로 분석, 아니면 기기 안 인식
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("sample").then(async (s) => {
@@ -2532,8 +2744,29 @@ function scheduleSave() {
   } else {
     $("manualHint").hidden = false;
   }
+  refreshJobsCount();
+  // 공유 링크(#v1=…)로 열리면 읽기 전용 보기. 이때는 자동 저장을 켜지 않아 이 기기의 작업을 덮어쓰지 않음
+  if (/^#v[01]=/.test(location.hash)) {
+    try { await openShared(location.hash); return; }
+    catch (e) { setStatus("공유 링크를 열지 못했습니다. 링크가 잘렸거나 손상되었을 수 있습니다. 보낸 사람에게 다시 받아 주세요.", true); history.replaceState(null, "", location.pathname); }
+  }
+  let openId = null;
+  try { openId = sessionStorage.getItem("jk_open"); sessionStorage.removeItem("jk_open"); } catch (e) {}
+  if (openId) { const rec = await Jobs.get(openId).catch(() => null); if (rec) { await openJob(rec); autosaveOn = true; return; } }
+  let prev = null;
+  try { prev = JSON.parse(localStorage.getItem("wo_autosave") || "null"); } catch (e) {}
+  if (prev && [JOB.app, ...JOB_OLD].includes(prev.app)) {
+    const t = new Date(prev.savedAt);
+    $("restoreTxt").textContent = `이전 작업이 있습니다 (${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} · ${T[prev.state?.opt?.template]?.name || ""})`;
+    $("restoreBar").hidden = false;
+    $("restoreBtn").addEventListener("click", async () => { $("restoreBar").hidden = true; await restore(prev); setCur(prev.jobId, prev.jobName); setStatus("이전 작업을 불러왔습니다."); scheduleSave(); });
+    $("restoreNo").addEventListener("click", () => { $("restoreBar").hidden = true; scheduleSave(); });
+  }
+  autosaveOn = true;
+
 })();
 </script>
 <script src="assets/site.js" defer></script>
+<script src="assets/feedback.js" defer></script>
 </body>
 </html>
