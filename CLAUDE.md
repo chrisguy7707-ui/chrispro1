@@ -14,7 +14,7 @@
 ## 도구 구조 (`app.html` 한 파일에 HTML/CSS/JS)
 - 분석 엔진 3단 구조 (`analyze()`):
   1. claude.ai 아티팩트로 열렸을 때: `window.claude.use("sample")` → Claude가 사진 분석 (키 불필요)
-  2. 그 외(직접 호스팅): Gemini API 키 입력 → `generateContent` + `responseMimeType: application/json`
+  2. (Google Gemini 경로는 2026-10-07에 제거. 다시 넣을지 검토 중 — 넣는다면 git 기록의 `analyzeWithGemini`·키 받기 탭 참고. 무료 등급 불안정·AQ. 키 문제 주의)
   3. 키 없음(공개 사이트 기본): **기기 안 인식** `analyzeLocal()`/`applyLocal()`. 사진 올리면 자동 실행.
      - transformers.js 4.3.0(jsDelivr) + `Xenova/mobileclip_s0` 사진 모델 **fp16**(23MB). q8 양자화 모델은 출력이 망가지므로 쓰지 말 것.
      - 글자 쪽은 `scripts/build-clip-labels.mjs`로 미리 임베딩해 `assets/clip-labels.json`(그룹별 후보: template·fit·neck·closure·rib·shape·주머니·color).
@@ -27,8 +27,25 @@
 - 하의(pants·shorts·skirt) 사이즈 표기: `INCH`(호칭→허리 인치) + `state.label`(num / both / inch), `sizeLabel()`로 칩·치수표 머리·사이즈 칸에 공통 적용.
   - 남 80~110 → 28·29·30·31·32·34·36, 여 44~88 → 24·26·28·30·32. `T` 허리단면×2÷2.54와 ±1인치 안에서 맞춘 참고값.
 - 도식화는 SVG 파라메트릭 드로잉: `drawTop`, `drawPants`, `drawSkirt`, `buildSVG`.
+  - **상의·원피스·바지·반바지는 치수표 기준 사이즈 열의 비율로 그림** (`baseVals()`: 화면 치수표가 지금 품목 것이면 고친 값 포함, 아니면 `specValues()` 계산값 — `specTable.dataset.key`로 확인).
+    배율 k = 상의 min(185/총장, 76/(가슴단면/2), 2.9), 바지 min(282/총장, 140/엉덩이단면). 치수 칸을 고치면 0.25초 뒤 도식화 다시 그림.
+  - 치수가 아닌 디테일 선택: 상의 `sleeve`(set·drop·raglan)·`hem`(straight·curved), 바지 `waist`(fixed·elastic)·`fpocket`(slant·scoop)·`bpocket`(patch·welt)·`cargo`·`pleat`.
+    `renderKindControls()`가 품목별로 보이는 선택을 정함. 패턴에는 `Pattern.OPT_KEYS`만 넘김(도식화 `hem`이 패턴 밑단 둘레 `hem`과 겹치지 않게).
+  - AI(claude.ai 안의 Claude)는 위 디테일 + `ratios`(상의: 총장÷가슴·소매÷총장·밑단÷가슴, 바지: 밑단÷허벅지·밑위÷총장)를 줌. 비율은 `showRatioHints()`로 **제안만** 보이고, 사용자가 눌러야 `setBaseValue()`로 치수표 반영.
+  - 기기 안 인식(CLIP)은 새 디테일을 아직 판단하지 않음 (직접 선택 또는 claude.ai 안의 Claude).
   - 치수 기호(A, B, C…)를 빨간 점선으로 도식화에 표시 → 치수표 기호 열과 연결.
 - 출력: `window.print()`(A4 가로 1장, `@media print`에서 zoom .93), HTML 파일 저장, SVG 저장.
+
+## 대분류 → 소분류 (`CATS`, `STYLES`)
+- 스타일 = 엔진 `template`(T의 10종) + 디테일 `opt` + 치수 보정 `spec`(기준 사이즈에 더할 cm). `specValues()`가 `styleOf().spec`을 더함.
+- UI는 `oCat`·`oStyle`, 엔진 칸 `oTemplate`는 숨김(사진 인식·AI·검사가 씀 → 바뀌면 `DEFAULT_STYLE`로). 품명 기본값 = 소분류 이름 `itemName()`.
+- 새 모양: 민소매(`sleeve: "none"`, 패턴은 소매 대신 진동 바이어스), 카라티 반오픈(`closure: "placket"`), 조거 밑단 시보리(`legRib`), 스커트 `mermaid`·`wrap`.
+- 스커트도 치수표 비율(`skirtGeom()`).
+
+## 도식화 편집 탭 (캔버스)
+- `editHandles()`: 품목별 손잡이(상의 7·바지 6·스커트 3·원피스 6, 파우치 없음) = [측정부위, 위치, 끌 방향, 좌표→cm]. 끌면 `setBaseValue()` → `renderFlats()`.
+- 표시 `state.notes = {front, back}`: text·arrow·circle. `annoSVG()`로 `buildSVG()` 끝에 그림 → 작업지시서·인쇄·HTML·SVG·작업 저장에 포함. 복원은 숫자·글자만(`cleanNote`).
+- 편집기 화면은 화살촉 id를 `ed-` 접두어로 바꿈(숨긴 작업지시서 SVG의 같은 id를 가리키면 안 보임). 되돌리기는 치수표 칸 + 표시 JSON 스냅숏 40개.
 
 ## 패턴 제도 (`assets/pattern.js`, app.html의 '패턴 제도' 탭)
 - `Pattern.TYPES`에 품목별 { name, fields, presets, draft }.
@@ -56,20 +73,12 @@
 - 치수: 줄별 구간(run)으로 픽셀 측정 → 사진 위 기준선(두 점 + 실제 cm)으로 환산 → 고른 항목만 치수표 기준 열에 넣고 다른 사이즈는 같은 차이만큼 이동.
 - 합성 사진(앱 도식화를 회색 바닥에) 기준 오차 3.5% 이내를 검사로 유지. 실제 사진 한계: 입은 사진·복잡한 배경·여러 개 겹침·흰 옷+흰 배경.
 
-## Gemini 키 받기 탭 ('🔑 Gemini 키 받기', 강조)
-- `checkGeminiKey()`: `GET v1beta/models`(헤더 x-goog-api-key)로 키 확인 → `gKey`·localStorage 저장. 기본 모델 `GEMINI_DEFAULT`가 목록에 없으면 lite·image 등을 뺀 Flash(정식 우선)로 바꿈.
-- 키 모양 검사는 공백 없는 20자 이상만 봄: 2026년부터 AI Studio는 **`AQ.`로 시작하는 인증 키**만 발급(예전 `AIza`도 허용). 점(.)을 막으면 새 키가 전부 막힘.
-- 401 `ACCESS_TOKEN_TYPE_UNSUPPORTED`: 일부 계정에서 AQ. 키가 Google 쪽 문제로 거부되는 사례(공식 포럼 다수 보고, 헤더·?key=·Bearer 모두 실패) → 원인과 대안(새 프로젝트로 재발급, 기기 안 인식) 안내.
-- 모델 고르기: `flashCandidates()` = 정식 Flash(최신 버전 먼저) → 미리보기 → lite. 키 확인 때 미리보기 대신 정식 Flash로 정함, 목록은 `wo_gmodels`에 보관.
-- 분석 중 503·429·500(붐빔)이면 1.5초 쉬고 다음 후보로 최대 3개 → 성공한 모델을 다음부터 먼저. 모두 실패하면 `code: "busy"` → 인식 모델을 받은 브라우저면 기기 안 인식으로 대신 채움.
-- 키는 작업 저장 파일(snapshot)에 넣지 않음. 안내 문구의 사실(자동 프로젝트·키 생성, 무료 등급 데이터 사용)은 ai.google.dev 공식 문서 기준 — 바뀌면 함께 고칠 것.
-
 ## 규칙
 - 한국어 UI, 공장 용어(시보리, 오버록, 2본침, 커버스티치, 요척 등) 유지.
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 10개 품목 × 남/여 모두 렌더링 확인.
 - 잡화(`kind: "bag"`, 지금은 `pouch`)는 성별 호칭 대신 `BAG_SIZES` S·M·L(기준 M), 치수는 완성 치수. `sizeList()`·`ensureSizeSystem()`·`renderKindControls()` 참고.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 58개, Gemini 키 확인(가짜 응답) 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 65개, 소분류 34종·도식화 편집(끌기·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, Gemini 키 확인(가짜 응답) 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).

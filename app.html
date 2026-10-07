@@ -116,6 +116,11 @@
   .status { margin-top: 10px; font-size: 13px; line-height: 1.5; min-height: 1.5em; }
   .status.err { color: #ffd2cc; }
   #guess .chip small { opacity: .75; margin-left: 4px; }
+  .ratio-hints { margin-top: 10px; background: rgba(0,0,0,.18); border: 1px solid var(--tape); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+  .ratio-hints small { display: block; opacity: .8; margin: 2px 0 4px; }
+  .ratio-hints ul { margin: 4px 0 8px; padding-left: 4px; list-style: none; }
+  .ratio-hints button { border: 0; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; background: var(--tape); color: var(--mat-deep); font-weight: 700; }
+  .ratio-hints button#ratioClose { background: transparent; color: var(--mat-ink); border: 1px solid rgba(255,255,255,.4); font-weight: 500; }
   details.key { margin-top: 10px; font-size: 13px; }
   details.key summary { cursor: pointer; }
 
@@ -163,9 +168,6 @@
   .tabs button { border: 0; background: transparent; color: var(--ink-soft); font: inherit; font-size: 15px; font-weight: 700; padding: 9px 16px; border-radius: 8px 8px 0 0; cursor: pointer; }
   .tabs button[aria-selected="true"] { background: var(--mat); color: #fff; }
   .tabs { flex-wrap: wrap; }
-  .tabs button.hl { margin-left: auto; background: var(--tape); color: var(--mat-deep); box-shadow: 0 0 0 2px var(--tape); }
-  .tabs button.hl[aria-selected="true"] { background: var(--mat-deep); color: var(--tape); }
-  @media (max-width: 600px) { .tabs button.hl { margin-left: 0; } }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button:not([aria-selected="true"]) { color: #b8c2bc; } }
   :root[data-theme="dark"] .tabs button:not([aria-selected="true"]) { color: #b8c2bc; }
   .pat { width: 1123px; max-width: 100%; background: var(--paper); color: var(--ink); padding: 18px 20px; box-shadow: 0 2px 18px rgba(0,0,0,.18); }
@@ -189,17 +191,19 @@
   .pat-calc p { margin: 0 0 6px; font-size: 12px; line-height: 1.6; }
   .pat-legend span { display: inline-block; margin-right: 12px; }
   #patPrint { display: none; }
-  .key-guide h2 { margin: 0 0 6px; font-size: 22px; } .key-guide h2 small { font-size: 13px; color: var(--ink-soft); font-weight: 500; }
-  .key-guide .lead { margin: 0 0 12px; font-size: 14px; line-height: 1.65; }
-  .key-steps { counter-reset: k; list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }
-  .key-steps li { counter-increment: k; position: relative; padding: 10px 12px 10px 46px; border: 1px solid var(--rule); border-radius: 10px; font-size: 14px; line-height: 1.6; }
-  .key-steps li::before { content: counter(k); position: absolute; left: 12px; top: 10px; width: 24px; height: 24px; border-radius: 50%; background: var(--tape); color: var(--mat-deep); font-weight: 700; display: grid; place-items: center; font-size: 13px; }
-  .key-steps a, .key-notes a { color: var(--mat); font-weight: 700; }
-  .key-box { background: #fff8dc; border: 1.5px solid var(--tape); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
-  .key-row { display: flex; gap: 8px; margin-top: 6px; } .key-row input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; }
-  .key-row .olz-btn { width: auto; margin: 0; padding: 9px 16px; }
-  #keyResult { margin: 8px 0 4px; font-size: 13px; line-height: 1.5; } #keyResult.ok { color: var(--mat); font-weight: 700; } #keyResult.err { color: var(--mark); }
-  .key-guide h3 { font-size: 15px; margin: 6px 0; } .key-notes { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.7; }
+  .ed-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .ed-bar button { border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 8px; padding: 7px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+  .ed-bar button[aria-pressed="true"] { background: var(--mat); border-color: var(--mat); color: #fff; font-weight: 700; }
+  .ed-bar input { flex: 1 1 180px; min-width: 140px; padding: 7px 9px; border: 1px solid var(--rule); border-radius: 8px; font: inherit; font-size: 13px; background: #fff; color: #1d1d1b; }
+  .ed-sep { flex: 0 0 8px; }
+  .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  @media (max-width: 760px) { .ed-grid { grid-template-columns: 1fr; } }
+  .ed-grid figure { margin: 0; border: 1px solid var(--ink); }
+  .ed-grid figcaption { font-size: 12px; color: var(--ink-soft); text-align: center; padding: 4px; border-top: 1px dashed var(--rule); }
+  .ed-view svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .ed-view .hd { cursor: grab; } .ed-view .hd:hover circle { r: 7; }
+  .ed-view [data-i] { cursor: pointer; }
+  .ed-tip { font: 700 9px sans-serif; fill: #c62828; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
   .olz-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; margin-top: 12px; align-items: start; }
   @media (max-width: 960px) { .olz-grid { grid-template-columns: 1fr; } }
   .olz-view { border: 1px solid var(--ink); background: #f4f4f1; }
@@ -220,7 +224,7 @@
   .olz-table th { white-space: nowrap; }
   .olz-table td.n { text-align: right; font-weight: 700; white-space: nowrap; }
   .olz-table small { color: var(--ink-soft); display: block; font-size: 11px; }
-  @media print { #olz, #keyGuide { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
+  @media print { #olz, #edit { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
   @media print {
     body { background: #fff; }
@@ -296,21 +300,22 @@
     <section class="step">
       <h2><span class="n">3</span>사진 분석 <span style="font-weight:400;opacity:.75">(선택)</span></h2>
       <button class="btn" id="analyzeBtn">사진으로 도식화·작업지시서 만들기</button>
-      <details class="key" id="keyBox" hidden>
-        <summary>Gemini API 키 (이 사이트를 직접 호스팅할 때)</summary>
-        <input type="password" id="gKey" placeholder="AQ.... 또는 AIza..." autocomplete="off" />
-        <input type="text" id="gModel" placeholder="모델명 (기본 gemini-3-flash-preview)" />
-        <p class="hint">키는 이 브라우저에만 저장됩니다. 키가 없으면 기기 안 인식을 씁니다. <a href="#" id="keyGuideLink" style="color:var(--tape);font-weight:700">키 받는 법 →</a></p>
-      </details>
       <p class="hint" id="manualHint" hidden><b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않습니다. 처음 한 번은 버튼을 눌러 인식 모델(약 23MB)을 받고, 그다음부터는 사진을 올리면 바로 인식합니다.</p>
       <div class="status" id="status" role="status"></div>
+      <div class="ratio-hints" id="ratioHints" hidden></div>
       <div class="chips" id="guess" aria-label="인식 후보" hidden></div>
     </section>
 
     <section class="step">
       <h2><span class="n">4</span>디테일 확인·수정</h2>
       <div class="grid2">
-        <label class="f">품목
+        <label class="f">대분류
+          <select id="oCat"></select>
+        </label>
+        <label class="f">소분류
+          <select id="oStyle"></select>
+        </label>
+        <label class="f" hidden>품목 (엔진)
           <select id="oTemplate">
             <option value="top_short">반팔 티셔츠</option>
             <option value="top_long">긴팔 티·맨투맨</option>
@@ -331,13 +336,28 @@
           <select id="oNeck"><option value="crew">라운드</option><option value="v">브이넥</option><option value="collar">셔츠 칼라</option><option value="hood">후드</option><option value="mock">하이넥</option></select>
         </label>
         <label class="f">여밈
-          <select id="oClosure"><option value="none">없음</option><option value="buttons">단추</option><option value="zip">지퍼</option><option value="half_zip">반지퍼</option></select>
+          <select id="oClosure"><option value="none">없음</option><option value="buttons">단추</option><option value="zip">지퍼</option><option value="half_zip">반지퍼</option><option value="placket">반오픈 단추 (카라티)</option></select>
         </label>
         <label class="f">밑단·소매단
           <select id="oRib"><option value="plain">일반 접단</option><option value="rib">시보리(골지)</option></select>
         </label>
+        <label class="f">소매 종류
+          <select id="oSleeve"><option value="set">일반 (셋인)</option><option value="drop">드롭숄더</option><option value="raglan">래글런</option><option value="none">민소매</option></select>
+        </label>
+        <label class="f">밑단 모양
+          <select id="oHem"><option value="straight">일자</option><option value="curved">라운드 (셔츠형)</option></select>
+        </label>
+        <label class="f">허리
+          <select id="oWaist"><option value="fixed">고정 (단추·지퍼)</option><option value="elastic">고무줄·끈</option></select>
+        </label>
+        <label class="f">앞주머니 모양
+          <select id="oFpocket"><option value="slant">사선</option><option value="scoop">청바지형</option></select>
+        </label>
+        <label class="f">뒷주머니 모양
+          <select id="oBpocket"><option value="patch">아웃포켓 (요크)</option><option value="welt">입술 주머니 (다트)</option></select>
+        </label>
         <label class="f">스커트·원피스 모양
-          <select id="oShape"><option value="a">A라인</option><option value="h">H라인</option><option value="pleat">플리츠</option></select>
+          <select id="oShape"><option value="a">A라인</option><option value="h">H라인</option><option value="pleat">플리츠</option><option value="mermaid">머메이드</option><option value="wrap">랩</option></select>
         </label>
       </div>
       <div class="checks" aria-label="주머니">
@@ -346,6 +366,9 @@
         <label><input type="checkbox" id="pPatch" />아웃포켓</label>
         <label><input type="checkbox" id="pSide" checked />옆 주머니</label>
         <label><input type="checkbox" id="pBack" checked />뒷 주머니</label>
+        <label><input type="checkbox" id="pCargo" />카고 주머니</label>
+        <label><input type="checkbox" id="pPleat" />앞 주름(턱)</label>
+        <label><input type="checkbox" id="pLegRib" />밑단 시보리 (조거)</label>
       </div>
       <label class="f">원단
         <select id="oFabric"></select>
@@ -362,9 +385,9 @@
   <main class="stage">
     <div class="tabs" role="tablist" aria-label="화면">
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
+      <button role="tab" id="tabEditBtn" aria-selected="false" aria-controls="edit">도식화 편집</button>
       <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
       <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">외곽선 <small style="font-weight:500;opacity:.8">시험</small></button>
-      <button role="tab" id="tabKeyBtn" class="hl" aria-selected="false" aria-controls="keyGuide">🔑 Gemini 키 받기</button>
     </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
@@ -475,6 +498,24 @@
         </div>
       </div>
     </section>
+    <section class="pat" id="edit" role="tabpanel" aria-label="도식화 편집" hidden>
+      <div class="ed-bar" role="toolbar" aria-label="편집 도구">
+        <button data-tool="move" aria-pressed="true" title="빨간 손잡이를 끌어 치수를 바꾸거나, 파란 표시를 골라 옮기기">✋ 끌기·고르기</button>
+        <button data-tool="text" aria-pressed="false" title="오른쪽 칸에 글자를 쓰고 도식화를 누르면 메모가 들어감">✎ 메모</button>
+        <input id="edText" type="text" maxlength="40" placeholder="메모 글자 (예: 스냅 단추 2개)" aria-label="메모 글자" />
+        <button data-tool="arrow" aria-pressed="false" title="끌어서 화살표">↗ 화살표</button>
+        <button data-tool="circle" aria-pressed="false" title="끌어서 동그라미 강조">◯ 동그라미</button>
+        <span class="ed-sep"></span>
+        <button id="edDel" title="고른 표시 지우기 (Delete 키)">선택 지우기</button>
+        <button id="edUndo" title="되돌리기 (Ctrl·Cmd+Z)">↶ 되돌리기</button>
+        <button id="edClear">표시 모두 지우기</button>
+      </div>
+      <p class="pat-note" id="edNote" role="status">빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.</p>
+      <div class="ed-grid">
+        <figure><div class="ed-view" id="edFront"></div><figcaption>앞판 FRONT · 손잡이로 치수 조절</figcaption></figure>
+        <figure><div class="ed-view" id="edBack"></div><figcaption>뒤판 BACK · 표시만</figcaption></figure>
+      </div>
+    </section>
     <section class="pat" id="olz" role="tabpanel" aria-label="외곽선 분석" hidden>
       <details class="pat-beta" open>
         <summary><b>시험 기능</b> · 사진에서 옷의 외곽선을 따서 모양을 판단하고, 기준 길이를 알려 주면 대략의 치수(±2~3cm)를 잽니다. AI 없이 기기 안에서 계산합니다.</summary>
@@ -504,33 +545,6 @@
           <p class="pat-warn" id="olzWarn" role="status"></p>
         </div>
       </div>
-    </section>
-    <section class="pat key-guide" id="keyGuide" role="tabpanel" aria-label="Gemini API 키 받는 법" hidden>
-      <h2>Gemini API 키 무료로 받기 <small>약 3분</small></h2>
-      <p class="lead">키가 없어도 기기 안 인식으로 품목·디테일·컬러는 고를 수 있습니다. Gemini 키를 연결하면 사진을 보고 <b>원단·혼용률·중량 추정, 부자재, 봉제 사양 문장</b>까지 채워 줍니다.</p>
-      <ol class="key-steps">
-        <li><b>Google AI Studio 열기</b> — <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">aistudio.google.com/app/apikey</a> 에 접속해 구글 계정으로 로그인합니다.</li>
-        <li><b>약관 동의</b> — 처음 쓰는 계정이면 이용약관에 동의하면 기본 프로젝트와 API 키가 자동으로 만들어집니다.
-          키가 안 보이면 <b>Create API key (API 키 만들기)</b>를 누르세요.</li>
-        <li><b>키 복사</b> — 키 옆의 복사 버튼을 누릅니다. 새 키는 <code>AQ.</code>로, 예전 키는 <code>AIza</code>로 시작하는 긴 글자입니다 (둘 다 쓸 수 있음).</li>
-        <li><b>아래 칸에 붙여넣고 '키 확인'</b> — 확인되면 이 브라우저에 저장되고, 3단계 버튼이 Gemini 분석으로 바뀝니다.</li>
-      </ol>
-      <div class="key-box">
-        <label for="keyInput"><b>Gemini API 키</b></label>
-        <div class="key-row"><input type="password" id="keyInput" placeholder="AQ.... 또는 AIza..." autocomplete="off" spellcheck="false" />
-          <button id="keyCheck" class="olz-btn primary">키 확인</button></div>
-        <p id="keyResult" role="status"></p>
-        <button id="keyForget" class="olz-btn">이 브라우저에서 키 지우기</button>
-      </div>
-      <h3>꼭 알아 두세요</h3>
-      <ul class="key-notes">
-        <li><b>키는 비밀번호처럼</b> — 다른 사람에게 보내거나 게시판·단톡방에 올리지 마세요. 이 사이트는 키를 서버에 저장하지 않고 이 브라우저에만 저장합니다.</li>
-        <li><b>키를 Gemini 전용으로 제한</b> — AI Studio의 API 키 목록에서 키를 'Gemini API만 사용'으로 제한해 두면 유출돼도 피해가 줄어듭니다.</li>
-        <li><b>무료 등급의 데이터</b> — Google은 무료 등급으로 보낸 내용을 제품 개선에 쓸 수 있다고 안내합니다. 아직 공개 전인 디자인이 걱정되면 키 없이 기기 안 인식만 쓰거나 유료 등급을 쓰세요.</li>
-        <li><b>사용 한도</b> — 무료 등급은 분당·하루 요청 수 제한이 있습니다. '요청이 많습니다'가 뜨면 잠시 후 다시 누르세요.</li>
-        <li><b>새 AQ. 키가 거부될 때</b> — 2026년부터 AI Studio는 AQ.로 시작하는 인증 키만 발급합니다. 일부 계정에서는 Google 쪽 문제로 이 키가 거부(401)되는 사례가 보고되어 있습니다. 새 프로젝트에서 다시 발급해 보고, 그래도 안 되면 키 없이 기기 안 인식을 쓰세요.</li>
-        <li>공식 안내: <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" rel="noopener">Gemini API 키 사용법</a> · <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">무료 등급과 요금</a></li>
-      </ul>
     </section>
     <div id="patPrint" aria-hidden="true"></div>
     <style id="pageStyle">@page { size: A4 landscape; margin: 7mm; }</style>
@@ -635,6 +649,50 @@ const T = {
     ["E","고리 탭","웨빙 2.5cm, 접기 전 길이",[7,0],[7,0]] ] },
 };
 
+/* ---------------------------------------------------------------- 대분류 → 소분류 (스타일)
+   스타일 = 그리기 엔진(template) + 디테일 기본값(opt) + 치수표 보정(spec: 기준 사이즈에 더할 cm, 다른 사이즈도 같은 만큼) */
+const CATS = { top: "상의", outer: "아우터", pants: "바지", skirt: "치마", dress: "원피스", acc: "잡화" };
+const STYLES = {
+  tee_short:   { cat: "top", name: "반팔 티셔츠", template: "top_short" },
+  tee_crop:    { cat: "top", name: "크롭 반팔티", template: "top_short", spec: { "총장": -14 } },
+  sleeveless:  { cat: "top", name: "민소매 (나시)", template: "top_short", opt: { sleeve: "none" }, spec: { "어깨너비": -10, "목너비": 1 } },
+  polo:        { cat: "top", name: "카라 티 (폴로)", template: "top_short", opt: { neck: "collar", closure: "placket" } },
+  tee_long:    { cat: "top", name: "긴팔 티셔츠", template: "top_long", opt: { rib: "plain" } },
+  sweat:       { cat: "top", name: "맨투맨", template: "top_long", opt: { rib: "rib" } },
+  hoodie:      { cat: "top", name: "후드티", template: "hoodie" },
+  shirt:       { cat: "top", name: "셔츠", template: "shirt" },
+  blouse:      { cat: "top", name: "블라우스", template: "shirt", opt: { neck: "crew", chest: false } },
+  zipup_hood:  { cat: "outer", name: "후드 집업", template: "hoodie", opt: { closure: "zip" } },
+  zip_jumper:  { cat: "outer", name: "집업 점퍼", template: "jacket" },
+  blouson:     { cat: "outer", name: "블루종 (봄버)", template: "jacket", opt: { rib: "rib", patch: false }, spec: { "총장": -6 } },
+  coach:       { cat: "outer", name: "코치 자켓", template: "jacket", opt: { neck: "collar", closure: "buttons", patch: false } },
+  denim_jkt:   { cat: "outer", name: "데님 자켓", template: "jacket", opt: { neck: "collar", closure: "buttons", chest: true, patch: false }, spec: { "총장": -8 } },
+  cardigan:    { cat: "outer", name: "카디건", template: "top_long", opt: { neck: "v", closure: "buttons", rib: "rib" } },
+  straight:    { cat: "pants", name: "일자 바지", template: "pants" },
+  wide:        { cat: "pants", name: "와이드 팬츠", template: "pants", spec: { "밑단단면": 9, "허벅지단면": 4, "엉덩이단면": 2 } },
+  slacks:      { cat: "pants", name: "슬랙스", template: "pants", opt: { pleat: true, bpocket: "welt", fpocket: "slant" } },
+  jeans:       { cat: "pants", name: "청바지", template: "pants", opt: { fpocket: "scoop", bpocket: "patch" }, spec: { "밑단단면": -1 } },
+  jogger:      { cat: "pants", name: "조거 팬츠", template: "pants", opt: { waist: "elastic", legRib: true, bpocket: "welt" }, spec: { "밑단단면": -7 } },
+  cargo:       { cat: "pants", name: "카고 팬츠", template: "pants", opt: { cargo: true }, spec: { "밑단단면": 2, "허벅지단면": 2 } },
+  shorts:      { cat: "pants", name: "반바지", template: "shorts" },
+  bermuda:     { cat: "pants", name: "버뮤다 팬츠", template: "shorts", spec: { "총장": 8, "밑단단면": -2 } },
+  skirt_a:     { cat: "skirt", name: "A라인 스커트", template: "skirt", opt: { shape: "a" } },
+  skirt_h:     { cat: "skirt", name: "H라인 (펜슬) 스커트", template: "skirt", opt: { shape: "h" } },
+  pleats_long: { cat: "skirt", name: "플리츠 롱스커트", template: "skirt", opt: { shape: "pleat" }, spec: { "총장": 15 } },
+  tennis:      { cat: "skirt", name: "테니스 스커트", template: "skirt", opt: { shape: "pleat" }, spec: { "총장": -27, "밑단단면": 6 } },
+  mini:        { cat: "skirt", name: "미니 스커트", template: "skirt", opt: { shape: "a" }, spec: { "총장": -25, "밑단단면": -6 } },
+  mermaid:     { cat: "skirt", name: "머메이드 스커트", template: "skirt", opt: { shape: "mermaid" }, spec: { "총장": 12 } },
+  wrap:        { cat: "skirt", name: "랩 스커트", template: "skirt", opt: { shape: "wrap" } },
+  dress_basic: { cat: "dress", name: "반팔 원피스", template: "dress" },
+  dress_slvls: { cat: "dress", name: "민소매 원피스", template: "dress", opt: { sleeve: "none" }, spec: { "어깨너비": -6 } },
+  shirt_dress: { cat: "dress", name: "셔츠 원피스", template: "dress", opt: { neck: "collar", closure: "buttons" } },
+  pouch:       { cat: "acc", name: "파우치", template: "pouch" },
+};
+/* 품목(엔진)마다 기본 스타일 (사진 인식·AI가 품목만 정했을 때) */
+const DEFAULT_STYLE = { top_short: "tee_short", top_long: "tee_long", shirt: "shirt", hoodie: "hoodie", jacket: "zip_jumper", pants: "straight", shorts: "shorts", skirt: "skirt_a", dress: "dress_basic", pouch: "pouch" };
+const styleOf = () => STYLES[state.opt.style]?.template === state.opt.template ? STYLES[state.opt.style] : STYLES[DEFAULT_STYLE[state.opt.template]];
+const itemName = () => styleOf()?.name || T[state.opt.template].name;
+
 /* 핏에 따른 보정 (cm, 측정부위 이름 기준) */
 const FIT = {
   regular: {},
@@ -686,9 +744,11 @@ const state = {
   base: "100",
   label: "both",        // 하의 사이즈 표기: num | both | inch
   photo: null,          // { blob, dataUrl }
-  opt: { template: "top_short", fit: "regular", neck: "crew", closure: "none", rib: "plain", shape: "a",
-         chest: false, kangaroo: false, patch: false, side: true, back: true },
+  opt: { template: "top_short", style: "tee_short", fit: "regular", neck: "crew", closure: "none", rib: "plain", shape: "a", legRib: false,
+         sleeve: "set", hem: "straight", waist: "fixed", fpocket: "slant", bpocket: "patch",
+         chest: false, kangaroo: false, patch: false, side: true, back: true, cargo: false, pleat: false },
   ai: null,
+  notes: { front: [], back: [] },   // 도식화 편집: 메모·화살표·동그라미
 };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -751,7 +811,8 @@ function specValues() {
     const [base, grade] = state.gender === "m" ? m : f;
     let b = base + (fit[part] || 0);
     if (part === "소매길이" && state.opt.fit === "oversize") b += t.sleeve === "short" ? 3 : -3; // 드롭숄더 보정
-    if (state.opt.template === "skirt" && part === "밑단단면") b += state.opt.shape === "h" ? -12 : state.opt.shape === "pleat" ? 8 : 0;
+    if (state.opt.template === "skirt" && part === "밑단단면") b += state.opt.shape === "h" ? -12 : state.opt.shape === "pleat" ? 8 : state.opt.shape === "mermaid" ? 14 : 0;
+    b += styleOf()?.spec?.[part] || 0;                     // 소분류(스타일) 보정
     const vals = chosen.map((s) => r05(b + (list.indexOf(s) - bi) * grade));
     return { code, part, how, grade, vals };
   });
@@ -763,6 +824,7 @@ function renderSpec() {
   const body = rows.map((r) => `<tr><td class="mk">${r.code}</td><td class="l">${r.part}</td><td class="l" style="color:var(--ink-soft)">${r.how}</td>${
     r.vals.map((v, i) => `<td contenteditable class="${chosen[i] === state.base ? "base" : ""}">${v}</td>`).join("")}<td>±${r.grade}</td></tr>`).join("");
   $("specTable").innerHTML = head + body;
+  $("specTable").dataset.key = specKey();
   $("specMeta").textContent = isBag() ? `잡화 · 기준 ${state.base} · 완성 치수` : `${state.gender === "m" ? "남성" : "여성"} · 기준 ${state.base} · ${({ regular: "레귤러", oversize: "오버핏", slim: "슬림" })[state.opt.fit]}${
     isBottom() && state.label !== "num" ? " · 허리 인치 호칭" : ""}`;
   $("fSizes").textContent = chosen.map((s) => sizeLabel(s)).join(" / ");
@@ -782,153 +844,243 @@ function dim(x1, y1, x2, y2, code, lx, ly) {
 }
 const DEFS = `<defs><marker id="ar" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="#c62828"/></marker></defs>`;
 
+/* 기준 사이즈 열(화면에서 고친 값 포함) → { 측정부위: cm }. 도식화는 이 비율로 그림 */
+const specKey = () => [state.opt.template, state.opt.style, state.gender, state.base, state.opt.fit, state.opt.shape].join("|");
+function baseVals() {
+  // 화면 치수표(고친 값 포함)가 지금 품목·사이즈 것이면 그것을, 아니면 계산값을 씀
+  if ($("specTable").dataset.key === specKey()) return worksheetBaseValues().values;
+  const { chosen, rows } = specValues(), i = chosen.indexOf(state.base);
+  return Object.fromEntries(rows.map((r) => [r.part, r.vals[i]]));
+}
+const DEF_FND = { crew: 9, v: 15, collar: 7.5, hood: 9, mock: 3 };
+
+/* 상의·원피스 몸판: 치수표의 총장·어깨·가슴·밑단·소매·목 비율로 그림 (단위 cm × k) */
 function drawTop(view, o, t) {
-  const over = o.fit === "oversize", slim = o.fit === "slim";
-  const sh = over ? 76 : slim ? 58 : 64;           // 어깨점 x 오프셋
-  const shY = over ? 58 : 46;                       // 어깨점 y (드롭숄더는 낮게)
-  const bw = over ? 74 : slim ? 58 : 64;            // 몸판 반폭
-  const nw = 25;                                    // 목 반폭
-  const hemY = o.template === "dress" ? 132 : (o.template === "shirt" || o.template === "jacket") ? 224 : 212;
-  const armY = over ? 120 : 108;
-  const cx = 150;
-  const long = t.sleeve === "long";
-  const front = view === "front";
+  const v = baseVals(), dress = o.template === "dress";
+  const CH = v["가슴단면"] || 55, TL = v["총장"] || 72, S = v["어깨너비"] || CH * 0.85;
+  const SL = v["소매길이"] || (t.sleeve === "long" ? 60 : 20), SW = v["소매통단면"] || CH * 0.38;
+  const N = v["목너비"] || (v["칼라 둘레"] ? v["칼라 둘레"] * 0.42 : CH * 0.34);
+  const FND = v["앞목깊이"] || DEF_FND[o.neck] || 9;
+  const H = dress ? (v["허리단면"] || CH * 0.8) : (v["밑단단면"] || CH);
+  const CU = v["소매부리단면"] || (v["커프스 둘레"] ? v["커프스 둘레"] / 2 + 1 : SW * 0.55);
+  const k = dress ? Math.min(290 / TL, 70 / (CH / 2)) : Math.min(185 / TL, 76 / (CH / 2), 2.9);
+  const cx = 150, top = 32, front = view === "front";
+  const slope = (o.fit === "oversize" || o.sleeve === "drop") ? 3 : 4.5;
+  const nw = (N / 2) * k, bw = (CH / 2) * k, sh = (S / 2) * k, shY = top + slope * k;
+  const AD = Math.max(19.5, 0.48 * CH) * (dress ? 0.92 : 1);
+  const armY = top + AD * k, hemY = top + (dress ? 40 : TL) * k, hw = Math.max((H / 2) * k, dress ? 0 : bw * 0.6);
+  const long = t.sleeve === "long", raglan = o.sleeve === "raglan", drop = o.sleeve === "drop" || sh > bw - 2;
+  const ribbed = o.rib === "rib" || o.template === "hoodie";
+  const curved = o.hem === "curved" && !dress && !ribbed;
   let out = "";
 
-  // 소매 (몸판 뒤에 먼저 그림)
-  const sleeve = (side) => {
-    const sx = (x) => side > 0 ? x : mirror(x);
-    let d;
-    if (long) {
-      const cuffY = over ? 214 : 206;
-      d = `M${sx(cx + sh)},${shY} L${sx(cx + sh + 40)},${cuffY - 4} L${sx(cx + sh + 12)},${cuffY + 4} L${sx(cx + bw - 2)},${armY + 8} Z`;
-      out += P(d);
-      if (o.rib === "rib" || o.template === "hoodie" || o.template === "top_long") {
-        const a = [sx(cx + sh + 38), cuffY - 20], b = [sx(cx + sh + 13), cuffY - 13];
-        out += P(`M${a[0]},${a[1]} L${sx(cx + sh + 40)},${cuffY - 4} L${sx(cx + sh + 12)},${cuffY + 4} L${b[0]},${b[1]} Z`);
-        for (let i = 1; i < 6; i++) { const k = i / 6; out += L(`M${a[0] + (b[0] - a[0]) * k},${a[1] + (b[1] - a[1]) * k} l${side * 1},18`, 'stroke-width=".5"'); }
-      } else if (o.template === "shirt") {
-        out += P(`M${sx(cx + sh + 37)},${cuffY - 24} L${sx(cx + sh + 40)},${cuffY - 4} L${sx(cx + sh + 12)},${cuffY + 4} L${sx(cx + sh + 11)},${cuffY - 16} Z`);
-        out += C(sx(cx + sh + 31), cuffY - 8, 2.2);
-      } else {
-        out += ST(`M${sx(cx + sh + 38)},${cuffY - 12} L${sx(cx + sh + 12)},${cuffY - 4}`);
-      }
-    } else {
-      d = `M${sx(cx + sh)},${shY} L${sx(cx + sh + 42)},${shY + 62} L${sx(cx + sh + 22)},${shY + 78} L${sx(cx + bw - 1)},${armY + 4} Z`;
-      out += P(d);
-      out += ST(`M${sx(cx + sh + 36)},${shY + 67} L${sx(cx + sh + 18)},${shY + 80}`);
+  // 소매 (몸판 뒤에 먼저): 어깨점(래글런은 목옆점)에서 소매 길이만큼, 끝 폭 = 소매부리
+  const sleeveGeo = (side) => {
+    const sx = (x) => cx + side * (x - cx);
+    const start = raglan ? [cx + nw, top + 2] : [cx + sh, shY];
+    let a = (long ? (raglan ? 52 : 64) : drop ? 36 : 30) * Math.PI / 180, te, cb;
+    const len = SL * k + (raglan ? Math.hypot(sh - nw, shY - top) : 0), cuffW = (long ? CU : Math.min(SW * 0.9, SW - 1)) * k;
+    for (let i = 0; i < 12; i++) {                      // 화면 밖으로 나가면 더 아래로 늘어뜨림
+      const d = [Math.cos(a), Math.sin(a)], n = [-Math.sin(a), Math.cos(a)];
+      te = [start[0] + d[0] * len, start[1] + d[1] * len]; cb = [te[0] + n[0] * cuffW, te[1] + n[1] * cuffW];
+      if (te[0] <= 330 && te[1] <= 248) break; a += 4 * Math.PI / 180;
     }
+    return { sx, start, te, cb, a, ua: [cx + bw, armY] };
   };
-  sleeve(1); sleeve(-1);
+  const sleeve = (side) => {
+    const g = sleeveGeo(side), { sx } = g, d = [Math.cos(g.a), Math.sin(g.a)];
+    const pt = (q) => `${sx(q[0]).toFixed(1)},${q[1].toFixed(1)}`;
+    out += P(`M${pt(g.start)} L${pt(g.te)} L${pt(g.cb)} L${pt(g.ua)} Z`);
+    const back = (q, cm) => [q[0] - d[0] * cm * k, q[1] - d[1] * cm * k];
+    if (long && (ribbed || o.template === "top_long")) {           // 소매 시보리
+      const a1 = back(g.te, 6), b1 = back(g.cb, 6);
+      out += P(`M${pt(a1)} L${pt(g.te)} L${pt(g.cb)} L${pt(b1)} Z`);
+      for (let i = 1; i < 6; i++) { const f = i / 6, p1 = [a1[0] + (b1[0] - a1[0]) * f, a1[1] + (b1[1] - a1[1]) * f], p2 = [g.te[0] + (g.cb[0] - g.te[0]) * f, g.te[1] + (g.cb[1] - g.te[1]) * f];
+        out += L(`M${pt(p1)} L${pt(p2)}`, 'stroke-width=".5"'); }
+    } else if (long && o.template === "shirt") {                   // 커프스 + 단추
+      const a1 = back(g.te, 6), b1 = back(g.cb, 6);
+      out += P(`M${pt(a1)} L${pt(g.te)} L${pt(g.cb)} L${pt(b1)} Z`);
+      const m = [(g.te[0] * 0.25 + g.cb[0] * 0.75 + a1[0] * 0.25 + b1[0] * 0.75) / 2, (g.te[1] * 0.25 + g.cb[1] * 0.75 + a1[1] * 0.25 + b1[1] * 0.75) / 2];
+      out += C(sx(m[0]), m[1], 2.2);
+    } else {                                                        // 접단 상침
+      out += ST(`M${pt(back(g.te, 2.5))} L${pt(back(g.cb, 2.5))}`);
+    }
+    if (raglan) out += ST(`M${pt([g.start[0] + 2, g.start[1] + 2])} L${pt([g.ua[0] - 2, g.ua[1] - 2])}`);
+  };
+  if (o.sleeve !== "none") { sleeve(1); sleeve(-1); }
 
   // 몸판
-  const neckDepth = front ? (o.neck === "v" ? 70 : o.neck === "collar" ? 40 : 58) : 42;
-  let body = `M${cx - nw},${32} L${cx - sh},${shY} L${cx - bw},${armY} L${cx - bw + (o.template === "dress" ? 6 : 0)},${hemY} L${cx + bw - (o.template === "dress" ? 6 : 0)},${hemY} L${cx + bw},${armY} L${cx + sh},${shY} L${cx + nw},32`;
-  if (o.neck === "v" && front) body += ` L${cx},${neckDepth} Z`;
-  else body += ` Q${cx},${neckDepth} ${cx - nw},32 Z`;
+  const neckDepth = front ? top + FND * k : top + 2.2 * k;
+  const sideRise = curved ? 6 * k : 0;
+  const shoulderPts = raglan ? "" : ` L${(cx - sh).toFixed(1)},${shY.toFixed(1)}`;
+  const shoulderPtsR = raglan ? "" : ` L${(cx + sh).toFixed(1)},${shY.toFixed(1)}`;
+  let body = `M${(cx - nw).toFixed(1)},${top}${shoulderPts} L${(cx - bw).toFixed(1)},${armY.toFixed(1)} L${(cx - hw).toFixed(1)},${(hemY - sideRise).toFixed(1)}`;
+  body += curved ? ` C${(cx - hw * 0.6).toFixed(1)},${(hemY + 4 * k).toFixed(1)} ${(cx + hw * 0.6).toFixed(1)},${(hemY + 4 * k).toFixed(1)} ${(cx + hw).toFixed(1)},${(hemY - sideRise).toFixed(1)}`
+                 : ` L${(cx + hw).toFixed(1)},${hemY.toFixed(1)}`;
+  body += ` L${(cx + bw).toFixed(1)},${armY.toFixed(1)}${shoulderPtsR} L${(cx + nw).toFixed(1)},${top}`;
+  if (o.neck === "v" && front) body += ` L${cx},${neckDepth.toFixed(1)} Z`;
+  else body += ` Q${cx},${neckDepth.toFixed(1)} ${(cx - nw).toFixed(1)},${top} Z`;
   out += P(body);
-  if (over) { out += ST(`M${cx - sh},${shY} L${cx - bw},${armY}`); out += ST(`M${cx + sh},${shY} L${cx + bw},${armY}`); }
+  if (o.sleeve === "none") for (const sgn of [-1, 1]) out += ST(`M${cx + sgn * (sh - 2)},${shY + 2} Q${cx + sgn * (bw - 6)},${armY - 12} ${cx + sgn * (bw - 1)},${armY - 3}`);   // 진동 바이어스 상침
+  else if (drop && !raglan) { out += ST(`M${cx - sh},${shY} L${cx - bw},${armY}`); out += ST(`M${cx + sh},${shY} L${cx + bw},${armY}`); }
 
   // 밑단
-  if (o.template !== "dress") {
-    if (o.rib === "rib" || o.template === "hoodie") {
-      const rh = 16;
-      out += P(`M${cx - bw + 3},${hemY - rh} L${cx + bw - 3},${hemY - rh} L${cx + bw - 3},${hemY} L${cx - bw + 3},${hemY} Z`);
-      for (let x = cx - bw + 9; x < cx + bw - 4; x += 6) out += L(`M${x},${hemY - rh + 2} L${x},${hemY - 2}`, 'stroke-width=".45"');
+  if (!dress) {
+    if (ribbed) {
+      const rh = 6 * k;
+      out += P(`M${cx - hw + 2},${hemY - rh} L${cx + hw - 2},${hemY - rh} L${cx + hw - 2},${hemY} L${cx - hw + 2},${hemY} Z`);
+      for (let x = cx - hw + 8; x < cx + hw - 4; x += 6) out += L(`M${x.toFixed(1)},${(hemY - rh + 2).toFixed(1)} L${x.toFixed(1)},${(hemY - 2).toFixed(1)}`, 'stroke-width=".45"');
+    } else if (curved) {
+      out += ST(`M${cx - hw + 2},${hemY - sideRise - 3} C${cx - hw * 0.6},${hemY + 4 * k - 5} ${cx + hw * 0.6},${hemY + 4 * k - 5} ${cx + hw - 2},${hemY - sideRise - 3}`);
     } else {
-      out += ST(`M${cx - bw + 2},${hemY - 9} L${cx + bw - 2},${hemY - 9}`);
+      out += ST(`M${cx - hw + 2},${hemY - 2.5 * k} L${cx + hw - 2},${hemY - 2.5 * k}`);
     }
   }
 
-  // 넥라인 디테일
+  // 넥라인 디테일 (목 폭·깊이는 치수표 비율)
+  const nd = neckDepth;
   if (o.neck === "crew" || o.neck === "v") {
-    const dd = front ? neckDepth : 42;
-    if (o.neck === "v" && front) out += L(`M${cx - nw + 5},33 L${cx},${dd - 9} L${cx + nw - 5},33`);
-    else out += L(`M${cx - nw + 4},34 Q${cx},${dd - 12} ${cx + nw - 4},34`);
+    if (o.neck === "v" && front) out += L(`M${cx - nw + 5},${top + 1} L${cx},${nd - 9} L${cx + nw - 5},${top + 1}`);
+    else out += L(`M${cx - nw + 4},${top + 2} Q${cx},${nd - 2.4 * k} ${cx + nw - 4},${top + 2}`);
   } else if (o.neck === "mock") {
-    out += P(`M${cx - nw},32 L${cx - nw + 2},12 L${cx + nw - 2},12 L${cx + nw},32 Q${cx},${front ? 40 : 36} ${cx - nw},32 Z`);
-    for (let x = cx - nw + 6; x < cx + nw - 4; x += 5) out += L(`M${x},15 L${x},33`, 'stroke-width=".45"');
+    out += P(`M${cx - nw},${top} L${cx - nw + 2},${top - 20} L${cx + nw - 2},${top - 20} L${cx + nw},${top} Q${cx},${front ? top + 8 : top + 4} ${cx - nw},${top} Z`);
+    for (let x = cx - nw + 6; x < cx + nw - 4; x += 5) out += L(`M${x},${top - 17} L${x},${top + 1}`, 'stroke-width=".45"');
   } else if (o.neck === "collar") {
     if (front) {
-      out += P(`M${cx - nw},30 L${cx - nw - 12},46 L${cx - 4},44 L${cx},36 Z`);
-      out += P(`M${cx + nw},30 L${cx + nw + 12},46 L${cx + 4},44 L${cx},36 Z`);
-      out += P(`M${cx - nw},30 Q${cx},20 ${cx + nw},30 L${cx},36 Z`);
+      out += P(`M${cx - nw},${top - 2} L${cx - nw - 12},${top + 14} L${cx - 4},${top + 12} L${cx},${top + 4} Z`);
+      out += P(`M${cx + nw},${top - 2} L${cx + nw + 12},${top + 14} L${cx + 4},${top + 12} L${cx},${top + 4} Z`);
+      out += P(`M${cx - nw},${top - 2} Q${cx},${top - 12} ${cx + nw},${top - 2} L${cx},${top + 4} Z`);
     } else {
-      out += P(`M${cx - nw},32 Q${cx},26 ${cx + nw},32 L${cx + nw + 4},42 Q${cx},36 ${cx - nw - 4},42 Z`);
-      out += L(`M${cx - sh + 4},${shY + 26} Q${cx},${shY + 30} ${cx + sh - 4},${shY + 26}`); // 요크
-      out += ST(`M${cx - sh + 4},${shY + 30} Q${cx},${shY + 34} ${cx + sh - 4},${shY + 30}`);
+      out += P(`M${cx - nw},${top} Q${cx},${top - 6} ${cx + nw},${top} L${cx + nw + 4},${top + 10} Q${cx},${top + 4} ${cx - nw - 4},${top + 10} Z`);
+      const yk = top + 9 * k;                                       // 요크 (뒤 목점에서 약 9cm)
+      out += L(`M${cx - sh + 4},${yk} Q${cx},${yk + 4} ${cx + sh - 4},${yk}`);
+      out += ST(`M${cx - sh + 4},${yk + 4} Q${cx},${yk + 8} ${cx + sh - 4},${yk + 4}`);
     }
   } else if (o.neck === "hood") {
+    const hh = (v["후드 높이"] || 35) * k * 0.62, hwid = Math.max(nw + 10, (v["후드 너비"] || 25) * k * 0.95);
     if (front) {
-      out += P(`M${cx - nw - 4},34 C${cx - 50},-10 ${cx + 50},-10 ${cx + nw + 4},34 Q${cx},${neckDepth - 4} ${cx - nw - 4},34 Z`);
-      out += L(`M${cx - nw + 2},32 C${cx - 36},2 ${cx + 36},2 ${cx + nw - 2},32`);
-      out += L(`M${cx - 8},${neckDepth - 6} l-3,38`); out += L(`M${cx + 8},${neckDepth - 6} l3,38`);
-      out += C(cx - 8, neckDepth - 8, 2); out += C(cx + 8, neckDepth - 8, 2);
+      out += P(`M${cx - nw - 4},${top + 2} C${cx - hwid},${top - hh} ${cx + hwid},${top - hh} ${cx + nw + 4},${top + 2} Q${cx},${nd - 4} ${cx - nw - 4},${top + 2} Z`);
+      out += L(`M${cx - nw + 2},${top} C${cx - hwid * 0.72},${top - hh * 0.7} ${cx + hwid * 0.72},${top - hh * 0.7} ${cx + nw - 2},${top}`);
+      out += L(`M${cx - 8},${nd - 6} l-3,${(14 * k).toFixed(1)}`); out += L(`M${cx + 8},${nd - 6} l3,${(14 * k).toFixed(1)}`);
+      out += C(cx - 8, nd - 8, 2); out += C(cx + 8, nd - 8, 2);
     } else {
-      out += P(`M${cx - nw - 4},34 C${cx - 52},-14 ${cx + 52},-14 ${cx + nw + 4},34 Q${cx},40 ${cx - nw - 4},34 Z`);
-      out += L(`M${cx},-2 L${cx},37`);
+      out += P(`M${cx - nw - 4},${top + 2} C${cx - hwid - 2},${top - hh - 4} ${cx + hwid + 2},${top - hh - 4} ${cx + nw + 4},${top + 2} Q${cx},${top + 8} ${cx - nw - 4},${top + 2} Z`);
+      out += L(`M${cx},${top - hh * 0.8} L${cx},${top + 5}`);
     }
   }
 
-  // 여밈 (앞판만)
+  // 여밈·주머니 (앞판만, 위치·크기도 비율)
   if (front) {
-    const topY = o.neck === "collar" ? 36 : o.neck === "hood" ? neckDepth : 46;
+    const topY = o.neck === "collar" ? top + 4 : o.neck === "hood" ? nd : top + 14;
+    const hemBottom = curved ? hemY + 2 * k : hemY;
     if (o.closure === "buttons") {
-      out += L(`M${cx - 5},${topY} L${cx - 5},${hemY}`); out += L(`M${cx + 5},${topY} L${cx + 5},${hemY}`);
-      for (let y = topY + 10; y < hemY - 10; y += 30) out += C(cx, y, 3);
+      out += L(`M${cx - 5},${topY} L${cx - 5},${hemBottom}`); out += L(`M${cx + 5},${topY} L${cx + 5},${hemBottom}`);
+      const gap = 9 * k; for (let y = topY + 4 * k; y < hemBottom - 4 * k; y += gap) out += C(cx, y.toFixed(1), 3);
+    } else if (o.closure === "placket") {          // 카라티 반오픈 (단추 2~3개)
+      const end = topY + 14 * k;
+      out += P(`M${cx - 5},${topY} L${cx + 5},${topY} L${cx + 5},${end} L${cx - 5},${end} Z`);
+      for (let y = topY + 4 * k; y < end - 2; y += 5 * k) out += C(cx, y.toFixed(1), 2.4);
     } else if (o.closure === "zip" || o.closure === "half_zip") {
-      const end = o.closure === "zip" ? hemY : topY + 62;
+      const end = o.closure === "zip" ? hemY : topY + 22 * k;
       out += L(`M${cx},${topY} L${cx},${end}`, 'stroke-width="1.4"');
       out += `<path d="M${cx},${topY} L${cx},${end}" stroke="#1d1d1b" stroke-width="4" stroke-dasharray="1 1.6" fill="none" opacity=".55"/>`;
       out += `<rect x="${cx - 3}" y="${topY + 2}" width="6" height="10" rx="1.5" fill="#fff" stroke="#1d1d1b" stroke-width="1"/>`;
     }
-    // 주머니
-    if (o.chest) { const x = cx + 18, y = shY + 46; out += P(`M${x},${y} h24 v26 l-12,4 l-12,-4 Z`); out += ST(`M${x + 3},${y + 4} h18`); }
-    if (o.kangaroo) { const y = hemY - (o.rib === "rib" || o.template === "hoodie" ? 74 : 64);
-      out += P(`M${cx - 44},${y + 50} L${cx - 34},${y} L${cx + 34},${y} L${cx + 44},${y + 50} Z`);
-      out += ST(`M${cx - 37},${y + 4} L${cx - 46},${y + 50}`); out += ST(`M${cx + 37},${y + 4} L${cx + 46},${y + 50}`); }
-    if (o.patch) { for (const s of [-1, 1]) { const x = s < 0 ? cx - bw + 12 : cx + 14; const y = hemY - 70;
-      out += P(`M${x},${y} h${bw - 26} v38 h-${bw - 26} Z`); out += ST(`M${x},${y + 8} h${bw - 26}`); } }
+    if (o.chest) { const pw = 11 * k, ph = 13 * k, x = cx + bw * 0.22, y = armY - 4 * k;
+      out += P(`M${x},${y} h${pw} v${ph} l-${pw / 2},${2 * k} l-${pw / 2},-${2 * k} Z`); out += ST(`M${x + 2},${y + 2.5 * k} h${pw - 4}`); }
+    if (o.kangaroo) { const pw = CH * 0.6 * k, ph = 20 * k, y = hemY - (ribbed ? 6 * k : 2 * k) - ph;
+      out += P(`M${cx - pw / 2},${y + ph} L${cx - pw * 0.38},${y} L${cx + pw * 0.38},${y} L${cx + pw / 2},${y + ph} Z`);
+      out += ST(`M${cx - pw * 0.38 + 3},${y + 3} L${cx - pw / 2 + 2},${y + ph}`); out += ST(`M${cx + pw * 0.38 - 3},${y + 3} L${cx + pw / 2 - 2},${y + ph}`); }
+    if (o.patch) { const pw = Math.min(hw - 10, 17 * k), ph = 17 * k; for (const sgn of [-1, 1]) { const x = sgn < 0 ? cx - hw + 8 : cx + hw - 8 - pw, y = hemY - ph - 6 * k;
+      out += P(`M${x},${y} h${pw} v${ph} h-${pw} Z`); out += ST(`M${x},${y + 4 * k} h${pw}`); } }
   }
-  return { svg: out, hemY, sh, shY, bw, armY, cx };
+  return { svg: out, hemY, sh, shY, bw, armY, cx, hw, k, top, nw, neckDepth, slv: o.sleeve === "none" ? null : sleeveGeo(1), raglanOff: raglan ? Math.hypot(sh - nw, shY - top) : 0 };
 }
 
+/* 바지·반바지: 치수표의 허리·엉덩이·허벅지·밑위·밑단·총장 비율로 그림 */
 function drawPants(view, o) {
-  const short = o.template === "shorts";
-  const cx = 150, wL = 92, wR = 208, hemY = short ? 170 : 312, crotchY = 128;
-  const front = view === "front";
+  const v = baseVals(), short = o.template === "shorts";
+  const W = v["허리단면"] || 41, HP = v["엉덩이단면"] || 52, TH = v["허벅지단면"] || 32, FR = v["앞 밑위"] || 28;
+  const HM = v["밑단단면"] || (short ? 30 : 20), OL = v["총장"] || (short ? 48 : 102);
+  const k = Math.min(282 / OL, 140 / HP), cx = 150, front = view === "front";
+  const band = 4 * k, y0 = 30, yb = y0 + band, crotchY = y0 + FR * k, hipY = y0 + FR * k * 0.66, hemY = y0 + OL * k;
+  const wL = cx - (W / 2) * k, wR = cx + (W / 2) * k, hipL = cx - (HP / 2) * k, hipR = cx + (HP / 2) * k;
+  const g = 1.2 * k, legC = cx + g + (TH / 2) * k, hmw = (HM / 2) * k;   // 오른쪽 다리 중심(허벅지 중심 기준 일자)
+  const outerR = legC + hmw, innerR = legC - hmw;   // 밑단 폭 = 치수표 밑단단면 그대로 (다리 중심 기준으로 좁아지거나 넓어짐)
   let out = "";
-  const legW = short ? 4 : 18;
-  out += P(`M${wL},50 L${wL - 8},${hemY} L${cx - (short ? 4 : 12)},${hemY} L${cx},${crotchY} L${cx + (short ? 4 : 12)},${hemY} L${wR + 8},${hemY} L${wR},50 Z`);
-  out += P(`M${wL},30 L${wR},30 L${wR},50 L${wL},50 Z`); // 허리밴드
-  out += ST(`M${wL + 2},34 L${wR - 2},34`); out += ST(`M${wL + 2},46 L${wR - 2},46`);
-  for (const x of front ? [wL + 14, wR - 14] : [wL + 14, cx, wR - 14]) out += P(`M${x - 2.5},28 h5 v26 h-5 Z`);
-  out += ST(`M${wL - 7},${hemY - 10} L${cx - (short ? 5 : 13)},${hemY - 10}`);
-  out += ST(`M${cx + (short ? 5 : 13)},${hemY - 10} L${wR + 7},${hemY - 10}`);
-  if (front) {
-    out += C(cx, 40, 3.2);
-    out += L(`M${cx},50 L${cx},${crotchY - 8}`);
-    out += ST(`M${cx - 14},50 L${cx - 14},${crotchY - 22} Q${cx - 14},${crotchY - 10} ${cx - 2},${crotchY - 8}`); // J 스티치
-    if (o.side) { out += L(`M${wL + 26},50 Q${wL + 18},74 ${wL + 1},86`); out += L(`M${wR - 26},50 Q${wR - 18},74 ${wR - 1},86`);
-      out += ST(`M${wL + 30},50 Q${wL + 22},78 ${wL + 2},92`); out += ST(`M${wR - 30},50 Q${wR - 22},78 ${wR - 2},92`); }
+  const f = (n) => n.toFixed(1);
+  out += P(`M${f(wL)},${f(yb)} C${f(hipL + 1)},${f(yb + (hipY - yb) * 0.4)} ${f(hipL)},${f(hipY - 4)} ${f(hipL)},${f(hipY)} L${f(2 * cx - outerR)},${f(hemY)} L${f(2 * cx - innerR)},${f(hemY)} L${cx},${f(crotchY)} L${f(innerR)},${f(hemY)} L${f(outerR)},${f(hemY)} L${f(hipR)},${f(hipY)} C${f(hipR)},${f(hipY - 4)} ${f(hipR - 1)},${f(yb + (hipY - yb) * 0.4)} ${f(wR)},${f(yb)} Z`);
+  // 허리
+  out += P(`M${f(wL)},${y0} L${f(wR)},${y0} L${f(wR)},${f(yb)} L${f(wL)},${f(yb)} Z`);
+  if (o.waist === "elastic") {
+    for (let x = wL + 4; x < wR - 2; x += 4) out += L(`M${f(x)},${y0 + 2} q1.5,${f(band / 2 - 2)} 0,${f(band - 4)}`, 'stroke-width=".45"');   // 고무줄 주름
+    if (front) { out += L(`M${cx - 3},${f(yb - 1)} q-6,14 -10,22`); out += L(`M${cx + 3},${f(yb - 1)} q6,14 10,22`); out += C(cx - 3, yb - 2, 1.6); out += C(cx + 3, yb - 2, 1.6); }   // 끈
   } else {
-    out += L(`M${wL},70 L${cx},84 L${wR},70`); out += ST(`M${wL},75 L${cx},89 L${wR},75`); // 뒷 요크
-    out += L(`M${cx},50 L${cx},${crotchY}`);
-    if (o.back) for (const x of [cx - 40, cx + 14]) { out += P(`M${x},96 h26 v28 l-13,6 l-13,-6 Z`); out += ST(`M${x + 3},100 h20`); }
+    out += ST(`M${f(wL + 2)},${y0 + 3} L${f(wR - 2)},${y0 + 3}`); out += ST(`M${f(wL + 2)},${f(yb - 3)} L${f(wR - 2)},${f(yb - 3)}`);
+    for (const x of front ? [wL + 14, wR - 14] : [wL + 14, cx, wR - 14]) out += P(`M${f(x - 2.5)},${y0 - 2} h5 v${f(band + 4)} h-5 Z`);   // 벨트고리
   }
-  return { svg: out, hemY, wL, wR, crotchY, cx };
+  // 밑단: 상침 또는 조거 시보리
+  if (o.legRib) for (const [a, b2] of [[2 * cx - outerR, 2 * cx - innerR], [innerR, outerR]]) {
+    const rh = 7 * k, lo = Math.min(a, b2), hi = Math.max(a, b2);
+    out += P(`M${f(lo + 1)},${f(hemY - rh)} L${f(hi - 1)},${f(hemY - rh)} L${f(hi - 1)},${f(hemY)} L${f(lo + 1)},${f(hemY)} Z`);
+    for (let x = lo + 5; x < hi - 3; x += 4) out += L(`M${f(x)},${f(hemY - rh + 2)} L${f(x)},${f(hemY - 2)}`, 'stroke-width=".45"');
+  } else {
+    out += ST(`M${f(2 * cx - outerR + 1)},${f(hemY - 3 * k)} L${f(2 * cx - innerR - 1)},${f(hemY - 3 * k)}`);
+    out += ST(`M${f(innerR + 1)},${f(hemY - 3 * k)} L${f(outerR - 1)},${f(hemY - 3 * k)}`);
+  }
+  if (front) {
+    if (o.waist !== "elastic") {
+      out += C(cx, y0 + band / 2, 3.2);
+      out += L(`M${cx},${f(yb)} L${cx},${f(crotchY - 8)}`);
+      out += ST(`M${cx - 14},${f(yb)} L${cx - 14},${f(crotchY - 22)} Q${cx - 14},${f(crotchY - 10)} ${cx - 2},${f(crotchY - 8)}`);   // J 스티치
+    } else out += L(`M${cx},${f(yb)} L${cx},${f(crotchY - 4)}`);
+    if (o.side) {
+      if (o.fpocket === "scoop") {      // 청바지형 앞주머니 + 동전 주머니
+        for (const sgn of [-1, 1]) { const a = cx + sgn * (cx - wL - 26), b = cx + sgn * (cx - wL + 0.5);
+          out += L(`M${f(a)},${f(yb)} Q${f(a + sgn * 2)},${f(yb + 22)} ${f(b)},${f(yb + 24)}`); out += ST(`M${f(a - sgn * 4)},${f(yb)} Q${f(a - sgn * 2)},${f(yb + 26)} ${f(b)},${f(yb + 28)}`); }
+        out += P(`M${f(wR - 26)},${f(yb + 4)} h12 v12 h-12 Z`);
+      } else {                          // 사선 주머니
+        for (const sgn of [-1, 1]) { const a = cx + sgn * (cx - wL - 26), b = cx + sgn * (cx - hipL - 1);
+          out += L(`M${f(a)},${f(yb)} Q${f(a + sgn * 8)},${f(yb + 24)} ${f(b)},${f(yb + 36)}`); out += ST(`M${f(a + sgn * 4)},${f(yb)} Q${f(a + sgn * 12)},${f(yb + 28)} ${f(b)},${f(yb + 42)}`); }
+      }
+    }
+    if (o.pleat) for (const sgn of [-1, 1]) out += L(`M${f(cx + sgn * (W / 4) * k)},${f(yb)} l0,${f(9 * k)}`, 'stroke-width="1.1"');   // 앞 턱
+  } else {
+    out += L(`M${cx},${f(yb)} L${cx},${f(crotchY)}`);
+    if (o.back && o.bpocket !== "welt") {        // 요크 + 아웃포켓 (청바지형)
+      out += L(`M${f(wL)},${f(yb + 14)} L${cx},${f(yb + 26)} L${f(wR)},${f(yb + 14)}`); out += ST(`M${f(wL)},${f(yb + 18)} L${cx},${f(yb + 30)} L${f(wR)},${f(yb + 18)}`);
+      const pw = 14 * k, ph = 15 * k; for (const x of [cx - (W / 4) * k - pw / 2, cx + (W / 4) * k - pw / 2]) { out += P(`M${f(x)},${f(yb + 32)} h${f(pw)} v${f(ph)} l-${f(pw / 2)},${f(2.5 * k)} l-${f(pw / 2)},-${f(2.5 * k)} Z`); out += ST(`M${f(x + 3)},${f(yb + 36)} h${f(pw - 6)}`); }
+    } else if (o.back) {                          // 다트 + 입술 주머니(웰트)
+      for (const sgn of [-1, 1]) { const x = cx + sgn * (W / 4) * k; out += L(`M${f(x - 2)},${f(yb)} L${f(x)},${f(yb + 10 * k)} L${f(x + 2)},${f(yb)}`);
+        out += P(`M${f(x - 6.5 * k)},${f(yb + 7 * k)} h${f(13 * k)} v${f(1.2 * k)} h-${f(13 * k)} Z`); }
+    }
+  }
+  if (o.cargo) for (const sgn of [-1, 1]) {        // 카고 주머니 (허벅지 옆, 그 높이의 옆선 안쪽에 붙임)
+    const y = crotchY + 6 * k, pw = 14 * k, ph = 17 * k, t = (y + ph / 2 - hipY) / (hemY - hipY);
+    const edge = hipR + (outerR - hipR) * t, ow = sgn > 0 ? edge : 2 * cx - edge, x = sgn > 0 ? ow - pw - 3 : ow + 3;
+    out += P(`M${f(x)},${f(y)} h${f(pw)} v${f(ph)} h-${f(pw)} Z`); out += P(`M${f(x - 1)},${f(y - 1)} h${f(pw + 2)} v${f(5 * k)} h-${f(pw + 2)} Z`); out += ST(`M${f(x + 2)},${f(y + 7 * k)} h${f(pw - 4)}`);
+  }
+  return { svg: out, hemY, wL, wR, crotchY, cx, hipY, hipL, hipR, outerR, innerR, k, legC, g, TH };
 }
 
 function drawSkirt(view, o, startY = 30, withBand = true) {
-  const cx = 150, wL = o.wL || 100, wR = o.wR || 200;
+  const cx = 150, wL = o.wL || 100, wR = o.wR || 200, top0 = withBand ? startY + (o.k ? 3 * o.k : 18) : startY;
   const lenY = (o.lenY) || ({ a: 230, h: 230, pleat: 240 }[o.shape] || 230);
-  const flare = o.shape === "h" ? 6 : o.shape === "pleat" ? 46 : 36;
+  const flare = o.flare ?? (o.shape === "h" ? 6 : o.shape === "pleat" ? 46 : 36);
   let out = "";
-  const top = withBand ? startY + 18 : startY;
-  out += P(`M${wL},${top} L${wL - flare},${lenY} L${wR + flare},${lenY} L${wR},${top} Z`);
+  const top = top0;
+  if (o.shape === "mermaid") {        // 무릎까지 몸에 붙다가 아래로 퍼짐
+    const kneeY = top + (lenY - top) * 0.62, narrow = Math.max(4, (wR - wL) * 0.08);
+    out += P(`M${wL},${top} C${wL - 6},${top + (kneeY - top) * 0.35} ${wL + narrow},${kneeY - 20} ${wL + narrow},${kneeY} Q${wL + narrow - 4},${lenY - 20} ${wL - flare},${lenY} L${wR + flare},${lenY} Q${wR - narrow + 4},${lenY - 20} ${wR - narrow},${kneeY} C${wR - narrow},${kneeY - 20} ${wR + 6},${top + (kneeY - top) * 0.35} ${wR},${top} Z`);
+    out += ST(`M${wL + narrow - 1},${kneeY} Q${cx},${kneeY + 6} ${wR - narrow + 1},${kneeY}`);
+  } else out += P(`M${wL},${top} L${wL - flare},${lenY} L${wR + flare},${lenY} L${wR},${top} Z`);
+  if (o.shape === "wrap" && view === "front") {   // 랩: 겹침 선 + 끈
+    out += L(`M${wL + (wR - wL) * 0.7},${top} Q${cx},${(top + lenY) / 2} ${wL - flare + 18},${lenY}`, 'stroke-width="1.2"');
+    out += P(`M${wL + 2},${top + 2} l-14,24 l5,2 l12,-22 Z`); out += P(`M${wL + 2},${top + 2} l-6,30 l5,1 l4,-28 Z`);
+  }
   if (withBand) { out += P(`M${wL},${startY} L${wR},${startY} L${wR},${top} L${wL},${top} Z`); out += ST(`M${wL + 2},${startY + 4} L${wR - 2},${startY + 4}`); }
   out += ST(`M${wL - flare + 2},${lenY - 9} L${wR + flare - 2},${lenY - 9}`);
-  if (o.shape === "pleat") for (let i = 1; i < 10; i++) { const k = i / 10; out += L(`M${wL + (wR - wL) * k},${top} L${wL - flare + (wR - wL + 2 * flare) * k},${lenY}`, 'stroke-width=".7"'); }
+  if (o.shape === "pleat") { const n = Math.max(8, Math.round((wR - wL) / 9)); for (let i = 1; i < n; i++) { const t = i / n; out += L(`M${wL + (wR - wL) * t},${top} L${wL - flare + (wR - wL + 2 * flare) * t},${lenY}`, 'stroke-width=".7"'); } }
   if (view === "back" && withBand) { out += L(`M${cx},${startY} L${cx},${top + 70}`, 'stroke-width="1.2"'); out += ST(`M${cx - 3},${top} L${cx - 3},${top + 70} L${cx + 3},${top + 70} L${cx + 3},${top}`); }
   return { svg: out, lenY, wL, wR, flare, top };
 }
@@ -960,6 +1112,12 @@ function drawPouch(view) {
   return { svg: out, x0, x1, y0, y1 };
 }
 
+/* 스커트: 치수표 허리·밑단·총장 비율 (밴드 3cm 포함) */
+function skirtGeom() {
+  const v = baseVals(), W = v["허리단면"] || 35, HM = v["밑단단면"] || 58, Lt = v["총장"] || 65;
+  const k = Math.min(275 / Lt, 150 / Math.max(HM, W)), wHalf = (W / 2) * k;
+  return { wL: 150 - wHalf, wR: 150 + wHalf, lenY: 30 + Lt * k, flare: Math.max(0, (HM / 2) * k - wHalf), k };
+}
 function buildSVG(view) {
   const o = state.opt, t = T[o.template];
   const vb = t.kind === "dress" ? "0 -20 340 345" : t.kind === "top" || t.kind === "bag" ? "0 -20 340 270" : "0 -20 340 350";
@@ -969,15 +1127,17 @@ function buildSVG(view) {
     const r = drawTop(view, { ...o, template: o.template }, t);
     inner += r.svg;
     if (t.kind === "dress") {
-      const sk = drawSkirt(view, { shape: o.shape, lenY: 300, wL: 150 - 58, wR: 150 + 58 }, r.hemY - 4, false);
+      const dv = baseVals(), wv = (dv["허리단면"] || 46) / 2 * r.k, hemHalf = (dv["밑단단면"] || 70) / 2 * r.k;
+      const sk = drawSkirt(view, { shape: o.shape, lenY: Math.min(320, r.top + (dv["총장"] || 110) * r.k), wL: 150 - wv, wR: 150 + wv,
+        flare: o.shape === "h" ? Math.max(4, hemHalf - wv) * 0.4 : Math.max(8, hemHalf - wv) }, r.hemY - 4, false);
       // 원피스: 허리선 아래 스커트, 허리 절개선
       inner = sk.svg.replace(/stroke-dasharray="3 2.2"/g, 'stroke-dasharray="3 2.2"') + inner;
       inner += L(`M${r.cx - r.bw + 6},${r.hemY} L${r.cx + r.bw - 6},${r.hemY}`, 'stroke-width="1.4"');
-      if (front) { dims += dim(318, 30, 318, sk.lenY, "A", 318, 180); dims += dim(r.cx - r.bw + 6, r.hemY + 10, r.cx + r.bw - 6, r.hemY + 10, "L", r.cx, r.hemY + 22); }
+      if (front) { dims += dim(318, 30, 318, sk.lenY, "A", 318, 180); dims += dim(sk.wL, r.hemY + 10, sk.wR, r.hemY + 10, "L", r.cx, r.hemY + 22); }
     } else if (front) {
       dims += dim(r.cx - r.sh, r.shY - 14, r.cx + r.sh, r.shY - 14, "B", r.cx + r.sh + 14, r.shY - 20);
       dims += dim(r.cx - r.bw, r.armY + 6, r.cx + r.bw, r.armY + 6, "C", r.cx - r.bw + 10, r.armY + 18);
-      dims += dim(r.cx - r.bw, r.hemY + 10, r.cx + r.bw, r.hemY + 10, "D", r.cx, r.hemY + 22);
+      dims += dim(r.cx - r.hw, r.hemY + 10, r.cx + r.hw, r.hemY + 10, "D", r.cx, r.hemY + 22);
     } else {
       dims += dim(r.cx + r.bw + 18, 32, r.cx + r.bw + 18, r.hemY, "A", r.cx + r.bw + 18, (32 + r.hemY) / 2);
     }
@@ -997,27 +1157,44 @@ function buildSVG(view) {
     inner += r.svg;
     if (front) {
       dims += dim(r.wL, 22, r.wR, 22, "A", r.cx + 64, 14);
-      dims += dim(r.cx + 34, 50, r.cx + 34, r.crotchY, "D", r.cx + 46, 92);
-      dims += dim(r.wR + 22, 30, r.wR + 22, r.hemY, "F", r.wR + 22, (30 + r.hemY) / 2);
+      dims += dim(r.cx + 34, 30, r.cx + 34, r.crotchY, "D", r.cx + 46, (30 + r.crotchY) / 2);
+      dims += dim(Math.max(r.outerR, r.hipR) + 16, 30, Math.max(r.outerR, r.hipR) + 16, r.hemY, "F", Math.max(r.outerR, r.hipR) + 16, (30 + r.hemY) / 2);
     } else {
-      dims += dim(r.wL - 6, 110, r.wR + 6, 110, "B", r.cx, 140);
+      dims += dim(r.hipL, r.hipY, r.hipR, r.hipY, "B", r.cx, r.hipY + 14);
     }
   } else {
-    const r = drawSkirt(view, o);
+    const r = drawSkirt(view, { ...o, ...skirtGeom() });
     inner += r.svg;
     if (front) {
       dims += dim(r.wL, 22, r.wR, 22, "A", 150, 14);
-      dims += dim(r.wR + r.flare + 14, 30, r.wR + r.flare + 14, r.lenY, "D", r.wR + r.flare + 14, 140);
+      dims += dim(r.wR + r.flare + 14, 30, r.wR + r.flare + 14, r.lenY, "D", r.wR + r.flare + 14, (30 + r.lenY) / 2);
       dims += dim(r.wL - r.flare, r.lenY + 12, r.wR + r.flare, r.lenY + 12, "C", 150, r.lenY + 24);
     }
   }
   const cap = t.kind === "bag" ? (front ? "앞면" : "옆면") : front ? "앞판" : "뒤판";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" role="img" aria-label="${t.name} ${cap} 도식화">${DEFS}${inner}${dims}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" role="img" aria-label="${t.name} ${cap} 도식화">${DEFS}${inner}${dims}${annoSVG(view)}</svg>`;
+}
+
+/* ---------------------------------------------------------------- 메모·화살표·동그라미 (도식화 편집 탭에서 넣음) */
+const ANNO = "#1e5bd8";
+function annoSVG(view, selected = -1) {
+  const list = (state.notes && state.notes[view]) || [];
+  if (!list.length) return "";
+  const n = (v) => (+v).toFixed(1);
+  return `<defs><marker id="an-${view}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0.5 L8,4 L0,7.5 z" fill="${ANNO}"/></marker></defs><g class="anno">`
+    + list.map((a, i) => {
+      const sel = i === selected ? ' stroke-dasharray="3 2"' : "";
+      if (a.t === "text") return `<text data-i="${i}" x="${n(a.x)}" y="${n(a.y)}" font-size="9" font-family="sans-serif" font-weight="700" fill="${ANNO}" stroke="#fff" stroke-width="2.6" paint-order="stroke"${i === selected ? ' text-decoration="underline"' : ""}>${esc(a.text)}</text>`;
+      if (a.t === "arrow") return `<line data-i="${i}" x1="${n(a.x1)}" y1="${n(a.y1)}" x2="${n(a.x2)}" y2="${n(a.y2)}" stroke="${ANNO}" stroke-width="1.4" marker-end="url(#an-${view})"${sel}/>`;
+      if (a.t === "circle") return `<circle data-i="${i}" cx="${n(a.x)}" cy="${n(a.y)}" r="${n(a.r)}" fill="none" stroke="${ANNO}" stroke-width="1.4"${sel}/>`;
+      return "";
+    }).join("") + "</g>";
 }
 
 function renderFlats() {
   $("svgFront").innerHTML = buildSVG("front"); $("svgBack").innerHTML = buildSVG("back");
   $("capFront").textContent = isBag() ? "앞면 FRONT" : "앞판 FRONT"; $("capBack").textContent = isBag() ? "옆면 SIDE (마치)" : "뒤판 BACK";
+  if (typeof activeTab !== "undefined" && activeTab === "edit") renderEditor();
 }
 
 /* ====================================================================== 원단·부자재 / 봉제 / 주의 */
@@ -1052,7 +1229,14 @@ function fitPrint() {
 function renderKindControls() {
   const bag = isBag();
   document.querySelector('.seg[aria-label="성별"]').hidden = bag;
+  const kind = T[state.opt.template].kind, isTop = kind === "top" || kind === "dress", isPants = kind === "pants";
   for (const id of ["oFit", "oNeck", "oRib", "oShape"]) $(id).closest("label").hidden = bag;
+  for (const id of ["oSleeve"]) $(id).closest("label").hidden = !isTop;
+  $("oHem").closest("label").hidden = kind !== "top";
+  for (const id of ["oWaist", "oFpocket", "oBpocket"]) $(id).closest("label").hidden = !isPants;
+  for (const id of ["pCargo", "pPleat", "pLegRib"]) $(id).closest("label").hidden = !isPants;
+  for (const id of ["pChest", "pKangaroo", "pPatch"]) $(id).closest("label").hidden = !isTop;
+  for (const id of ["pSide", "pBack"]) $(id).closest("label").hidden = !(isPants || kind === "skirt");
   document.querySelector('.checks[aria-label="주머니"]').hidden = bag;
   $("specCap").textContent = bag ? "치수표 (단위 cm, 완성 치수)" : "치수표 (단위 cm, 단면 기준)";
 }
@@ -1060,30 +1244,51 @@ function renderAll() { ensureSizeSystem(); renderKindControls(); renderSizeChips
 function renderContent() { renderTrims(); renderSew(); fitPrint(); }
 
 /* ====================================================================== 옵션 입력 연결 */
-const optMap = { oTemplate: "template", oFit: "fit", oNeck: "neck", oClosure: "closure", oRib: "rib", oShape: "shape" };
-const chkMap = { pChest: "chest", pKangaroo: "kangaroo", pPatch: "patch", pSide: "side", pBack: "back" };
+const optMap = { oTemplate: "template", oFit: "fit", oNeck: "neck", oClosure: "closure", oRib: "rib", oShape: "shape",
+  oSleeve: "sleeve", oHem: "hem", oWaist: "waist", oFpocket: "fpocket", oBpocket: "bpocket" };
+const chkMap = { pChest: "chest", pKangaroo: "kangaroo", pPatch: "patch", pSide: "side", pBack: "back", pCargo: "cargo", pPleat: "pleat", pLegRib: "legRib" };
+/* 대분류·소분류 목록 */
+function renderStylePicker() {
+  const st = styleOf(), cat = st.cat;
+  $("oCat").innerHTML = Object.entries(CATS).map(([k, n]) => `<option value="${k}">${n}</option>`).join("");
+  $("oCat").value = cat;
+  $("oStyle").innerHTML = Object.entries(STYLES).filter(([, x]) => x.cat === cat).map(([k, x]) => `<option value="${k}">${esc(x.name)}</option>`).join("");
+  $("oStyle").value = Object.keys(STYLES).find((k) => STYLES[k] === st);
+}
+/* 소분류 고르기: 엔진 품목 → 품목 기본 디테일 → 스타일 디테일 순서로 적용 */
+function chooseStyle(id) {
+  const st = STYLES[id]; if (!st) return;
+  const changedTpl = st.template !== state.opt.template;
+  state.opt.template = st.template; state.opt.style = id;
+  applyTemplateDefaults(); Object.assign(state.opt, st.opt || {}); state.ai = null;
+  syncControls(); renderAll(); $("fItem").textContent = $("oItem").value || itemName();
+  if (changedTpl) renderFabricOptions(); renderContent();
+}
+$("oCat").addEventListener("change", () => { chooseStyle(Object.keys(STYLES).find((k) => STYLES[k].cat === $("oCat").value)); });
+$("oStyle").addEventListener("change", () => chooseStyle($("oStyle").value));
 function syncControls() {
+  renderStylePicker();
   for (const [id, k] of Object.entries(optMap)) $(id).value = state.opt[k];
   for (const [id, k] of Object.entries(chkMap)) $(id).checked = !!state.opt[k];
 }
 for (const [id, k] of Object.entries(optMap)) $(id).addEventListener("change", () => {
   state.opt[k] = $(id).value;
   // 품목을 직접 바꾸면 이전 품목의 AI 부자재·봉제 사양은 맞지 않으므로 그 품목 기본값으로
-  if (k === "template") { applyTemplateDefaults(); state.ai = null; }
-  renderAll(); if (k === "template") { $("fItem").textContent = $("oItem").value || T[state.opt.template].name; renderFabricOptions(); renderContent(); }
+  if (k === "template") { state.opt.style = DEFAULT_STYLE[state.opt.template]; applyTemplateDefaults(); Object.assign(state.opt, STYLES[state.opt.style].opt || {}); state.ai = null; }
+  renderAll(); if (k === "template") { $("fItem").textContent = $("oItem").value || itemName(); renderFabricOptions(); renderContent(); }
 });
 for (const [id, k] of Object.entries(chkMap)) $(id).addEventListener("change", () => { state.opt[k] = $(id).checked; renderFlats(); });
 
 function applyTemplateDefaults() {
   // 품목을 바꾸면 그 품목의 일반적인 기본 디테일로 초기화합니다 (핏은 유지)
   const D = {
-    top_short: { neck: "crew", closure: "none", rib: "plain", chest: false, kangaroo: false, patch: false },
-    top_long:  { neck: "crew", closure: "none", rib: "rib",   chest: false, kangaroo: false, patch: false },
-    shirt:     { neck: "collar", closure: "buttons", rib: "plain", chest: true, kangaroo: false, patch: false },
-    hoodie:    { neck: "hood", closure: "none", rib: "rib", chest: false, kangaroo: true, patch: false },
-    jacket:    { neck: "mock", closure: "zip", rib: "plain", chest: false, kangaroo: false, patch: true },
-    pants:     { side: true, back: true },
-    shorts:    { side: true, back: true },
+    top_short: { neck: "crew", closure: "none", rib: "plain", chest: false, kangaroo: false, patch: false, sleeve: "set", hem: "straight" },
+    top_long:  { neck: "crew", closure: "none", rib: "rib",   chest: false, kangaroo: false, patch: false, sleeve: "set", hem: "straight" },
+    shirt:     { neck: "collar", closure: "buttons", rib: "plain", chest: true, kangaroo: false, patch: false, sleeve: "set", hem: "curved" },
+    hoodie:    { neck: "hood", closure: "none", rib: "rib", chest: false, kangaroo: true, patch: false, sleeve: "set", hem: "straight" },
+    jacket:    { neck: "mock", closure: "zip", rib: "plain", chest: false, kangaroo: false, patch: true, sleeve: "set", hem: "straight" },
+    pants:     { side: true, back: true, waist: "fixed", fpocket: "slant", bpocket: "patch", cargo: false, pleat: false, legRib: false },
+    shorts:    { side: true, back: true, waist: "fixed", fpocket: "slant", bpocket: "patch", cargo: false, pleat: false, legRib: false },
     skirt:     { shape: "a" },
     dress:     { neck: "crew", closure: "none", rib: "plain", shape: "a", chest: false, kangaroo: false, patch: false },
     pouch:     { fit: "regular", closure: "zip", chest: false, kangaroo: false, patch: false, side: false, back: false },
@@ -1106,9 +1311,11 @@ $("oFabric").addEventListener("change", () => {
   $("fFabric").textContent = f[1]; $("fMix").textContent = f[2]; $("fWeight").textContent = f[3];
 });
 $("oColor").addEventListener("input", () => { $("fColor").textContent = $("oColor").value; });
-$("oItem").addEventListener("input", () => { $("fItem").textContent = $("oItem").value || T[state.opt.template].name; });
+$("oItem").addEventListener("input", () => { $("fItem").textContent = $("oItem").value || itemName(); });
 
 $("sheet").addEventListener("input", fitPrint);
+let flatTimer = null;
+$("specTable").addEventListener("input", () => { clearTimeout(flatTimer); flatTimer = setTimeout(renderFlats, 250); });   // 치수 고치면 도식화 비율도
 /* 화면 폭이 A4 가로(1123px)보다 좁으면 작업지시서를 축소해 보여 줌. 인쇄 배율과는 별개 */
 function fitScreen() {
   const st = document.querySelector(".stage"), cs = getComputedStyle(st);
@@ -1168,7 +1375,16 @@ const PROMPT = `당신은 한국 의류 생산 현장(동대문 공장)의 작�
   "closure": "none | buttons | zip | half_zip",
   "rib": "plain | rib  (밑단·소매단에 골지 시보리가 있으면 rib)",
   "shape": "a | h | pleat  (스커트·원피스 치마 모양, 해당 없으면 a)",
-  "pockets": ["chest","kangaroo","patch","side","back" 중 보이는 것],
+  "sleeve": "set | drop | raglan  (상의 소매: 일반 / 어깨선이 팔로 내려온 드롭숄더 / 목에서 겨드랑이로 사선 절개된 래글런)",
+  "hem": "straight | curved  (상의 밑단: 일자 / 셔츠처럼 옆이 올라간 라운드)",
+  "waist": "fixed | elastic  (하의 허리: 단추·지퍼 고정 / 고무줄·끈)",
+  "frontPocket": "slant | scoop  (하의 앞주머니: 사선 / 청바지형 둥근 주머니)",
+  "backPocket": "patch | welt  (하의 뒷주머니: 붙인 주머니 / 입술 주머니)",
+  "pockets": ["chest","kangaroo","patch","side","back","cargo" 중 보이는 것],
+  "pleat": true 또는 false  (하의 앞 주름·턱이 보이면 true),
+  "ratios": { 사진에서 보이는 비율만, 확실하지 않으면 null. 치수(cm)가 아니라 비율입니다.
+    상의: "length": 총장 ÷ 가슴 폭, "sleeve": 소매 길이 ÷ 총장, "hem": 밑단 폭 ÷ 가슴 폭
+    하의: "hem": 밑단 폭 ÷ 허벅지 폭, "rise": 앞 밑위 ÷ 총장 },
   "color": "컬러명",
   "fabric": "원단 (예: 면 싱글저지 30수 (추정))",
   "mix": "혼용률 (예: 면 100% (추정))",
@@ -1179,112 +1395,75 @@ const PROMPT = `당신은 한국 의류 생산 현장(동대문 공장)의 작�
 }`;
 
 const ALLOWED = { template: Object.keys(T), fit: ["regular","oversize","slim"], neck: ["crew","v","collar","hood","mock"],
-  closure: ["none","buttons","zip","half_zip"], rib: ["plain","rib"], shape: ["a","h","pleat"] };
+  closure: ["none","buttons","zip","half_zip","placket"], rib: ["plain","rib"], shape: ["a","h","pleat","mermaid","wrap"],
+  sleeve: ["set","drop","raglan","none"], hem: ["straight","curved"], style: Object.keys(STYLES), waist: ["fixed","elastic"], fpocket: ["slant","scoop"], bpocket: ["patch","welt"] };
 
 function applyAI(r) {
   if (!r || typeof r !== "object") throw new Error("결과 형식이 올바르지 않습니다.");
+  r = { ...r, fpocket: r.frontPocket ?? r.fpocket, bpocket: r.backPocket ?? r.bpocket };
+  if (ALLOWED.template.includes(r.template) && r.template !== state.opt.template) state.opt.style = DEFAULT_STYLE[r.template];
   for (const k of Object.keys(ALLOWED)) if (ALLOWED[k].includes(r[k])) state.opt[k] = r[k];
   const pk = Array.isArray(r.pockets) ? r.pockets : [];
-  for (const k of ["chest","kangaroo","patch","side","back"]) state.opt[k] = pk.includes(k);
+  for (const k of ["chest","kangaroo","patch","side","back","cargo"]) state.opt[k] = pk.includes(k);
+  if (typeof r.pleat === "boolean") state.opt.pleat = r.pleat;
   if (T[state.opt.template].kind === "pants" && !pk.length) { state.opt.side = true; state.opt.back = true; }
   state.ai = {
     trims: Array.isArray(r.trims) ? r.trims.slice(0, 8).map((x) => ({ type: String(x.type ?? ""), name: String(x.name ?? ""), spec: String(x.spec ?? ""), qty: String(x.qty ?? "") })) : [],
     sewing: Array.isArray(r.sewing) ? r.sewing.slice(0, 10).map(String) : [],
     notes: Array.isArray(r.notes) ? r.notes.slice(0, 4).map(String) : [],
   };
-  $("fItem").textContent = r.itemName || T[state.opt.template].name;
+  $("fItem").textContent = r.itemName || itemName();
   $("fColor").textContent = r.color || "";
   $("fFabric").textContent = r.fabric || "";
   $("fMix").textContent = r.mix || "";
   $("fWeight").textContent = r.weight || "";
   $("oItem").value = r.itemName || ""; $("oColor").value = r.color || ""; $("oFabric").value = "";
   syncControls(); renderFabricOptions(); renderAll(); renderContent();
+  showRatioHints(r.ratios);
+}
+
+/* ---------------------------------------------------------------- 사진 비율 제안
+   AI가 준 '비율'로 치수표 기준값을 계산해 보여 주기만 함. 사용자가 눌러야 반영 (AI는 치수를 정하지 않는다는 원칙) */
+const RATIO_RULES = {
+  top: [["총장", "length", (v, r) => r * v["가슴단면"], [1, 2.2]], ["소매길이", "sleeve", (v, r) => r * v["총장"], [0.15, 1.1]], ["밑단단면", "hem", (v, r) => r * v["가슴단면"], [0.6, 1.4]]],
+  pants: [["밑단단면", "hem", (v, r) => r * v["허벅지단면"], [0.4, 1.6]], ["앞 밑위", "rise", (v, r) => r * v["총장"], [0.15, 0.7]]],
+};
+function setBaseValue(part, cm) {   // 기준 사이즈 값을 바꾸고, 다른 사이즈는 같은 차이만큼 옮김
+  const tr = [...$("specTable").querySelectorAll("tr")].find((x) => x.children[1]?.textContent === part); if (!tr) return false;
+  const cells = [...tr.querySelectorAll("td[contenteditable]")], bi = cells.findIndex((td) => td.classList.contains("base"));
+  const d = cm - parseFloat(cells[bi].textContent);
+  cells.forEach((td) => { const x = parseFloat(td.textContent); if (Number.isFinite(x)) td.textContent = Math.round((x + d) * 2) / 2; });
+  return true;
+}
+function showRatioHints(ratios) {
+  const box = $("ratioHints"); box.hidden = true; box.innerHTML = "";
+  if (!ratios || typeof ratios !== "object") return;
+  const kind = T[state.opt.template].kind, rules = RATIO_RULES[kind === "pants" ? "pants" : kind === "top" ? "top" : ""];
+  if (!rules) return;
+  const v = baseVals(), items = [];
+  for (const [part, key, fn, [lo, hi]] of rules) {
+    const r = +ratios[key]; if (!Number.isFinite(r) || r < lo || r > hi || v[part] == null) continue;
+    const sug = Math.round(fn(v, r) * 2) / 2; if (!Number.isFinite(sug) || Math.abs(sug - v[part]) < 1.5) continue;
+    items.push({ part, cur: v[part], sug });
+  }
+  if (!items.length) return;
+  box.innerHTML = `<b>사진 비율 제안</b> <small>AI가 사진에서 읽은 비율로 계산한 값입니다. 실측이 아니니 맞을 때만 반영하세요.</small>
+    <ul>${items.map((x, i) => `<li><label><input type="checkbox" data-i="${i}" checked /> ${esc(x.part)}: ${x.cur} → <b>${x.sug}</b>cm</label></li>`).join("")}</ul>
+    <button id="ratioApply">고른 값을 치수표에 반영</button> <button id="ratioClose">닫기</button>`;
+  box.hidden = false;
+  $("ratioApply").addEventListener("click", () => {
+    const done = []; box.querySelectorAll("input:checked").forEach((cb) => { const x = items[+cb.dataset.i]; if (setBaseValue(x.part, x.sug)) done.push(`${x.part} ${x.sug}`); });
+    box.hidden = true; renderFlats(); fitPrint(); scheduleSave();
+    setStatus(done.length ? `사진 비율 제안을 기준 사이즈(${state.base})에 반영했습니다: ${done.join(", ")}cm. 다른 사이즈도 같은 차이만큼 옮겼습니다.` : "반영할 항목을 고르세요.");
+  });
+  $("ratioClose").addEventListener("click", () => { box.hidden = true; });
 }
 
 let sampleFn = null;      // claude.ai에서 열렸을 때: Claude
 let sampleImages = false;
-function geminiMode() { return !sampleFn || !sampleImages; }
+const claudeMode = () => !!(sampleFn && sampleImages);   // claude.ai 안에서 열려 Claude가 사진을 볼 수 있을 때
 
-/* 쓸 수 있는 모델 이름 → 사진 분석용 Flash 후보 순서: 정식(최신 버전 먼저) → 미리보기 → lite */
-function flashCandidates(names) {
-  const ver = (n) => parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
-  const pick = (re) => names.filter((n) => re.test(n)).sort((a, b) => ver(b) - ver(a));
-  return [...pick(/^gemini-\d+(\.\d+)?-flash$/), ...pick(/^gemini-\d+(\.\d+)?-flash-preview$/), ...pick(/^gemini-\d+(\.\d+)?-flash-lite$/)];
-}
-async function geminiModels(key) {
-  try { const c = JSON.parse(localStorage.getItem("wo_gmodels") || "null"); if (Array.isArray(c) && c.length) return c; } catch (e) {}
-  try {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
-    const data = await res.json();
-    const names = (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => m.name.replace(/^models\//, ""));
-    try { localStorage.setItem("wo_gmodels", JSON.stringify(names)); } catch (e) {}
-    return names;
-  } catch (e) { return []; }
-}
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-/* Gemini 분석: 모델이 붐비면(503·429·500) 잠깐 쉬고 다른 Flash 모델로 다시 (최대 3개) */
-async function analyzeWithGemini() {
-  let key = $("gKey").value.trim();
-  if (!key) { $("keyBox").hidden = false; $("keyBox").open = true; throw new Error("Gemini API 키를 입력하거나, 4단계에서 직접 선택해 주세요."); }
-  try { localStorage.setItem("wo_gkey", key); localStorage.setItem("wo_gmodel", $("gModel").value.trim()); } catch (e) {}
-  // 순서: 지난번에 된 모델 → 최신 정식 → 오래된 정식(덜 붐빔) → lite(무료 한도가 넉넉한 편). 최대 4개
-  const first = $("gModel").value.trim() || GEMINI_DEFAULT, c = flashCandidates(await geminiModels(key));
-  const stable = c.filter((n) => /-flash$/.test(n)), lite = c.filter((n) => /flash-lite$/.test(n));
-  let lastOk = null, bad = []; try { lastOk = localStorage.getItem("wo_gmodel_ok"); bad = JSON.parse(localStorage.getItem("wo_gmodel_bad") || "[]"); } catch (e) {}
-  // 목록에는 있어도 새 사용자에게 막힌 모델(예: '더 이상 제공하지 않음')은 기억해 두고 건너뜀
-  const ok = (n) => n && !bad.includes(n) && (c.includes(n) || n === first);
-  const st = stable.filter((n) => !bad.includes(n));
-  const models = [...new Set([lastOk, first, st[0], st[1], lite.find((n) => !bad.includes(n)), ...c].filter(ok))].slice(0, 5);
-  const b64 = state.photo.dataUrl.split(",")[1];
-  const tried = [], why = [];   // 모델별 결과 (붐빔·분당 한도·서버 오류)
-  let wait = 0;
-  for (const model of models) {
-    if (tried.length) { setStatus(`Gemini(${tried[tried.length - 1]}: ${why[why.length - 1]})라서 ${Math.round(wait / 1000)}초 뒤 ${model}(으)로 다시 시도…`); await sleep(wait); }
-    tried.push(model);
-    // 연결 실패(사파리 'Load failed', 크롬 'Failed to fetch' — 붐빌 때 CORS 없는 응답·끊김)와 60초 시간 초과도 다음 모델로
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 60000);
-    let res;
-    try {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, signal: ctl.signal,
-        body: JSON.stringify({ contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }],
-          generationConfig: { responseMimeType: "application/json" } }),
-      });
-    } catch (err) {
-      why.push(err?.name === "AbortError" ? "시간 초과" : "연결 실패"); wait = 2000 * tried.length; continue;
-    } finally { clearTimeout(timer); }
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      const txt = (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
-      const r = JSON.parse(txt.replace(/```json|```/g, "").trim());
-      r.__model = model; r.__switched = tried.length > 1;
-      try { localStorage.setItem("wo_gmodel_ok", model); } catch (e) {}   // 잘 된 모델을 다음부터 먼저
-      return r;
-    }
-    const msg = data?.error?.message || "";
-    // 이 계정에서 쓸 수 없는 모델: 기억하고 바로 다음 모델로 (기다리지 않음)
-    if ([400, 403, 404].includes(res.status) && /no longer available|not found|not supported|deprecated|unsupported/i.test(msg)) {
-      bad.push(model); try { localStorage.setItem("wo_gmodel_bad", JSON.stringify([...new Set(bad)])); } catch (e) {}
-      if ($("gModel").value.trim() === model) $("gModel").value = "";
-      why.push(`사용 불가 ${res.status}`); wait = 0; continue;
-    }
-    if (![429, 500, 503].includes(res.status)) throw new Error(msg || "HTTP " + res.status);
-    why.push(res.status === 503 ? "붐빔 503" : res.status === 500 ? "서버 오류 500" : /per.?day|daily/i.test(msg) ? "하루 한도 429" : "분당 한도 429");
-    // Google이 알려 준 대기 시간(RetryInfo)이 있으면 그만큼, 없으면 2·4·6초 (최대 10초)
-    const hint = (data?.error?.details || []).find((d) => d.retryDelay)?.retryDelay;
-    wait = Math.min(10000, hint ? parseFloat(hint) * 1000 : 2000 * tried.length);
-  }
-  const detail = tried.map((m, i) => `${m}: ${why[i]}`).join(" · ");
-  const daily = why.length && why.every((w) => /하루 한도/.test(w));
-  if (why.length && why.every((w) => /연결 실패|시간 초과/.test(w))) {
-    const e = new Error(`Gemini에 연결하지 못했습니다 (${detail}). 인터넷 연결을 확인하고 잠시 후 다시 누르세요. 회사·학교 와이파이나 광고 차단 앱이 막는 경우도 있습니다.`); e.code = "busy"; throw e;
-  }
-  const e = new Error(daily ? `오늘 무료 사용량을 다 썼습니다 (${detail}). 내일 다시 시도하거나 기기 안 인식을 쓰세요.`
-    : `Gemini가 지금 응답하지 못합니다 (${detail}). ${why.some((w) => /분당/.test(w)) ? "무료 등급의 분당 한도에 걸린 모델이 있어 1분쯤 뒤에" : "Google 쪽 일시적인 문제라 잠시 후"} 다시 누르면 대부분 됩니다.`);
-  e.code = "busy"; throw e;
-}
-
-/* ---------------------------------------------------------------- 기기 안 인식 (키 없을 때)
+/* ---------------------------------------------------------------- 기기 안 인식 (claude.ai 밖 기본)
    MobileCLIP S0 사진 모델을 브라우저에서 돌리고, 미리 계산한 글자 임베딩(assets/clip-labels.json,
    scripts/build-clip-labels.mjs)과 비교해 품목·디테일·컬러를 고릅니다. 사진은 기기 밖으로 나가지 않습니다.
    q8 양자화 모델은 결과가 망가져서 fp16(23MB)을 씀. */
@@ -1298,7 +1477,7 @@ function confLabel(tpl) {
   const p = tpl[0].p, gap = p - (tpl[1]?.p || 0);
   return p >= 0.85 && gap >= 0.6 ? "높음" : p >= 0.55 && gap >= 0.25 ? "보통" : "낮음";
 }
-const localMode = () => geminiMode() && !$("gKey").value.trim();
+const localMode = () => !claudeMode();
 let localModel = null;
 function loadLocal() {
   if (!localModel) localModel = (async () => {
@@ -1346,7 +1525,7 @@ async function analyzeLocal() {
 }
 function applyLocal({ tpl, color, emb, labels }, template = tpl[0].c) {
   const o = state.opt;
-  o.template = template; applyTemplateDefaults();         // 품목 기본 디테일에서 시작
+  o.template = template; o.style = DEFAULT_STYLE[template]; applyTemplateDefaults();   // 품목 기본 스타일·디테일에서 시작
   const kind = T[template].kind, sure = (g, only, min = 0.5) => { const r = rankGroup(labels, emb, g, only)[0]; return r.p >= min ? r.c : null; };
   const fit = sure("fit", null, 0.6); if (fit) o.fit = fit;
   for (const g of ["neck", "closure"]) { const only = LOCAL_ALLOWED[g][template]; if (only) { const v = only.length === 1 ? only[0] : sure(g, only); if (v) o[g] = v; } }
@@ -1357,7 +1536,7 @@ function applyLocal({ tpl, color, emb, labels }, template = tpl[0].c) {
   if (template === "jacket") o.patch = sure("patch", null, 0.55) === "yes";
   syncControls(); renderAll(); renderFabricOptions(); renderContent();
   const fitName = { oversize: "오버핏 ", slim: "슬림 " }[o.fit] || "";
-  if (!$("oItem").value.trim()) $("fItem").textContent = fitName + T[template].name;
+  if (!$("oItem").value.trim()) $("fItem").textContent = fitName + itemName();
   const oc = $("oColor");
   if (color.p >= 0.3 && (!oc.value.trim() || oc.value === oc.dataset.auto)) { oc.value = oc.dataset.auto = color.c; $("fColor").textContent = color.c; }
   // 후보 버튼: 틀렸을 때 바로 바꿀 수 있게
@@ -1379,26 +1558,15 @@ async function analyze() {
       setStatus(`기기 안에서 인식했습니다: ${T[top.c].name} (확신 ${conf})${r.color.p >= 0.3 ? " · " + r.color.c : ""}. ${conf === "낮음" ? "확신이 낮습니다. 아래 후보 중에서 맞는 품목을 골라 주세요." : "틀리면 아래 후보를 누르거나 4단계에서 고르세요."}`);
       return;
     }
-    let r;
-    if (!geminiMode()) r = await sampleFn.json(PROMPT, { images: state.photo.blob });
-    else r = await analyzeWithGemini();
+    const r = await sampleFn.json(PROMPT, { images: state.photo.blob });   // claude.ai 안: Claude 분석
     applyAI(r);
     $("guess").hidden = true;
-    setStatus(`완료했습니다${r.__switched ? ` (붐비지 않는 ${r.__model}(으)로 분석)` : ""}. 4단계에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.`);
+    setStatus("완료했습니다. 4단계에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.");
   } catch (e) {
-    // Gemini가 붐비면, 인식 모델을 이미 받은 브라우저에서는 기기 안 인식으로 품목·디테일·컬러라도 채움
-    if (e && e.code === "busy" && sampleImages !== true && modelReady()) {
-      try {
-        const r = await analyzeLocal(); applyLocal(r);
-        setStatus(`${e.message} 대신 기기 안 인식으로 품목(${T[r.tpl[0].c].name})·디테일·컬러를 채웠습니다. 원단·봉제 사양은 나중에 다시 눌러 Gemini로 채울 수 있습니다.`, true);
-        return;
-      } catch (e2) {}
-    }
     const code = e && e.code;
     const msg = code === "not_granted" ? "Claude 사용이 허용되지 않았습니다. 4단계에서 직접 선택해 주세요."
       : code === "rate_limited" ? "요청이 많습니다. 잠시 후 다시 눌러 주세요."
       : code === "invalid_json" ? "결과를 읽지 못했습니다. 한 번 더 눌러 주세요."
-      : code === "busy" ? e.message
       : /Load failed|Failed to fetch|NetworkError/i.test(e?.message || "") ? "연결에 실패했습니다. 인터넷 연결을 확인하고 잠시 후 다시 눌러 주세요."
       : localMode() ? "기기 안 인식에 실패했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요."
       : (e && e.message) || "분석에 실패했습니다.";
@@ -1459,9 +1627,9 @@ function fillFromWorksheet() {
 }
 function setTab(t) {
   activeTab = t;
-  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabKeyBtn").setAttribute("aria-selected", t === "key");
-  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("keyGuide").hidden = t !== "key";
-  if (t === "key") $("keyInput").value = $("gKey").value;
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit");
+  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("edit").hidden = t !== "edit";
+  if (t === "edit") renderEditor();
   if (t === "olz") runOutline();
   document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
   if (t === "pat") { syncPatternToTemplate(); applyPendingPattern(); }
@@ -1469,8 +1637,138 @@ function setTab(t) {
 $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
 $("tabOlzBtn").addEventListener("click", () => setTab("olz"));
-$("tabKeyBtn").addEventListener("click", () => setTab("key"));
-$("keyGuideLink").addEventListener("click", (e) => { e.preventDefault(); setTab("key"); document.querySelector(".tabs").scrollIntoView({ behavior: "smooth" }); });
+$("tabEditBtn").addEventListener("click", () => setTab("edit"));
+
+/* ====================================================================== 도식화 편집 (캔버스)
+   손잡이(앞판) = 치수표 기준 사이즈 값. 끌면 setBaseValue → 도식화 다시. 메모·화살표·동그라미 = state.notes */
+const ed = { tool: "move", sel: { view: null, i: -1 }, drag: null, undo: [] };
+const svgPt = (svg, e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+const r05e = (v) => Math.round(v * 2) / 2;
+/* 품목별 손잡이: [측정부위, 위치, 끌 방향, 위치 → cm] */
+function editHandles() {
+  const v = baseVals(), o = state.opt, t = T[o.template], hs = [];
+  const add = (part, x, y, axis, toCm, lo, hi) => { if (v[part] != null) hs.push({ part, x, y, axis, toCm, lo: lo ?? 1, hi: hi ?? 200 }); };
+  if (t.kind === "top" || t.kind === "dress") {
+    const r = drawTop("front", o, t), cx = r.cx;
+    if (t.kind === "top") {
+      add("총장", cx + r.hw * 0.4, r.hemY, "y", (p) => (p.y - r.top) / r.k, 20, 140);
+      add("밑단단면", cx + r.hw, r.hemY - 4, "x", (p) => (2 * (p.x - cx)) / r.k, 15, 120);
+    }
+    add("가슴단면", cx + r.bw, r.armY, "x", (p) => (2 * (p.x - cx)) / r.k, 20, 120);
+    if (o.sleeve !== "raglan") add("어깨너비", cx + r.sh, r.shY, "x", (p) => (2 * (p.x - cx)) / r.k, 15, 100);
+    add("목너비", cx + r.nw, r.top, "x", (p) => (2 * (p.x - cx)) / r.k, 6, 40);
+    add("앞목깊이", cx, r.neckDepth, "y", (p) => (p.y - r.top) / r.k, 1, 40);
+    if (r.slv) { const s = r.slv, d = [Math.cos(s.a), Math.sin(s.a)];
+      add("소매길이", s.te[0], s.te[1], "dir", (p) => ((p.x - s.start[0]) * d[0] + (p.y - s.start[1]) * d[1] - r.raglanOff) / r.k, 3, 100); hs[hs.length - 1] && (hs[hs.length - 1].dir = d, hs[hs.length - 1].start = s.start); }
+    if (t.kind === "dress") {
+      const g = skirtGeomDress(r); add("허리단면", 150 + g.wv, r.hemY, "x", (p) => (2 * (p.x - 150)) / r.k, 15, 120);
+      add("밑단단면", 150 + g.wv + g.flare, g.lenY, "x", (p) => (2 * (p.x - 150)) / r.k, 20, 200);
+      add("총장", 150, g.lenY, "y", (p) => (p.y - r.top) / r.k, 40, 160);
+    }
+  } else if (t.kind === "pants") {
+    const r = drawPants("front", o), cx = r.cx;
+    add("허리단면", r.wR, 30, "x", (p) => (2 * (p.x - cx)) / r.k, 15, 80);
+    add("엉덩이단면", r.hipR, r.hipY, "x", (p) => (2 * (p.x - cx)) / r.k, 20, 90);
+    add("허벅지단면", cx + r.g + r.TH * r.k, r.crotchY + 3, "x", (p) => (p.x - cx - r.g) / r.k, 10, 60);
+    add("앞 밑위", cx, r.crotchY, "y", (p) => (p.y - 30) / r.k, 10, 60);
+    add("밑단단면", r.outerR, r.hemY - 4, "x", (p) => (2 * (p.x - r.legC)) / r.k, 5, 70);
+    add("총장", r.legC, r.hemY, "y", (p) => (p.y - 30) / r.k, 20, 140);
+  } else if (t.kind === "skirt") {
+    const g = skirtGeom();
+    add("허리단면", g.wR, 30, "x", (p) => (2 * (p.x - 150)) / g.k, 15, 80);
+    add("밑단단면", g.wR + g.flare, g.lenY - 4, "x", (p) => (2 * (p.x - 150)) / g.k, 20, 200);
+    add("총장", 150, g.lenY, "y", (p) => (p.y - 30) / g.k, 20, 130);
+  }
+  return hs;
+}
+function skirtGeomDress(r) { const dv = baseVals(), wv = (dv["허리단면"] || 46) / 2 * r.k, hemHalf = (dv["밑단단면"] || 70) / 2 * r.k;
+  return { wv, flare: state.opt.shape === "h" ? Math.max(4, hemHalf - wv) * 0.4 : Math.max(8, hemHalf - wv), lenY: Math.min(320, r.top + (dv["총장"] || 110) * r.k) }; }
+function renderEditor() {
+  for (const view of ["front", "back"]) {
+    const box = view === "front" ? $("edFront") : $("edBack");
+    let svg = buildSVG(view);
+    if (ed.sel.view === view && ed.sel.i >= 0) svg = svg.replace(/<defs><marker id="an-[\s\S]*?<\/g><\/svg>$/, annoSVG(view, ed.sel.i) + "</svg>");
+    // 숨겨진 작업지시서 도식화와 화살촉 이름(id)이 겹치면 숨긴 쪽을 가리켜 안 보이므로 편집기용 이름으로 바꿈
+    box.innerHTML = svg.replace(/id="(ar|an-front|an-back)"/g, 'id="ed-$1"').replace(/url\(#(ar|an-front|an-back)\)/g, "url(#ed-$1)");
+    const el = box.querySelector("svg"); el.dataset.view = view;
+    if (view === "front" && !isBag()) {
+      const NS = "http://www.w3.org/2000/svg", g = document.createElementNS(NS, "g");
+      editHandles().forEach((h, i) => {
+        const hg = document.createElementNS(NS, "g"); hg.setAttribute("class", "hd"); hg.dataset.h = i;
+        hg.innerHTML = `<circle cx="${h.x.toFixed(1)}" cy="${h.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#c62828" stroke-width="2"/><title>${esc(h.part)} 끌기</title>`;
+        g.append(hg);
+      });
+      el.append(g);
+    }
+  }
+  $("edNote").textContent = isBag() ? "파우치는 손잡이 편집을 아직 지원하지 않습니다. 메모·화살표·동그라미는 넣을 수 있습니다."
+    : "빨간 손잡이를 끌면 치수표 기준 사이즈 값이 바뀌고 도식화도 따라 바뀝니다. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.";
+}
+function pushUndo() {
+  ed.undo.push({ spec: [...$("specTable").querySelectorAll("td[contenteditable]")].map((td) => td.textContent), key: $("specTable").dataset.key, notes: JSON.stringify(state.notes) });
+  if (ed.undo.length > 40) ed.undo.shift();
+}
+function undoEdit() {
+  const u = ed.undo.pop(); if (!u) return;
+  if (u.key === $("specTable").dataset.key) [...$("specTable").querySelectorAll("td[contenteditable]")].forEach((td, i) => { if (u.spec[i] != null) td.textContent = u.spec[i]; });
+  state.notes = JSON.parse(u.notes); ed.sel = { view: null, i: -1 };
+  renderFlats(); fitPrint(); scheduleSave(); renderEditor();
+}
+function setTool(t) { ed.tool = t; document.querySelectorAll(".ed-bar [data-tool]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tool === t)); }
+document.querySelectorAll(".ed-bar [data-tool]").forEach((b) => b.addEventListener("click", () => { setTool(b.dataset.tool); if (b.dataset.tool === "text") $("edText").focus(); }));
+for (const box of [$("edFront"), $("edBack")]) {
+  box.addEventListener("pointerdown", (e) => {
+    const svg = box.querySelector("svg"); if (!svg) return;
+    const view = svg.dataset.view, p = svgPt(svg, e), list = state.notes[view];
+    const hd = e.target.closest(".hd"), an = e.target.closest("[data-i]");
+    if (ed.tool === "move" && hd) {
+      const h = editHandles()[+hd.dataset.h]; if (!h) return;
+      pushUndo(); ed.drag = { kind: "handle", h, view }; box.setPointerCapture(e.pointerId); e.preventDefault(); return;
+    }
+    if (ed.tool === "move" && an) {
+      ed.sel = { view, i: +an.dataset.i }; pushUndo(); ed.drag = { kind: "anno", view, i: +an.dataset.i, last: p }; box.setPointerCapture(e.pointerId); renderEditor(); return;
+    }
+    if (ed.tool === "move") { ed.sel = { view: null, i: -1 }; renderEditor(); return; }
+    if (ed.tool === "text") {
+      const text = $("edText").value.trim(); if (!text) { $("edText").focus(); $("edNote").textContent = "먼저 메모 글자를 쓰고 도식화를 누르세요."; return; }
+      pushUndo(); list.push({ t: "text", x: p.x, y: p.y, text: text.slice(0, 40) }); ed.sel = { view, i: list.length - 1 }; renderFlats(); scheduleSave(); renderEditor(); return;
+    }
+    pushUndo();
+    const item = ed.tool === "arrow" ? { t: "arrow", x1: p.x, y1: p.y, x2: p.x + 1, y2: p.y + 1 } : { t: "circle", x: p.x, y: p.y, r: 2 };
+    list.push(item); ed.drag = { kind: "new", view, i: list.length - 1, start: p }; box.setPointerCapture(e.pointerId); renderEditor();
+  });
+  box.addEventListener("pointermove", (e) => {
+    const d = ed.drag; if (!d) return;
+    const svg = box.querySelector("svg"), p = svgPt(svg, e);
+    if (d.kind === "handle") {
+      const h = d.h, q = h.axis === "x" ? { x: p.x, y: h.y } : h.axis === "y" ? { x: h.x, y: p.y } : p;
+      const cm = Math.min(h.hi, Math.max(h.lo, r05e(h.toCm(q))));
+      if (cm !== d.cm) { d.cm = cm; setBaseValue(h.part, cm); renderFlats(); $("edNote").textContent = `${h.part} → ${cm}cm (기준 사이즈 ${state.base}, 다른 사이즈도 같은 차이만큼)`; }
+      return;
+    }
+    const a = state.notes[d.view][d.i]; if (!a) return;
+    if (d.kind === "anno") { const dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
+      if (a.t === "arrow") { a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; } else { a.x += dx; a.y += dy; } renderEditor(); return; }
+    if (a.t === "arrow") { a.x2 = p.x; a.y2 = p.y; } else a.r = Math.max(3, Math.hypot(p.x - a.x, p.y - a.y));
+    renderEditor();
+  });
+  const end = () => {
+    const d = ed.drag; if (!d) return; ed.drag = null;
+    if (d.kind === "new") { const a = state.notes[d.view][d.i]; if (a && ((a.t === "arrow" && Math.hypot(a.x2 - a.x1, a.y2 - a.y1) < 6) || (a.t === "circle" && a.r < 4))) { state.notes[d.view].splice(d.i, 1); ed.undo.pop(); } else ed.sel = { view: d.view, i: d.i }; }
+    if (d.kind === "handle" && d.cm == null) ed.undo.pop();
+    renderFlats(); fitPrint(); scheduleSave(); renderEditor();
+  };
+  box.addEventListener("pointerup", end); box.addEventListener("pointercancel", end);
+}
+function deleteSelected() { const { view, i } = ed.sel; if (!view || i < 0) return; pushUndo(); state.notes[view].splice(i, 1); ed.sel = { view: null, i: -1 }; renderFlats(); scheduleSave(); renderEditor(); }
+$("edDel").addEventListener("click", deleteSelected);
+$("edUndo").addEventListener("click", undoEdit);
+$("edClear").addEventListener("click", () => { if (!state.notes.front.length && !state.notes.back.length) return; pushUndo(); state.notes = { front: [], back: [] }; ed.sel = { view: null, i: -1 }; renderFlats(); scheduleSave(); renderEditor(); });
+document.addEventListener("keydown", (e) => {
+  if (activeTab !== "edit" || e.target.matches("input, textarea, [contenteditable]")) return;
+  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undoEdit(); }
+});
 
 /* 패턴 탭을 열 때마다 작업지시서 품목을 확인: 패턴이 있으면 그 품목으로, 없으면 안내 */
 function syncPatternToTemplate() {
@@ -1497,7 +1795,8 @@ function buildPatForm() {
 }
 function patValues() { return Object.fromEntries([...$("patFields").querySelectorAll("input")].map((n) => [n.dataset.k, n.value])); }
 function renderPattern() {
-  patDraft = Pattern.draft($("patType").value, patValues(), state.opt);
+  // 패턴에는 필요한 선택만 넘김 (도식화 전용 'hem' 같은 이름이 패턴 치수와 겹치지 않게)
+  patDraft = Pattern.draft($("patType").value, patValues(), Object.fromEntries(Pattern.OPT_KEYS.map((k) => [k, state.opt[k]])));
   const title = `${patDraft.name} · ${($("fStyle").textContent || "").trim()}`;
   $("patView").innerHTML = Pattern.svg(patDraft, patDraft.lay, "view", title);
   $("patCalc").innerHTML = patDraft.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="n">${esc(c)}</td></tr>`).join("");
@@ -1545,60 +1844,13 @@ function buildPatPrint() {
 }
 function preparePrint() {
   document.body.classList.toggle("print-pattern", activeTab === "pat");
-  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "key");   // 외곽선·키 탭에서 인쇄하면 작업지시서를 인쇄
+  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit");   // 외곽선·키 탭에서 인쇄하면 작업지시서를 인쇄
   if (activeTab === "pat") buildPatPrint();
   else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
 $("savePatBtn").addEventListener("click", () => {
   const d = patDraft; if (!d) return;
   saveFile(`패턴_${d.type}_${styleNo()}.svg`, Pattern.svg(d, d.lay, "real", `${d.name} · ${$("fStyle").textContent}`), "image/svg+xml");
-});
-
-/* ====================================================================== Gemini 키 확인
-   모델 목록을 받아 키가 유효한지 확인. 기본 모델이 목록에 없으면(미리보기 종료 등) 쓸 수 있는 Flash 모델로 바꿈 */
-const GEMINI_DEFAULT = "gemini-3-flash-preview";
-async function checkGeminiKey() {
-  const key = $("keyInput").value.trim(), out = $("keyResult");
-  out.className = ""; out.textContent = "확인하는 중…";
-  // 새 키는 'AQ.'(인증 키), 예전 키는 'AIza'로 시작. 점(.)·밑줄·하이픈이 들어갈 수 있어 공백만 없으면 통과
-  if (!/^\S{20,}$/.test(key)) { out.className = "err"; out.textContent = "키 모양이 아닙니다. AI Studio에서 복사한 키 전체를 붙여 넣으세요 (보통 AQ. 또는 AIza로 시작, 공백 없이)."; return; }
-  try {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      out.className = "err";
-      const reason = (data?.error?.details || []).map((d) => d.reason).join(",");
-      if (res.status === 401 && /ACCESS_TOKEN_TYPE_UNSUPPORTED/.test(reason + (data?.error?.message || "")))
-        // AI Studio의 새 'AQ.' 인증 키가 일부 계정에서 Google 쪽 문제로 거부되는 사례 (2026년 공식 포럼에 다수 보고)
-        out.innerHTML = `Google이 이 키를 거부했습니다 (401 ACCESS_TOKEN_TYPE_UNSUPPORTED). 키를 잘못 넣은 게 아니라, 새 <b>AQ.</b> 키가 일부 계정에서 거부되는 <b>Google 쪽 문제</b>로 알려져 있습니다.
-          <br>· AI Studio에서 <b>새 프로젝트를 만들어 키를 다시 발급</b>해 보세요 · 해결될 때까지는 키 없이 <b>기기 안 인식</b>을 쓸 수 있습니다
-          · <a href="https://discuss.ai.google.dev/c/gemini-api/4" target="_blank" rel="noopener">Google AI 포럼</a>에서 같은 문제를 확인·신고할 수 있습니다`;
-      else out.textContent = res.status === 400 || res.status === 401 || res.status === 403 ? "키가 올바르지 않거나 사용이 제한되었습니다. 키 전체를 다시 복사하거나 AI Studio에서 새로 만드세요." : `확인에 실패했습니다 (${res.status}). ${data?.error?.message || ""}`;
-      return;
-    }
-    const names = (data.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m) => m.name.replace(/^models\//, ""));
-    try { localStorage.setItem("wo_gmodels", JSON.stringify(names)); } catch (e) {}
-    const cur = $("gModel").value.trim() || GEMINI_DEFAULT, best = flashCandidates(names)[0];
-    let model = cur, note = "";
-    // 미리보기 모델은 붐비기 쉬워서, 정식 Flash가 있으면 그쪽으로 (직접 입력한 정식 모델은 존중)
-    if (best && (!names.includes(cur) || /preview|exp/.test(cur))) {
-      model = best;
-      note = names.includes(cur) ? ` 미리보기 모델(${cur}) 대신 안정적인 ${model}(으)로 정했습니다.` : ` 기본 모델(${cur})을 쓸 수 없어 ${model}(으)로 바꿨습니다.`;
-    }
-    $("gKey").value = key; $("gModel").value = model && model !== GEMINI_DEFAULT ? model : "";
-    try { localStorage.setItem("wo_gkey", key); localStorage.setItem("wo_gmodel", $("gModel").value.trim()); } catch (e) {}
-    out.className = "ok"; out.textContent = `키가 확인되었습니다. 이제 사진 분석에 Gemini를 씁니다 (모델: ${$("gModel").value.trim() || GEMINI_DEFAULT}).${note}`;
-    $("manualHint").hidden = true;
-    if (state.photo) setStatus("Gemini 키가 연결되었습니다. 3단계 '사진으로 도식화·작업지시서 만들기'를 누르면 Gemini가 분석합니다.");
-  } catch (e) { out.className = "err"; out.textContent = "인터넷 연결을 확인하고 다시 눌러 주세요."; }
-}
-$("keyCheck").addEventListener("click", checkGeminiKey);
-$("keyInput").addEventListener("keydown", (e) => { if (e.key === "Enter") checkGeminiKey(); });
-$("keyForget").addEventListener("click", () => {
-  $("keyInput").value = ""; $("gKey").value = ""; $("gModel").value = "";
-  try { localStorage.removeItem("wo_gkey"); localStorage.removeItem("wo_gmodel"); localStorage.removeItem("wo_gmodels"); } catch (e) {}
-  $("keyResult").className = ""; $("keyResult").textContent = "이 브라우저에서 키를 지웠습니다. 사진 분석은 기기 안 인식으로 돌아갑니다.";
-  if (geminiMode()) $("manualHint").hidden = false;
 });
 
 /* ====================================================================== 외곽선 분석 (시험, assets/outline.js)
@@ -1703,7 +1955,8 @@ function snapshot(withPhoto = true) {
     trims: [...$("trimTable").querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((td) => td.textContent)),
     sew: lines($("sewList")), notes: lines($("noteList")),
     photo: withPhoto && state.photo ? state.photo.dataUrl : null,
-    pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null };
+    pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null,
+    notes: state.notes };
 }
 const str = (x, max = 300) => String(x ?? "").slice(0, max);
 async function restore(j) {
@@ -1712,7 +1965,8 @@ async function restore(j) {
   if (["m", "f"].includes(st.gender)) state.gender = st.gender;
   const o = st.opt || {};
   for (const k of Object.keys(ALLOWED)) if (ALLOWED[k].includes(o[k])) state.opt[k] = o[k];
-  for (const k of ["chest", "kangaroo", "patch", "side", "back"]) if (typeof o[k] === "boolean") state.opt[k] = o[k];
+  for (const k of ["chest", "kangaroo", "patch", "side", "back", "cargo", "pleat", "legRib"]) if (typeof o[k] === "boolean") state.opt[k] = o[k];
+  if (STYLES[state.opt.style]?.template !== state.opt.template) state.opt.style = DEFAULT_STYLE[state.opt.template];
   if (["num", "both", "inch"].includes(st.label)) state.label = st.label;
   const list = sizeList();
   state.base = list.includes(st.base) ? st.base : isBag() ? BAG_BASE : BASE[state.gender];
@@ -1738,6 +1992,14 @@ async function restore(j) {
     $("dropImg").src = j.photo; $("dropImg").hidden = false; $("dropTxt").textContent = "다른 사진으로 바꾸려면 누르세요";
     $("sheetPhoto").innerHTML = ""; const im = new Image(); im.alt = "참고 사진"; im.src = j.photo; im.addEventListener("load", fitPrint); $("sheetPhoto").append(im);
   }
+  // 도식화 표시: 숫자·글자만 받음
+  const num = (x) => (Number.isFinite(+x) ? Math.max(-100, Math.min(500, +x)) : 0);
+  const cleanNote = (a) => a && a.t === "text" ? { t: "text", x: num(a.x), y: num(a.y), text: str(a.text, 40) }
+    : a && a.t === "arrow" ? { t: "arrow", x1: num(a.x1), y1: num(a.y1), x2: num(a.x2), y2: num(a.y2) }
+    : a && a.t === "circle" ? { t: "circle", x: num(a.x), y: num(a.y), r: Math.min(200, Math.abs(num(a.r))) } : null;
+  state.notes = { front: [], back: [] };
+  for (const vw of ["front", "back"]) if (Array.isArray(j.notes?.[vw])) state.notes[vw] = j.notes[vw].slice(0, 60).map(cleanNote).filter(Boolean);
+  renderFlats();
   pendingPattern = j.pattern && Pattern.TYPES[j.pattern.type] ? j.pattern : null;
   if (activeTab === "pat") applyPendingPattern();
   fitPrint();
@@ -1777,9 +2039,10 @@ function scheduleSave() {
   $("fDate").textContent = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
   $("fStyle").textContent = `WO-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-01`;
   $("fSeason").textContent = `${d.getFullYear()} ${["SS","SS","SS","SS","SS","SS","FW","FW","FW","FW","FW","FW"][d.getMonth()]}`;
-  $("fItem").textContent = T[state.opt.template].name;
+  $("fItem").textContent = itemName();
   $("footStamp").textContent = "옷만들기 도면 메이커로 작성";
-  try { $("gKey").value = localStorage.getItem("wo_gkey") || ""; $("gModel").value = localStorage.getItem("wo_gmodel") || ""; } catch (e) {}
+  // Gemini 분석을 뺐으므로, 예전에 이 브라우저에 저장된 키·모델 기록을 지움
+  try { ["wo_gkey", "wo_gmodel", "wo_gmodels", "wo_gmodel_ok", "wo_gmodel_bad"].forEach((k) => localStorage.removeItem(k)); } catch (e) {}
   syncControls(); renderFabricOptions(); renderAll(); renderContent(); fitScreen();
   let prev = null;
   try { prev = JSON.parse(localStorage.getItem("wo_autosave") || "null"); } catch (e) {}
@@ -1792,16 +2055,16 @@ function scheduleSave() {
   }
   autosaveOn = true;
 
-  // claude.ai 안에서 열리면 Claude로 분석, 아니면 Gemini 키 사용
+  // claude.ai 안에서 열리면 Claude로 분석, 아니면 기기 안 인식
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("sample").then(async (s) => {
-      if (!s) { $("keyBox").hidden = false; $("manualHint").hidden = false; return; }
+      if (!s) { $("manualHint").hidden = false; return; }
       const lim = await s.limits().catch(() => null);
-      if (lim && lim.images) { sampleFn = s; sampleImages = true; } else { $("keyBox").hidden = false; $("manualHint").hidden = false; }
+      if (lim && lim.images) { sampleFn = s; sampleImages = true; } else { $("manualHint").hidden = false; }
     });
     window.claude.use("downloads").then((d) => { downloadsCap = d; });
   } else {
-    $("keyBox").hidden = false; $("manualHint").hidden = false;
+    $("manualHint").hidden = false;
   }
 })();
 </script>

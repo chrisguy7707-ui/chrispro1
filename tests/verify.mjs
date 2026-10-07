@@ -148,6 +148,72 @@ ok("파우치: S·M·L 사이즈, 성별 버튼 숨김, 옆면(마치) 도식화
   pouch.sizes === "S / M / L" && pouch.seg && pouch.cap.includes("옆면") && pouch.trims && pouch.sew && pouch.meta.includes("잡화") && pouch.A.includes("15.5") && pouch.A.includes("24.5")
   && !pouch.segBack && /\d/.test(pouch.back), JSON.stringify(pouch).slice(0, 200));
 
+/* 4-2. 도식화가 치수표 비율을 따르는지 + 새 디테일 선택 전 조합 */
+const flatSpec = await page.evaluate(() => {
+  const sel = (id, v) => { const s = document.getElementById(id); s.value = v; s.dispatchEvent(new Event("change")); };
+  const spec = (part) => [...document.querySelectorAll("#specTable tr")].find((tr) => tr.children[1]?.textContent === part).querySelector("td.base");
+  document.getElementById("gM").click(); sel("oTemplate", "top_long");
+  const r0 = drawTop("front", state.opt, T.top_long);
+  spec("가슴단면").textContent = String(+spec("가슴단면").textContent + 10); renderFlats();
+  const r1 = drawTop("front", state.opt, T.top_long);
+  sel("oTemplate", "pants");
+  const p0 = drawPants("front", state.opt);
+  spec("밑단단면").textContent = String(+spec("밑단단면").textContent + 8); renderFlats();
+  const p1 = drawPants("front", state.opt);
+  return { chest: [r0.bw / r0.k, r1.bw / r1.k], hem: [(p0.outerR - p0.innerR) / p0.k, (p1.outerR - p1.innerR) / p1.k] };
+});
+ok("도식화가 치수표를 따름: 가슴단면 +10 → 몸판 폭 +10cm, 바지 밑단 +8 → 밑단 폭 +8cm (비율 그대로)",
+  Math.abs(flatSpec.chest[1] * 2 - flatSpec.chest[0] * 2 - 10) < 0.6 && Math.abs(flatSpec.hem[1] - flatSpec.hem[0] - 8) < 0.6, JSON.stringify(flatSpec));
+const newOptBad = await page.evaluate(() => {
+  const keep = { ...state.opt }, bad = [];
+  for (const template of ["top_short", "top_long", "shirt", "hoodie", "jacket", "dress"]) for (const sleeve of ["set", "drop", "raglan"]) for (const hem of ["straight", "curved"]) for (const fit of ["regular", "oversize", "slim"]) {
+    Object.assign(state.opt, { template, sleeve, hem, fit }); renderSpec();
+    for (const v of ["front", "back"]) { const x = buildSVG(v); if (/NaN|undefined/.test(x) || new DOMParser().parseFromString(x, "image/svg+xml").querySelector("parsererror")) bad.push(`${template}/${sleeve}/${hem}/${fit}/${v}`); }
+  }
+  for (const template of ["pants", "shorts"]) for (const waist of ["fixed", "elastic"]) for (const fpocket of ["slant", "scoop"]) for (const bpocket of ["patch", "welt"]) for (const cargo of [false, true]) for (const pleat of [false, true]) {
+    Object.assign(state.opt, { template, waist, fpocket, bpocket, cargo, pleat, side: true, back: true }); renderSpec();
+    for (const v of ["front", "back"]) { const x = buildSVG(v); if (/NaN|undefined/.test(x) || new DOMParser().parseFromString(x, "image/svg+xml").querySelector("parsererror")) bad.push(`${template}/${waist}/${fpocket}/${bpocket}/${cargo}/${pleat}/${v}`); }
+  }
+  Object.assign(state.opt, keep); syncControls(); renderAll();
+  return bad;
+});
+ok("새 디테일 선택 전 조합(상의 소매·밑단·핏 108 + 바지 허리·주머니·카고·주름 64) 도식화 정상", newOptBad.length === 0, newOptBad.slice(0, 3).join(", "));
+const ctl = await page.evaluate(() => {
+  const sel = (id, v) => { const s = document.getElementById(id); s.value = v; s.dispatchEvent(new Event("change")); };
+  const vis = (id) => getComputedStyle(document.getElementById(id).closest("label")).display !== "none";
+  sel("oTemplate", "shirt"); const shirt = { sleeve: vis("oSleeve"), hem: vis("oHem"), waist: vis("oWaist"), cargo: vis("pCargo"), hemVal: state.opt.hem };
+  sel("oTemplate", "pants"); const pants = { sleeve: vis("oSleeve"), waist: vis("oWaist"), cargo: vis("pCargo"), chest: vis("pChest") };
+  sel("oTemplate", "top_short");
+  return { shirt, pants };
+});
+ok("4단계 선택이 품목에 맞게 보임 (셔츠: 소매·밑단, 셔츠 기본 라운드 밑단 / 바지: 허리·주머니·카고)",
+  ctl.shirt.sleeve && ctl.shirt.hem && !ctl.shirt.waist && !ctl.shirt.cargo && ctl.shirt.hemVal === "curved" && !ctl.pants.sleeve && ctl.pants.waist && ctl.pants.cargo && !ctl.pants.chest, JSON.stringify(ctl));
+
+/* 4-3. 대분류 → 소분류 */
+const sty = await page.evaluate(() => {
+  const bad = [], vals = {};
+  const oi = document.getElementById("oItem"); oi.value = ""; oi.dispatchEvent(new Event("input"));   // 앞 검사가 넣은 품명 비움
+  document.getElementById("gF").click();
+  for (const id of Object.keys(STYLES)) {
+    const c = document.getElementById("oCat"); c.value = STYLES[id].cat; c.dispatchEvent(new Event("change"));
+    const sEl = document.getElementById("oStyle"); sEl.value = id; sEl.dispatchEvent(new Event("change"));
+    if (state.opt.style !== id || state.opt.template !== STYLES[id].template || document.getElementById("fItem").textContent !== STYLES[id].name) bad.push(`${id} 선택(${state.opt.style}/${state.opt.template}/${document.getElementById("fItem").textContent}/${document.getElementById("oItem").value})`);
+    for (const [k, v] of Object.entries(STYLES[id].opt || {})) if (state.opt[k] !== v) bad.push(`${id} ${k}`);
+    const x = buildSVG("front"); if (/NaN|undefined/.test(x)) bad.push(id + " NaN");
+    vals[id] = baseVals();
+  }
+  const sel = (id) => { const sEl = document.getElementById("oStyle"); const c = document.getElementById("oCat"); c.value = STYLES[id].cat; c.dispatchEvent(new Event("change")); sEl.value = id; sEl.dispatchEvent(new Event("change")); };
+  sel("sleeveless"); document.getElementById("tabPatBtn").click();
+  const noSleeve = !patDraft.pieces.some((p) => /소매/.test(p.name)) && patDraft.pieces.some((p) => /진동 바이어스/.test(p.name));
+  document.getElementById("tabSheetBtn").click(); sel("tennis");
+  const job = snapshot();
+  return { bad, tennis: vals.tennis["총장"], skirtA: vals.skirt_a["총장"], wide: vals.wide["밑단단면"] - vals.straight["밑단단면"], noSleeve, jobStyle: job.state.opt.style };
+});
+ok(`소분류 ${Object.keys(await page.evaluate(() => STYLES)).length}종: 대분류·소분류로 고르면 엔진·디테일·품명·도식화가 맞게 바뀜`, sty.bad.length === 0, sty.bad.slice(0, 4).join(", "));
+ok("소분류 치수 보정: 테니스 스커트 총장 = A라인 − 27, 와이드 밑단 = 일자 + 9, 민소매 패턴은 소매 대신 진동 바이어스, 저장 파일에 소분류 기록",
+  sty.tennis === sty.skirtA - 27 && sty.wide === 9 && sty.noSleeve && sty.jobStyle === "tennis", JSON.stringify(sty).slice(0, 200));
+await page.evaluate(() => { document.getElementById("gM").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
+
 /* 5. 하의 인치 표기 */
 const lbl = async (mode) => { await page.click(`#labelBox [data-label="${mode}"]`); return page.$eval("#fSizes", (n) => n.textContent); };
 await page.evaluate((sel) => document.querySelector(sel).click(), "#gM"); await setSel("oTemplate", "pants"); await selectAll();
@@ -176,11 +242,11 @@ ok("컬러·품명 입력 → 작업지시서", await page.evaluate(() => {
   const s = document.getElementById("oTemplate"); s.value = "pants"; s.dispatchEvent(new Event("change"));
   const keep = document.getElementById("fItem").textContent === "크롭 후드";
   i.value = ""; i.dispatchEvent(new Event("input"));
-  return a && keep && document.getElementById("fItem").textContent === "바지";
+  return a && keep && document.getElementById("fItem").textContent === "일자 바지";   // 품명 기본값 = 소분류 이름
 }));
 
 /* 7. 키 없이 분석 버튼 → 기기 안 인식, 사진을 밖으로 보내는 요청 없음 */
-await page.evaluate(() => { document.getElementById("gKey").value = ""; document.getElementById("status").textContent = ""; });
+await page.evaluate(() => { document.getElementById("status").textContent = ""; });
 await page.click("#analyzeBtn"); await waitDone();
 ok("키 없이 분석 → 기기 안 인식, 사진 외부 전송 0건 (POST·Gemini 요청 없음)",
   sent.length === 0 && (await page.$eval("#status", (n) => !n.className.includes("err") && n.textContent.includes("기기 안에서 인식"))), sent.slice(0, 2).join(" | "));
@@ -307,6 +373,52 @@ await page.evaluate(() => preparePrint());
 const back = await page.pdf({ preferCSSPageSize: true });
 ok("작업지시서 탭으로 돌아오면 인쇄는 다시 A4 가로 1장", mediaBoxes(back).length === 1 && !isPortrait(mediaBoxes(back)[0]));
 
+/* 8-1b. 도식화 편집 탭: 손잡이 끌기 → 치수표, 메모·화살표·동그라미, 지우기·되돌리기, 작업지시서·저장 반영 */
+await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); document.getElementById("gM").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); state.notes = { front: [], back: [] }; renderFlats(); });
+await page.click("#tabEditBtn");
+const edBefore = await page.evaluate(() => ({ len: baseVals()["총장"], parts: editHandles().map((h) => h.part) }));
+const hb = await page.evaluate(() => { const i = editHandles().findIndex((h) => h.part === "총장"); const c = document.querySelectorAll("#edFront .hd circle")[i].getBoundingClientRect(); return { x: c.x + c.width / 2, y: c.y + c.height / 2 }; });
+await page.mouse.move(hb.x, hb.y); await page.mouse.down(); await page.mouse.move(hb.x, hb.y + 25, { steps: 6 }); await page.mouse.up();
+const edAfter = await page.evaluate(() => ({ len: baseVals()["총장"], r: drawTop("front", state.opt, T.top_short) }));
+ok("도식화 편집: 상의 손잡이 7개, 총장 손잡이를 끌면 치수표 총장이 늘고 도식화 기장도 같은 cm만큼",
+  edBefore.parts.length === 7 && edAfter.len > edBefore.len && Math.abs((edAfter.r.hemY - edAfter.r.top) / edAfter.r.k - edAfter.len) < 0.01, JSON.stringify({ before: edBefore.len, after: edAfter.len, parts: edBefore.parts }));
+const fr = await page.evaluate(() => { const r = document.querySelector("#edFront svg").getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+await page.click('.ed-bar [data-tool="text"]'); await page.evaluate(() => { document.getElementById("edText").value = '<img src=x onerror="window.__xss2=1">스냅'; });
+await page.mouse.click(fr.x + fr.w * 0.7, fr.y + fr.h * 0.3);
+await page.click('.ed-bar [data-tool="arrow"]');
+await page.mouse.move(fr.x + fr.w * 0.75, fr.y + fr.h * 0.35); await page.mouse.down(); await page.mouse.move(fr.x + fr.w * 0.55, fr.y + fr.h * 0.5, { steps: 6 }); await page.mouse.up();
+await page.click('.ed-bar [data-tool="circle"]');
+await page.mouse.move(fr.x + fr.w * 0.4, fr.y + fr.h * 0.6); await page.mouse.down(); await page.mouse.move(fr.x + fr.w * 0.45, fr.y + fr.h * 0.65, { steps: 4 }); await page.mouse.up();
+const notes = await page.evaluate(() => ({ kinds: state.notes.front.map((a) => a.t), sheet: document.getElementById("svgFront").innerHTML, xss: !!window.__xss2 || !!document.querySelector("#svgFront img, #edFront img"), html: sheetHTML() }));
+ok("메모·화살표·동그라미가 들어가고, 작업지시서 도식화·HTML 내보내기에도 나옴 (메모 속 HTML은 글자로만)",
+  notes.kinds.join(",") === "text,arrow,circle" && notes.sheet.includes('class="anno"') && notes.sheet.includes("&lt;img") && !notes.xss && notes.html.includes('class="anno"'), notes.kinds.join(","));
+await page.click('.ed-bar [data-tool="move"]'); await page.keyboard.press("Delete");
+const afterDel = await page.evaluate(() => state.notes.front.length);
+await page.click("#edUndo"); await page.click("#edUndo");
+const afterUndo = await page.evaluate(() => ({ n: state.notes.front.length }));
+ok("선택 지우기(Delete) → 되돌리기 2번이면 표시 하나 지운 것과 동그라미 추가까지 되돌아감", afterDel === 2 && afterUndo.n === 2, JSON.stringify({ afterDel, afterUndo }));
+const edJob = await page.evaluate(() => JSON.stringify(snapshot()));
+const p5 = await browser.newPage();
+await p5.evaluateOnNewDocument(() => { try { localStorage.removeItem("wo_autosave"); } catch (e) {} });
+await p5.goto(URL, { waitUntil: "networkidle0" });
+fs.writeFileSync(new URL_("job_notes.json", OUT), edJob);
+await (await p5.$("#jobFile")).uploadFile(new URL_("job_notes.json", OUT).pathname);
+await p5.waitForFunction(() => /작업 파일을 열었습니다/.test(document.getElementById("status").textContent), { timeout: 10000 });
+const reopened = await p5.evaluate(() => ({ n: state.notes.front.length, sheet: document.getElementById("svgFront").innerHTML.includes('class="anno"') }));
+await p5.close();
+ok("표시가 작업 저장 파일에 들어가고 다시 열면 그대로", reopened.n === 2 && reopened.sheet, JSON.stringify(reopened));
+await page.evaluate(() => preparePrint());
+const edPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
+ok("편집 탭에서 인쇄하면 작업지시서 A4 가로 1장 (표시 포함)", edPdf.length === 1 && !isPortrait(edPdf[0]), edPdf.join(" "));
+const handleKinds = await page.evaluate(() => {
+  const out = {};
+  for (const t of ["pants", "skirt", "dress", "pouch"]) { const s = document.getElementById("oTemplate"); s.value = t; s.dispatchEvent(new Event("change")); out[t] = editHandles().length; renderEditor(); out[t + "Dom"] = document.querySelectorAll("#edFront .hd").length; }
+  const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); state.notes = { front: [], back: [] }; renderFlats();
+  document.getElementById("tabSheetBtn").click();
+  return out;
+});
+ok("품목별 손잡이: 바지 6 · 스커트 3 · 원피스 손잡이 있음 · 파우치 없음", handleKinds.pants === 6 && handleKinds.skirt === 3 && handleKinds.dress >= 5 && handleKinds.pouchDom === 0, JSON.stringify(handleKinds));
+
 /* 8-2. 작업 저장 → 새 페이지에서 열기, 자동 저장 → 이어서 하기, 위험한 글자는 글자로만 */
 await page.evaluate(() => {
   document.getElementById("tabSheetBtn").click();
@@ -345,10 +457,14 @@ await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.va
 /* 8-3. 외곽선 분석 (시험): 크기를 아는 합성 사진으로 정확도, 기준선 → 치수표 반영, 경고, SVG, 인쇄 */
 const olzAcc = await page.evaluate(async () => {
   const out = [];
-  const E = { top_short: ["top", { "총장": 36, "가슴단면": 25.6, "밑단단면": 25.6 }], pants: ["pants", { "허리단면": 23.2, "총장": 56.4, "밑단단면": 10.8 }],
-    skirt: ["skirt", { "허리단면": 20, "총장": 40, "밑단단면": 34.4 }], pouch: ["bag", { "가로": 35.2, "높이": 25.2 }] };
-  for (const [t, [kind, exp]] of Object.entries(E)) {
-    const keep = { ...state.opt }; state.opt.template = t; applyTemplateDefaults(); state.opt.fit = "regular";
+  // 기대값: 도식화 좌표(svg 1단위 = 2px, 1cm = 10px → 0.2cm)에서 계산. 상의·바지는 치수표 비율로 그리므로 그 좌표에서 구함
+  const E = { top_short: ["top", null], pants: ["pants", null], skirt: ["skirt", null], pouch: ["bag", { "가로": 35.2, "높이": 25.2 }] };
+  for (const [t, [kind, fixed]] of Object.entries(E)) {
+    const keep = { ...state.opt }; state.opt.template = t; applyTemplateDefaults(); state.opt.fit = "regular"; renderAll();
+    let exp = fixed;
+    if (t === "top_short") { const r = drawTop("front", state.opt, T[t]); exp = { "총장": (r.hemY - r.top) * 0.2, "가슴단면": r.bw * 2 * 0.2, "밑단단면": r.hw * 2 * 0.2 }; }
+    if (t === "pants") { const r = drawPants("front", state.opt); exp = { "허리단면": (r.wR - r.wL) * 0.2, "총장": (r.hemY - 30) * 0.2, "밑단단면": (r.outerR - r.innerR) * 0.2 }; }
+    if (t === "skirt") { const r = skirtGeom(); exp = { "허리단면": (r.wR - r.wL) * 0.2, "총장": (r.lenY - 30) * 0.2, "밑단단면": (r.wR - r.wL + 2 * r.flare) * 0.2 }; }
     const vb = buildSVG("front").match(/viewBox="([^"]+)"/)[1].split(" ").map(Number);
     const svg = buildSVG("front").replace(/<g class="dim">[\s\S]*?<\/g>/g, "").replace("<svg ", `<svg width="${vb[2] * 2}" height="${vb[3] * 2}" `);
     Object.assign(state.opt, keep); syncControls(); renderAll();
@@ -411,87 +527,6 @@ await page.evaluate(() => preparePrint());
 const olzPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
 ok("외곽선 탭에서 인쇄하면 작업지시서 A4 가로 1장", olzPdf.length === 1 && !isPortrait(olzPdf[0]), olzPdf.join(" "));
 await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
-
-/* 8-4. Gemini 키 받기 탭: 강조 표시, 안내·공식 링크, 키 확인 (Google 응답은 가짜로 대체, 실제 요청 없음) */
-const pk = await browser.newPage();
-await pk.setRequestInterception(true);
-let keySeen = null, allBusy = false, dropFirst = false; const genCalls = [];
-pk.on("request", (r) => {
-  if (r.url().startsWith("https://generativelanguage.googleapis.com/v1beta/models")) {
-    const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "x-goog-api-key, content-type", "access-control-allow-methods": "GET, POST" };
-    if (r.method() === "OPTIONS") return r.respond({ status: 204, headers: cors });   // 키 헤더 때문에 브라우저가 먼저 보내는 사전 확인
-    // 사진 분석: 모델별로 '붐빔(503)' 또는 성공을 흉내 냄
-    const gm = r.url().match(/models\/([^:]+):generateContent/);
-    if (gm) {
-      genCalls.push(gm[1]);
-      if (gm[1] === "gemini-3.5-flash" && dropFirst) return r.abort("failed");   // 연결 실패 흉내 (사파리 'Load failed')
-      if (gm[1] === "gemini-2.0-flash") return r.respond({ status: 404, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 404, message: "This model models/gemini-2.0-flash is no longer available to new users." } }) });
-      if (allBusy || gm[1] !== "gemini-3.5-flash-lite") return r.respond({ status: 503, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 503, status: "UNAVAILABLE", message: "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later." } }) });
-      return r.respond({ status: 200, contentType: "application/json", headers: cors, body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ itemName: "와이드 데님 팬츠", template: "pants", fit: "regular", pockets: ["side", "back"], color: "연청", fabric: "데님 12oz (추정)", mix: "면 100% (추정)", weight: "12oz (추정)", trims: [], sewing: ["옆선 쌍침"], notes: [] }) }] } }] }) });
-    }
-    keySeen = r.headers()["x-goog-api-key"];
-    if (keySeen === "AIzaBADBADBADBADBADBADBAD") return r.respond({ status: 400, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { message: "API key not valid" } }) });
-    if (keySeen === "AQ.Ab8RN6BROKENBROKENBROKEN") return r.respond({ status: 401, contentType: "application/json", headers: cors, body: JSON.stringify({ error: { code: 401, status: "UNAUTHENTICATED",
-      message: "Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.", details: [{ reason: "ACCESS_TOKEN_TYPE_UNSUPPORTED" }] } }) });
-    return r.respond({ status: 200, contentType: "application/json", headers: cors,
-      body: JSON.stringify({ models: [{ name: "models/gemini-3.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.0-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-3.5-flash-lite", supportedGenerationMethods: ["generateContent"] }, { name: "models/text-embedding-004", supportedGenerationMethods: ["embedContent"] }] }) });
-  }
-  r.continue();
-});
-await pk.evaluateOnNewDocument(() => { try { localStorage.removeItem("wo_gkey"); localStorage.removeItem("wo_gmodel"); } catch (e) {} });
-await pk.goto(URL, { waitUntil: "networkidle0" });
-const keyTab = await pk.evaluate(() => {
-  const b = document.getElementById("tabKeyBtn"), bg = getComputedStyle(b).backgroundColor;
-  b.click();
-  const g = document.getElementById("keyGuide");
-  return { hl: bg !== "rgba(0, 0, 0, 0)" && b.classList.contains("hl"), shown: !g.hidden && document.getElementById("sheet").hidden,
-    steps: g.querySelectorAll(".key-steps li").length, studio: !!g.querySelector('a[href="https://aistudio.google.com/app/apikey"]'), notes: g.querySelector(".key-notes").textContent.includes("무료 등급") };
-});
-ok("Gemini 키 받기 탭: 강조 색, 4단계 안내, AI Studio 링크, 무료 등급 데이터 안내", keyTab.hl && keyTab.shown && keyTab.steps === 4 && keyTab.studio && keyTab.notes, JSON.stringify(keyTab));
-await pk.evaluate(() => { document.getElementById("keyInput").value = "짧음"; document.getElementById("keyCheck").click(); });
-const badShape = await pk.$eval("#keyResult", (n) => n.className === "err" && n.textContent.includes("키 모양"));
-await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaBADBADBADBADBADBADBAD"; document.getElementById("keyCheck").click(); });
-await pk.waitForFunction(() => document.getElementById("keyResult").className === "err" && /올바르지/.test(document.getElementById("keyResult").textContent), { timeout: 5000 });
-// 새 형식 AQ. 키: 모양 검사 통과 → Google 쪽 401 ACCESS_TOKEN_TYPE_UNSUPPORTED 이면 원인과 대안 안내
-await pk.evaluate(() => { document.getElementById("keyInput").value = "AQ.Ab8RN6BROKENBROKENBROKEN"; document.getElementById("keyCheck").click(); });
-await pk.waitForFunction(() => /ACCESS_TOKEN_TYPE_UNSUPPORTED/.test(document.getElementById("keyResult").textContent), { timeout: 5000 });
-const aqBroken = await pk.evaluate(() => { const t = document.getElementById("keyResult").textContent; return t.includes("Google 쪽 문제") && t.includes("기기 안 인식"); }).catch(() => false);
-await pk.evaluate(() => { document.getElementById("keyInput").value = "AQ.Ab8RN6TESTTESTTESTTEST-_x"; document.getElementById("keyCheck").click(); });
-await pk.waitForFunction(() => document.getElementById("keyResult").className === "ok", { timeout: 5000 });
-const aqOk = keySeen === "AQ.Ab8RN6TESTTESTTESTTEST-_x" && await pk.evaluate(() => /바꿨습니다/.test(document.getElementById("keyResult").textContent));
-ok("새 AQ. 키: 점(.) 포함 키도 받고 그대로 전송, Google 쪽 401(ACCESS_TOKEN_TYPE_UNSUPPORTED)이면 원인·대안 안내", aqOk && aqBroken, JSON.stringify({ aqOk, aqBroken }));
-await pk.evaluate(() => { document.getElementById("keyInput").value = "AIzaTESTTESTTESTTESTTESTTESTTEST"; document.getElementById("keyCheck").click(); });
-await pk.waitForFunction(() => document.getElementById("keyResult").className === "ok" && /AIzaTEST/.test(document.getElementById("gKey").value), { timeout: 5000 });
-const keyOk = await pk.evaluate(() => ({ gkey: document.getElementById("gKey").value, model: document.getElementById("gModel").value, stored: localStorage.getItem("wo_gkey"),
-  msg: document.getElementById("keyResult").textContent, gem: !localMode(), inJob: JSON.stringify(snapshot()).includes("AIzaTEST") }));
-ok("키 확인: 모양 검사 → 잘못된 키 안내 → 올바른 키 저장, 없는 기본 모델은 쓸 수 있는 Flash로 교체, 3단계가 Gemini로 전환",
-  badShape && keySeen === "AIzaTESTTESTTESTTESTTESTTESTTEST" && keyOk.gkey === keySeen && keyOk.stored === keySeen && keyOk.model === "gemini-3.5-flash" && keyOk.gem, JSON.stringify(keyOk).slice(0, 200));
-ok("API 키는 작업 저장 파일에 들어가지 않음", !keyOk.inJob);
-/* Gemini가 붐빌 때(503): 다른 Flash 모델로 다시 → 성공. 모두 붐비면 기기 안 인식으로 대신 */
-await (await pk.$("#file")).uploadFile(new URL_("pouch_synth.png", OUT).pathname);
-await pk.waitForFunction(() => document.querySelector("#sheetPhoto img"), { timeout: 5000 });
-await pk.evaluate(() => { document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
-await pk.waitForFunction(() => /완료했습니다|응답하지 못합니다/.test(document.getElementById("status").textContent), { timeout: 30000 });
-const busy1 = await pk.evaluate(() => ({ st: document.getElementById("status").textContent, t: state.opt.template, item: document.getElementById("fItem").textContent, model: document.getElementById("gModel").value }));
-ok("Gemini 붐빔(503) → 다른 모델로 재시도, '더 이상 제공 안 함(404)' 모델은 건너뛰고 기억 → 분석 성공, 잘 된 모델을 다음부터 먼저",
-  genCalls[0] === "gemini-3.5-flash" && genCalls.includes("gemini-2.0-flash") && genCalls.includes("gemini-3.5-flash-lite") && busy1.t === "pants"
-  && (await pk.evaluate(() => JSON.parse(localStorage.getItem("wo_gmodel_bad") || "[]").includes("gemini-2.0-flash"))) && busy1.item === "와이드 데님 팬츠" && busy1.st.includes("붐비지 않는") && (await pk.evaluate(() => localStorage.getItem("wo_gmodel_ok"))) === "gemini-3.5-flash-lite", JSON.stringify({ genCalls, ...busy1 }).slice(0, 220));
-allBusy = true; genCalls.length = 0;
-await pk.evaluate(() => { document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
-await pk.waitForFunction(() => /기기 안 인식으로|응답하지 못합니다/.test(document.getElementById("status").textContent) && !/다시 시도…/.test(document.getElementById("status").textContent), { timeout: 240000 });
-const busy2 = await pk.evaluate(() => document.getElementById("status").textContent);
-ok("모든 모델이 붐비면 한국어로 안내하고, 인식 모델을 받은 브라우저면 기기 안 인식으로 대신 채움", genCalls.length === 2 && !genCalls.includes("gemini-2.0-flash") && /응답하지 못합니다/.test(busy2) && /붐빔 503/.test(busy2) && /기기 안 인식으로 품목/.test(busy2), `${genCalls.join(",")} | ${busy2.slice(-90)}`);
-allBusy = false;
-/* 연결 실패(Load failed)도 다음 모델로 넘어가 성공 */
-dropFirst = true; genCalls.length = 0;
-await pk.evaluate(() => { localStorage.removeItem("wo_gmodel_ok"); document.getElementById("gModel").value = "gemini-3.5-flash"; document.getElementById("status").textContent = ""; document.getElementById("analyzeBtn").click(); });
-await pk.waitForFunction(() => /완료했습니다|응답하지 못합니다|연결하지 못했습니다/.test(document.getElementById("status").textContent), { timeout: 30000 });
-const dropSt = await pk.evaluate(() => document.getElementById("status").textContent);
-ok("연결 실패(사파리 'Load failed')도 멈추지 않고 다음 모델로 넘어가 분석 성공", genCalls[0] === "gemini-3.5-flash" && genCalls.includes("gemini-3.5-flash-lite") && /완료했습니다/.test(dropSt), `${genCalls.join(",")} | ${dropSt.slice(0, 80)}`);
-dropFirst = false;
-await pk.evaluate(() => document.getElementById("keyForget").click());
-ok("키 지우기 → 기기 안 인식으로 돌아감", await pk.evaluate(() => localMode() && !localStorage.getItem("wo_gkey")));
-await pk.close();
 
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });

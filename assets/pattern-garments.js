@@ -146,9 +146,11 @@
       const capEase = kind === "shirt" || kind === "jacket" ? 1.5 : 0;
       const cuffH = kind === "shirt" ? 6 : rib && longSl ? 6 : 0;
       const hemHalf = !longSl ? v.SW - 1 : kind === "shirt" ? (v.CU / 2 + 2) : rib ? Math.max(v.CU + 1, v.SW * 0.55) : v.CU;
-      const sl = sleevePiece(v, b, { capEase, cuffH, hemHalf, hemSA: cuffH ? 1 : kind === "jacket" ? 3 : 2.5 });
-      pieces.push(sl.piece);
-      if (Math.abs(sl.capLen - b.armLen - capEase) > 1) warn.push("소매산 길이를 진동둘레에 맞추지 못했습니다. 소매통이나 진동 깊이를 확인하세요.");
+      const noSleeve = v.sleeve === "none";
+      const sl = noSleeve ? { ch: 0, capLen: b.armLen } : sleevePiece(v, b, { capEase, cuffH, hemHalf, hemSA: cuffH ? 1 : kind === "jacket" ? 3 : 2.5 });
+      if (noSleeve) pieces.push(strip("진동 바이어스", "2장 (민소매)", r1(b.armLen + 2), 3.5, "진동둘레 + 2"));
+      else pieces.push(sl.piece);
+      if (!noSleeve && Math.abs(sl.capLen - b.armLen - capEase) > 1) warn.push("소매산 길이를 진동둘레에 맞추지 못했습니다. 소매통이나 진동 깊이를 확인하세요.");
 
       /* 목·칼라·후드 */
       const neckFull = b.neckLen * 2;
@@ -225,8 +227,8 @@
         dims: [{ a: [0, SL - 3], b: [hem2, SL - 3], text: `${r1(hem2)}` }, { a: [w * 0.25, 0], b: [w * 0.25, SL], text: `${r1(SL)}`, v: true }],
         notes: [[0.8, 2.2, "다트 위치에 주름(턱) 또는 다트"]], labelY: 0.4 });
     }
-    const sl = sleevePiece(v, b, { capEase: 1, hemHalf: v.SW - 1, hemSA: 2.5 });
-    pieces.push(sl.piece);
+    const sl = v.sleeve === "none" ? { ch: 0 } : sleevePiece(v, b, { capEase: 1, hemHalf: v.SW - 1, hemSA: 2.5 });
+    if (v.sleeve === "none") pieces.push(strip("진동 바이어스", "2장 (민소매)", r1(b.armLen + 2), 3.5, "진동둘레 + 2")); else pieces.push(sl.piece);
     pieces.push(strip("목 바이어스", "1장", r1(b.neckLen * 2 + 2), 3.5, "안단 처리 시"));
     return { pieces, warn,
       calc: [["허리 위치 (목옆점 → 허리)", "입력값", v.WY], ["몸판 남는 양 (반쪽)", "가슴 ÷ 2 − 허리 ÷ 2", r1(ex)], ["옆선 들임 / 허리 다트", "남는 양 × 0.45 / 나머지", `${side} / ${dart}`],
@@ -310,5 +312,5 @@
   const dd = P.TYPES.ws_dress.draft;
   P.TYPES.ws_dress.draft = (v) => dd({ ...v, SW: v.SW || r1(v.C * 0.36) });
   /* 사용자의 디테일 선택(핏·넥라인·여밈·시보리·주머니·모양)을 함께 받음 */
-  P.OPT_KEYS = ["fit", "neck", "closure", "rib", "shape", "chest", "kangaroo", "patch", "side", "back"];
+  P.OPT_KEYS = ["fit", "neck", "closure", "rib", "shape", "chest", "kangaroo", "patch", "side", "back", "sleeve"];
 })();
