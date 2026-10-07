@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://chrisguy7707-ui.github.io/chrispro1/sitemap.xml
+Sitemap: https://jakji.app/sitemap.xml
