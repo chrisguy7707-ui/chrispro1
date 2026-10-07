@@ -619,7 +619,9 @@ await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
 
 /* 8-6. 내 스타일 목록(IndexedDB) · 공유 링크(# 뒤 압축, 서버 없음) */
 const pj = await browser.newPage(); const pjErr = []; pj.on("pageerror", (e) => pjErr.push(e.message));
-const pjSent = []; pj.on("request", (r) => { if (r.method() !== "GET") pjSent.push(r.method() + " " + r.url()); });
+// 공개 사이트에서는 GitHub이 자동화 브라우저에만 넣는 봇 탐지 요청(사이트 루트의 무작위 경로)을 빼고 셈 (맨 위 page와 같은 기준)
+const ghBot = (u) => { const x = new globalThis.URL(u); return x.hostname.endsWith("github.io") && !x.pathname.startsWith("/chrispro1/"); };
+const pjSent = []; pj.on("request", (r) => { if (r.method() !== "GET" && !ghBot(r.url())) pjSent.push(r.method() + " " + r.url()); });
 await pj.setViewport({ width: 1400, height: 900 });
 await pj.goto(URL, { waitUntil: "networkidle0" });
 await pj.evaluate(async () => { localStorage.clear(); for (const r of await Jobs.all()) await Jobs.del(r.id); });
