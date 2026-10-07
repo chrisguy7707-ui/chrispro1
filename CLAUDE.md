@@ -56,6 +56,17 @@
 - 공개 사이트 검사: `APP_URL=https://jakji.app/app.html node tests/verify.mjs`, `SITE_URL=https://jakji.app/ node tests/site.mjs`. GitHub이 자동화 브라우저에만 넣는 봇 탐지 요청(긴 무작위 경로)은 `isGhBot()`으로 걸러냄.
 - 도메인 자동 갱신·WHOIS 개인정보 보호는 Cloudflare Manage domain에서 켜 둘 것. 이메일(chris7707@naver.com)은 도메인과 별개.
 
+## 배우기 글 (애드센스 콘텐츠, 2026-10-07)
+- `learn.html`(목록) + 6편: `learn-sample`(첫 샘플~본생산)·`learn-fabric`·`learn-yield`·`learn-size`·`learn-label`·`learn-inspect`. 각 편 끝에 '자주 묻는 질문' 3개, 읽는 시간은 한글 글자 수(450자/분)로 계산한 값.
+- 글은 정적 HTML(생성 스크립트는 저장소에 없음, 고칠 때는 파일을 직접 수정). 새 글을 추가하면 configure.mjs `PAGES`·tests/site.mjs `PAGES`·`learn.html` 카드·대문 '옷 만들기 안내서'·바닥 링크를 함께 고칠 것.
+- 숫자(중량 oz→g/㎡ 환산, 그레이딩 간격, 요척 계산 예시 등)는 이 앱의 값·공개 실측표와 맞춰 둠. 케어라벨 7항목·어린이 제품 구분은 '생산 준비 탭'과 같은 근거(국가기술표준원).
+- 남성 알파벳 대응은 스파오 사이즈표 기준(85=XS … 110=XXL, 80=XXS). guide.html 표도 같게 고침.
+
+## 애드센스 신청 체크리스트
+- 필수 페이지·모든 페이지의 방침·약관·문의 링크(검사 있음), 도구 화면(app.html)에는 광고 칸을 두지 않음.
+- 신청은 **구글 색인 후**(서치 콘솔에서 색인된 페이지가 늘어난 뒤, 보통 2~4주). 승인 뒤: 게시자 ID를 `adsenseClient`에 넣고 configure → ads.txt 생성, 광고 단위 ID는 `adSlots`(home-mid·home-bottom·guide-mid·factory-mid·learn-mid).
+- 승인 뒤 애드센스 화면의 '개인 정보 보호 및 메시지'에서 유럽·영국 방문자용 동의 메시지(Google 인증 CMP)를 켤 것. 코드 변경은 필요 없음.
+
 ## 방문 통계 (Cloudflare Web Analytics, 2026-10-07 켬)
 - `analyticsToken`(site.config.json) → configure가 모든 페이지 head에 **조건부 로더**를 넣음: 주소가 공유 링크(`#v0=`·`#v1=`)이면 불러오지 않음(작업 내용이 주소 # 뒤에 있어서). 쿠키 없음.
 - Cloudflare 사이트는 DNS only(회색 구름)라 자동 설치가 안 되고 JS 스니펫만 씀. 대시보드: Analytics & Logs → Web Analytics → jakji.app.
@@ -135,7 +146,7 @@
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 10개 품목 × 남/여 모두 렌더링 확인.
 - 잡화(`kind: "bag"`, 지금은 `pouch`)는 성별 호칭 대신 `BAG_SIZES` S·M·L(기준 M), 치수는 완성 치수. `sizeList()`·`ensureSizeSystem()`·`renderKindControls()` 참고.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 76개, 방문 통계 조건부 로딩 포함, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 24개, factory·비밀 의견 포함: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 76개, 방문 통계 조건부 로딩 포함, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 32개, factory·배우기 7페이지·비밀 의견·필수 링크 포함: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).
