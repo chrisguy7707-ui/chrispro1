@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>무료 작업지시서 만들기 – 도식화·치수표 자동 작성 | 마름</title>
+<title>무료 작업지시서 만들기 – 도식화·치수표 자동 작성 | 작지</title>
 <meta name="description" content="옷 사진을 올리고 사이즈를 고르면 앞·뒤 도식화, 남 80~110·여 44~88 치수표, 원단·부자재, 봉제 사양이 담긴 A4 한 장 작업지시서를 무료로 만듭니다. 회원가입 없이 바로 인쇄·PDF 저장." />
 <meta name="theme-color" content="#17171c" />
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 <!-- SITE:HEAD-START -->
 <link rel="canonical" href="https://chrisguy7707-ui.github.io/chrispro1/app.html" />
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="마름" />
-<meta property="og:title" content="무료 작업지시서 만들기 – 도식화·치수표 자동 작성 | 마름" />
+<meta property="og:site_name" content="작지" />
+<meta property="og:title" content="무료 작업지시서 만들기 – 도식화·치수표 자동 작성 | 작지" />
 <meta property="og:description" content="옷 사진을 올리고 사이즈를 고르면 앞·뒤 도식화, 남 80~110·여 44~88 치수표, 원단·부자재, 봉제 사양이 담긴 A4 한 장 작업지시서를 무료로 만듭니다. 회원가입 없이 바로 인쇄·PDF 저장." />
 <meta property="og:url" content="https://chrisguy7707-ui.github.io/chrispro1/app.html" />
 <meta property="og:image" content="https://chrisguy7707-ui.github.io/chrispro1/assets/og.png" />
@@ -312,7 +312,7 @@
 <div class="app">
   <!-- ================= 입력 패널 ================= -->
   <aside class="panel" aria-label="작업지시서 입력">
-    <div class="brand"><h1><a href="./" title="마름 홈">마름<small>작업지시서 메이커</small></a></h1><div class="ruler" aria-hidden="true"></div></div>
+    <div class="brand"><h1><a href="./" title="작지 홈">작지<small>작업지시서 메이커</small></a></h1><div class="ruler" aria-hidden="true"></div></div>
     <div class="restore" id="restoreBar" role="status" hidden>
       <span id="restoreTxt">이전 작업이 있습니다.</span>
       <button id="restoreBtn">이어서 하기</button><button id="restoreNo">새로 시작</button>
@@ -2399,8 +2399,8 @@ function cleanProd(p) {
 /* ====================================================================== 작업 저장 · 열기 · 자동 저장
    저장 내용: 선택 상태, 작업지시서 글자(머리 정보·치수표 수정·부자재·봉제·주의), 4단계 입력, 사진, 패턴 탭 입력.
    다시 열 때는 글자만 넣고(textContent) HTML은 받지 않음 → 다른 사람이 준 파일도 안전하게 열 수 있음 */
-const JOB = { app: "마름", v: 1 };
-const JOB_OLD = ["옷만들기 도면 메이커"];   // 이름을 바꾸기 전에 저장한 작업 파일도 열기
+const JOB = { app: "작지", v: 1 };
+const JOB_OLD = ["옷만들기 도면 메이커", "마름"];   // 이름을 바꾸기 전에 저장한 작업 파일도 열기
 const lines = (n) => n.innerText.split("\n").map((x) => x.trim()).filter(Boolean);
 function snapshot(withPhoto = true) {
   return { ...JOB, savedAt: new Date().toISOString(),
@@ -2500,7 +2500,7 @@ function scheduleSave() {
   $("fStyle").textContent = `WO-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}-01`;
   $("fSeason").textContent = `${d.getFullYear()} ${["SS","SS","SS","SS","SS","SS","FW","FW","FW","FW","FW","FW"][d.getMonth()]}`;
   $("fItem").textContent = itemName();
-  $("footStamp").textContent = "마름으로 작성";
+  $("footStamp").textContent = "작지로 작성";
   // Gemini 분석을 뺐으므로, 예전에 이 브라우저에 저장된 키·모델 기록을 지움
   try { ["wo_gkey", "wo_gmodel", "wo_gmodels", "wo_gmodel_ok", "wo_gmodel_bad"].forEach((k) => localStorage.removeItem(k)); } catch (e) {}
   syncControls(); renderFabricOptions(); renderAll(); renderContent(); fitScreen();

@@ -50,7 +50,7 @@ await og.setContent(`<!doctype html><html><head><meta charset="utf-8">
   .stk { position: absolute; left: 618px; top: 52px; z-index: 2; width: 110px; height: 110px; border-radius: 50%; background: #ff6b4a; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 22px; transform: rotate(-12deg); }
 </style></head><body>
 <div class="blob b1"></div><div class="blob b2"></div>
-<div class="t"><span class="eye">✂ 1인 브랜드 · 패션 전공 학생</span><h1>마름</h1><div class="sub">옷 작업지시서 메이커</div><div class="tape"></div>
+<div class="t"><span class="eye">✂ 1인 브랜드 · 패션 전공 학생</span><h1>작지</h1><div class="sub">옷 작업지시서 메이커</div><div class="tape"></div>
 <p>사진 한 장으로 도식화·치수표·봉제 사양까지</p><span class="tag">무료 작업지시서 만들기</span></div>
 <div class="stk">A4 한 장</div><div class="doc"><img src="data:image/png;base64,${img}"></div>
 </body></html>`, { waitUntil: "networkidle0" });
