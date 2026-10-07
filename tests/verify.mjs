@@ -307,6 +307,37 @@ const allPat = await page.evaluate(() => {
   return { n, bad };
 });
 ok(`10개 품목 × 남/여 × 3핏 = ${allPat.n}개 패턴: 치수표 값 반영·도면·시접·소매산 정상, 경고 없음`, allPat.bad.length === 0, allPat.bad.slice(0, 4).join(" | "));
+/* 소분류 34종 × 남/여: 패턴이 소분류 모양을 따라가는지 (칼라·여밈·요크·주름·고무줄 등) */
+const allStyles = await page.evaluate(() => {
+  const bad = [];
+  const need = { polo: ["폴로 칼라", "플래킷 (단추단)"], cardigan: ["앞단 시보리 (앞여밈·목둘레)"], zipup_hood: ["앞 손주머니"], blouse: ["목 바이어스"],
+    coach: ["칼라", "칼라밴드"], denim_jkt: ["칼라", "주머니 덮개 (플랩)"], blouson: ["칼라 시보리", "밑단 시보리"], shirt_dress: ["칼라", "소매 SLEEVE"],
+    jeans: ["뒤 요크 YOKE", "뒷주머니 (아웃포켓)", "주머니 받침천 (앞)"], slacks: ["입술감 (뒷주머니)"], jogger: ["허리밴드 (고무줄 통)", "밑단 시보리"],
+    cargo: ["카고 주머니", "카고 덮개 (플랩)"], tennis: ["앞판 FRONT (플리츠)"], pleats_long: ["뒤판 BACK (플리츠)"], wrap: ["겉 앞판 (겹침)", "안 앞판", "허리 끈"],
+    sleeveless: ["진동 바이어스"], dress_slvls: ["진동 바이어스"], shirt: ["요크 YOKE", "칼라"], hoodie: ["후드 HOOD", "캥거루 주머니"] };
+  const not = { blouse: ["칼라", "요크 YOKE"], jogger: ["지퍼 안단", "벨트고리"], shirt_dress: ["진동 바이어스", "목 바이어스"], polo: ["목 시보리"], cardigan: ["목 시보리"],
+    zipup_hood: ["캥거루 주머니"], tennis: ["앞판 FRONT"], skirt_a: ["허리 끈"] };
+  let n = 0;
+  for (const g of ["gM", "gF"]) for (const id of Object.keys(STYLES)) {
+    document.getElementById("tabSheetBtn").click(); document.getElementById(g).click(); chooseStyle(id);
+    document.getElementById("tabPatBtn").click(); n++;
+    const d = patDraft, tag = `${g}/${id}`, names = d.pieces.map((p) => p.name), svg = Pattern.svg(d, d.lay, "real");
+    if (d.name !== STYLES[id].name) bad.push(`${tag} 이름 ${d.name}`);
+    for (const x of need[id] || []) if (!names.includes(x)) bad.push(`${tag} ${x} 없음`);
+    for (const x of not[id] || []) if (names.includes(x)) bad.push(`${tag} ${x} 있으면 안 됨`);
+    if (/NaN|undefined/.test(svg)) bad.push(tag + " NaN");
+    if (new DOMParser().parseFromString(svg, "image/svg+xml").querySelector("parsererror")) bad.push(tag + " SVG");
+    for (const p of d.pieces) if (p.edges.some((e) => e > 0) && Math.abs(Pattern._area(p.cut)) <= Math.abs(Pattern._area(p.pts))) bad.push(`${tag} ${p.name} 시접`);
+    if (d.warn.length) bad.push(`${tag} ${d.warn[0]}`);
+    if (d.tiles.length > 40) bad.push(`${tag} 분할 ${d.tiles.length}장`);
+    const front = d.pieces.find((p) => /^앞판 FRONT$|^앞 몸판$/.test(p.name));
+    if (["zipup_hood", "cardigan", "shirt_dress", "coach"].includes(id) && !/2장/.test(front?.count || "")) bad.push(`${tag} 앞이 트이지 않음`);
+    if (id === "slacks" && !front.notes.some((x) => /턱/.test(x[2]))) bad.push(`${tag} 앞 턱 없음`);
+    if (id === "mermaid" && !d.pieces[0].lines.some((l) => l.label === "무릎선 KL")) bad.push(`${tag} 무릎선 없음`);
+  }
+  return { n, bad };
+});
+ok(`소분류 ${allStyles.n / 2}종 × 남/여 = ${allStyles.n}개 패턴: 칼라·여밈·요크·주름·고무줄·랩 등 모양 반영, 도면·시접 정상`, allStyles.bad.length === 0, allStyles.bad.slice(0, 5).join(" | "));
 /* 치수표에서 고친 값이 패턴에 반영 */
 const edited = await page.evaluate(() => {
   document.getElementById("tabSheetBtn").click(); document.getElementById("gM").click();

@@ -77,39 +77,48 @@
     if (db > 3.5 || df > 3.5) warn.push("다트 하나가 3.5cm를 넘습니다. 다트를 3개로 나누거나 옆선 들임을 늘리세요.");
 
     // v.hem(밑단 둘레)이 있으면 엉덩이선 아래로 밑단까지 벌림 (A라인). 없으면 H라인
+    // v.mermaidHem: 무릎까지 붙고 그 아래로 벌어지는 머메이드 / v.wrap: 앞이 겹치는 랩 스커트(겉·안 앞판, 뒤 골선, 끈)
     const flare = v.hem ? Math.max(0, v.hem / 4 - half / 2) : 0;
-    function panel(back) {
-      const w = back ? Bw : Fw, s = back ? sb : sf, top = back ? cbDrop : 0, wh = w + flare;
+    const kneeY = HL + (L - HL) * 0.5, wrap = !!v.wrap;
+    function panel(back, ext = 0) {
+      const w = back ? Bw : Fw, s = back ? sb : sf, top = back ? cbDrop : 0;
+      const mer = v.mermaidHem ? Math.max(4, v.mermaidHem / 4 - w) : 0, wh = mer ? w + mer : w + flare;
       const waist = bez([0, top], [(w - s) * 0.5, top], [(w - s) * 0.85, back ? 0.2 : 0], [w - s, 0], 12);
       const side = bez([w - s, 0], [w - s + s * 0.35, HL * 0.25], [w, HL * 0.5], [w, HL], 14);
+      const lower = mer ? [[[[w, HL], [w - 1.5, kneeY]], 1.5], [[[w - 1.5, kneeY], [wh, L]], 1.5]] : [[[[w, HL], [wh, L]], 1.5]];
+      const hemSA = flare > 3 || mer ? 2 : 4, x0 = -ext, cbFold = back && wrap;
       const { pts, edges } = chain([
+        ...(ext ? [[[[x0, 0], [0, 0]], 1]] : []),
         [waist, 1],
         [side, 1.5],
-        [[[w, HL], [wh, L]], 1.5],
-        [[[wh, L], [0, L]], flare > 3 ? 2 : 4],
-        [[[0, L], [0, top]], back ? 1.5 : 0],
+        ...lower,
+        [[[wh, L], [x0, L]], hemSA],
+        [[[x0, L], [x0, ext ? 0 : top]], ext ? 1 : back && !cbFold ? 1.5 : 0],
       ]);
       const dl = back ? lenB : lenF, d = back ? db : df;
       const darts = [1 / 3, 2 / 3].map((k, i) => {
         const x = (w - s) * k, y = yOnCurve(waist, x);
         return { pts: [[x - d / 2, y], [x, y + dl[i]], [x + d / 2, y]] };
       });
+      const zipHere = back && !wrap;
       const p = {
-        name: back ? "뒤판 BACK" : "앞판 FRONT", count: back ? "2장 (좌우 대칭)" : "1장 (앞중심 골선)",
-        pts, edges, darts, fold: back ? null : [[0, 0], [0, L]],
-        lines: [{ pts: [[0, HL], [w, HL]], dash: true, label: "엉덩이선 HL" }],
+        name: back ? "뒤판 BACK" : ext ? (ext > 8 ? "겉 앞판 (겹침)" : "안 앞판") : "앞판 FRONT",
+        count: back ? (cbFold ? "1장 (뒤중심 골선)" : "2장 (좌우 대칭)") : ext ? "1장" : "1장 (앞중심 골선)",
+        pts, edges, darts, fold: back ? (cbFold ? [[0, top], [0, L]] : null) : ext ? null : [[0, 0], [0, L]],
+        lines: [{ pts: [[0, HL], [w, HL]], dash: true, label: "엉덩이선 HL" }].concat(mer ? [{ pts: [[0, kneeY], [w, kneeY]], dash: true, label: "무릎선 KL" }] : [], ext ? [{ pts: [[0, 0], [0, L]], dash: true, label: "앞중심 CF" }] : []),
         grain: [[w * 0.55, HL + 6], [w * 0.55, L - 8]],
-        notchPts: [[w, HL]].concat(back ? [[0, top + v.zip]] : []),
+        notchPts: [[w, HL]].concat(zipHere ? [[0, top + v.zip]] : []),
         dims: [   // 치수선은 조각 안쪽에 (분할 인쇄 장수를 줄이려고)
           { a: [0, HL + 4], b: [w, HL + 4], text: `${r1(w)}` },
-          ...(flare ? [{ a: [0, L - 3], b: [wh, L - 3], text: `${r1(wh)}` }] : []),
+          ...(flare || mer ? [{ a: [0, L - 3], b: [wh, L - 3], text: `${r1(wh)}` }] : []),
           { a: [w * 0.22, top], b: [w * 0.22, L], text: `${r1(L - top)}`, v: true },
         ],
-        notes: back ? [[1.5, top + v.zip + 1.2, `콘솔지퍼 ${v.zip}cm`]] : [[1.2, L * 0.7, "앞중심 골선 (CF)"]],
+        notes: zipHere ? [[1.5, top + v.zip + 1.2, `콘솔지퍼 ${v.zip}cm`]] : back ? [] : ext ? [[x0 + 0.8, L * 0.5, ext > 8 ? "겹침 부분은 다트 없이 단순화" : "안쪽 겹침"]] : [[1.2, L * 0.7, "앞중심 골선 (CF)"]],
       };
       return p;
     }
-    const bandLen = W + 3, bandW = v.band || 3;
+    const wrapExt = wrap ? r1(Fw * 0.7) : 0;
+    const bandLen = W + 3 + wrapExt, bandW = v.band || 3;
     const band = {
       name: "허리밴드", count: "1장 (접착 심지)",
       ...chain([[[[0, 0], [bandLen, 0]], 1], [[[bandLen, 0], [bandLen, bandW * 2]], 1], [[[bandLen, bandW * 2], [0, bandW * 2]], 1], [[[0, bandW * 2], [0, 0]], 1]]),
@@ -121,8 +130,10 @@
       notes: [[bandLen - 2.6, -0.4, "겹침 3"], [0.4, -0.4, "직사각형이라 실물 크기 분할 인쇄에서는 빠짐 · 자로 재서 재단"]],
       below: true, measureOnly: true,
     };
+    const ties = wrap ? [{ name: "허리 끈", count: "2장 (2겹 접음)", ...chain([[[[0, 0], [60, 0]], 1], [[[60, 0], [60, 8]], 1], [[[60, 8], [0, 8]], 1], [[[0, 8], [0, 0]], 1]]),
+      darts: [], fold: null, lines: [{ pts: [[0, 4], [60, 4]], dash: true, label: "접는 선" }], grain: [[20, 4], [40, 4]], notchPts: [], dims: [], notes: [[0.4, -0.4, "완성 폭 3 · 길이 60 (취향에 맞게)"]], below: true, measureOnly: true }] : [];
     return {
-      pieces: [panel(true), panel(false), band], warn,
+      pieces: wrap ? [panel(true), panel(false, wrapExt), panel(false, 6), band, ...ties] : [panel(true), panel(false), band], warn,
       calc: [
         ["엉덩이 반둘레 + 여유", `${v.hip} ÷ 2 + ${v.ease / 2}`, half],
         ["뒤판 폭 / 앞판 폭", "반둘레 ÷ 2 ∓ 0.5", `${r1(Bw)} / ${r1(Fw)}`],
@@ -134,7 +145,8 @@
         ["뒤중심 내림", "", cbDrop],
         ["허리밴드", "허리 + 여유 + 겹침 3 × 완성 폭 3", `${r1(bandLen)} × 6`],
       ].map(([a, b, c]) => [a, b, typeof c === "number" ? r1(c) : c]),
-      seam: `시접: 허리 1 · 옆선 1.5 · 뒤중심 1.5 · 밑단 ${flare > 3 ? 2 : 4} · 앞중심 골선`,
+      seam: wrap ? `시접: 허리 1 · 옆선 1.5 · 앞 겹침단 1 (말아 박기) · 밑단 ${flare > 3 ? 2 : 4} · 뒤중심 골선 (지퍼 없음)`
+        : `시접: 허리 1 · 옆선 1.5 · 뒤중심 1.5 · 밑단 ${flare > 3 || v.mermaidHem ? 2 : 4} · 앞중심 골선`,
     };
   }
 

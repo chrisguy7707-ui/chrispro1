@@ -1524,7 +1524,7 @@ function applyTemplateDefaults() {
     pants:     { side: true, back: true, waist: "fixed", fpocket: "slant", bpocket: "patch", cargo: false, pleat: false, legRib: false },
     shorts:    { side: true, back: true, waist: "fixed", fpocket: "slant", bpocket: "patch", cargo: false, pleat: false, legRib: false },
     skirt:     { shape: "a" },
-    dress:     { neck: "crew", closure: "none", rib: "plain", shape: "a", chest: false, kangaroo: false, patch: false },
+    dress:     { neck: "crew", closure: "none", rib: "plain", shape: "a", chest: false, kangaroo: false, patch: false, sleeve: "set" },
     pouch:     { fit: "regular", closure: "zip", chest: false, kangaroo: false, patch: false, side: false, back: false },
   }[state.opt.template] || {};
   Object.assign(state.opt, D);
@@ -2038,7 +2038,7 @@ function syncPatternToTemplate() {
   if (ws && $("patType").value === target && patFilledKey !== patKey()) fillFromWorksheet();
   const { size } = worksheetBaseValues();
   $("patNote").hidden = !ws;
-  $("patNote").textContent = ws ? `작업지시서 치수표의 기준 사이즈(${size}) 완성 치수로 채웠습니다. 치수표를 고친 뒤 이 탭을 다시 열면 반영됩니다. 디테일(핏·넥라인·여밈·시보리·주머니)도 작업지시서 선택을 따릅니다.` : "";
+  $("patNote").textContent = ws ? `작업지시서 치수표의 기준 사이즈(${size}) 완성 치수로 채웠습니다. 치수표를 고친 뒤 이 탭을 다시 열면 반영됩니다. 소분류(${itemName()})와 디테일(핏·넥라인·여밈·시보리·주머니·허리)도 작업지시서 선택을 따릅니다.` : "";
   renderPattern();
 }
 function buildPatForm() {
@@ -2054,6 +2054,8 @@ function patValues() { return Object.fromEntries([...$("patFields").querySelecto
 function renderPattern() {
   // 패턴에는 필요한 선택만 넘김 (도식화 전용 'hem' 같은 이름이 패턴 치수와 겹치지 않게)
   patDraft = Pattern.draft($("patType").value, patValues(), Object.fromEntries(Pattern.OPT_KEYS.map((k) => [k, state.opt[k]])));
+  // 작업지시서 품목과 같은 패턴이면 소분류 이름으로 (예: 테니스 스커트, 후드 집업)
+  if ($("patType").value === PATTERN_FOR[state.opt.template]) patDraft.name = itemName();
   const title = `${patDraft.name} · ${($("fStyle").textContent || "").trim()}`;
   $("patView").innerHTML = Pattern.svg(patDraft, patDraft.lay, "view", title);
   $("patCalc").innerHTML = patDraft.calc.map(([a, b, c]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td class="n">${esc(c)}</td></tr>`).join("");
