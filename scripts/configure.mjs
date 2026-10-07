@@ -60,7 +60,8 @@ function headBlock(html, page) {
     site.adSlots = Object.fromEntries(Object.entries(cfg.adSlots || {}).filter(([, v]) => String(v).trim()));
   }
   // 방문 통계: Cloudflare Web Analytics (쿠키 없음, 개인 식별 안 함). site.config.json analyticsToken 이 있을 때만
-  if (/^[a-f0-9]{32}$/i.test(cfg.analyticsToken || "")) lines.push(`<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${cfg.analyticsToken}"}'></script>`);
+  // 공유 링크(#v1=…)에는 작업 내용이 주소에 들어 있으므로, 그때는 통계 스크립트를 불러오지 않음
+  if (/^[a-f0-9]{32}$/i.test(cfg.analyticsToken || "")) lines.push(`<script>if(!/^#v[01]=/.test(location.hash)){var s=document.createElement("script");s.type="module";s.src="https://static.cloudflareinsights.com/beacon.min.js";s.setAttribute("data-cf-beacon",'{"token": "${cfg.analyticsToken}"}');document.head.appendChild(s)}</script>`);
   // 광고·문의 메일·비밀 의견 주소 (assets/site.js, assets/feedback.js 가 읽음)
   lines.push(`<script>window.SITE = ${JSON.stringify(site).replace(/</g, "\\u003c")};</script>`);
   return lines.join("\n");

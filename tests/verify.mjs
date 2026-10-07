@@ -17,6 +17,7 @@ const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "
 const page = await browser.newPage();
 /* 봇 탐지 요청: 같은 사이트 도메인의 아주 긴 무작위 한 단계 경로 (github.io 아래에서는 /chrispro1/ 밖의 모든 경로) */
 const isGhBot = (u) => { const x = new globalThis.URL(u); return (x.hostname.endsWith("github.io") && !x.pathname.startsWith("/chrispro1/")) || (!/^(localhost|127\.0\.0\.1)$/.test(x.hostname) && /^\/[A-Za-z0-9_-]{60,}$/.test(x.pathname)); };
+const isAnalytics = (u) => /(^|\.)cloudflareinsights\.com$/.test(new globalThis.URL(u).hostname);   // 방문 통계(페이지 요약만 보냄)는 사진·작업 전송이 아님
 const isRemote = (s) => !!s && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(s);
 /* 공개 사이트(github.io·jakji.app) 검사: GitHub CDN이 자동화 브라우저에만 봇 탐지 스크립트(사이트 루트의 무작위 경로)를 끼워 넣음.
    일반 브라우저에서는 없으므로, 우리 경로(/chrispro1/) 밖의 같은 도메인 요청은 막고 일반 방문자 기준으로 확인 */
@@ -31,7 +32,7 @@ page.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().inclu
 await page.setViewport({ width: 1500, height: 1000 });
 /* 사진이 밖으로 나가지 않는지: 모든 요청 기록 (기기 안 인식은 GET으로 모델만 받음) */
 const sent = [];
-page.on("request", (r) => { if (r.method() !== "GET" || r.url().includes("generativelanguage")) sent.push(`${r.method()} ${r.url()}`); });
+page.on("request", (r) => { if (isAnalytics(r.url())) return; if (r.method() !== "GET" || r.url().includes("generativelanguage")) sent.push(`${r.method()} ${r.url()}`); });
 await page.goto(URL, { waitUntil: "networkidle0" });
 
 /* 1. 시작 상태 */
@@ -624,7 +625,7 @@ await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
 const pj = await browser.newPage(); const pjErr = []; pj.on("pageerror", (e) => pjErr.push(e.message));
 // 공개 사이트에서는 GitHub이 자동화 브라우저에만 넣는 봇 탐지 요청(사이트 루트의 무작위 경로)을 빼고 셈 (맨 위 page와 같은 기준)
 const ghBot = isGhBot;
-const pjSent = []; pj.on("request", (r) => { if (r.method() !== "GET" && !ghBot(r.url())) pjSent.push(r.method() + " " + r.url()); });
+const pjSent = []; pj.on("request", (r) => { if (r.method() !== "GET" && !ghBot(r.url()) && !isAnalytics(r.url())) pjSent.push(r.method() + " " + r.url()); });
 await pj.setViewport({ width: 1400, height: 900 });
 await pj.goto(URL, { waitUntil: "networkidle0" });
 await pj.evaluate(async () => { localStorage.clear(); for (const r of await Jobs.all()) await Jobs.del(r.id); });
@@ -668,10 +669,12 @@ const jobs = await pj.evaluate(async () => {
 const shareUrl = jobs.url; delete jobs.url;
 // 공유 링크를 다른 브라우저(새 사용자)에서 열기: 읽기 전용, 자동 저장이 기존 작업을 덮지 않음
 const ctx2 = await browser.createBrowserContext(); const pv = await ctx2.newPage(); const pvErr = []; pv.on("pageerror", (e) => pvErr.push(e.message));
+const pvStats = []; pv.on("request", (r) => { if (isAnalytics(r.url())) pvStats.push(r.url()); });
 await pv.setViewport({ width: 1400, height: 900 });
 await pv.goto(URL, { waitUntil: "networkidle0" });
 await pv.evaluate(() => { localStorage.setItem("wo_autosave", JSON.stringify({ app: "작지", savedAt: new Date().toISOString(), state: { opt: { template: "pants" } }, fields: { fStyle: "MY-OWN" } })); });
-await pv.goto("about:blank"); await pv.goto(shareUrl, { waitUntil: "networkidle0" }); await new Promise((x) => setTimeout(x, 500));
+await pv.goto("about:blank"); pvStats.length = 0;   // 공유 링크를 여는 순간부터만 센다
+await pv.goto(shareUrl, { waitUntil: "networkidle0" }); await new Promise((x) => setTimeout(x, 500));
 const view = await pv.evaluate(async () => ({
   viewOnly: document.body.classList.contains("view-only") && !document.getElementById("viewBar").hidden,
   panelHidden: getComputedStyle(document.querySelector(".panel")).display === "none",
@@ -681,6 +684,7 @@ const view = await pv.evaluate(async () => ({
   ownKept: JSON.parse(localStorage.getItem("wo_autosave")).fields.fStyle === "MY-OWN",
 }));
 await new Promise((x) => setTimeout(x, 900));
+view.noStats = pvStats.length === 0 && (await pv.evaluate(() => !document.querySelector("script[data-cf-beacon]")));
 view.ownKeptAfter = await pv.evaluate(() => JSON.parse(localStorage.getItem("wo_autosave")).fields.fStyle === "MY-OWN");
 await pv.evaluate(() => preparePrint());
 const viewPdf = mediaBoxes(await pv.pdf({ preferCSSPageSize: true }));
@@ -694,6 +698,8 @@ view.savedToList = saved.hash === "" && saved.list.length === 1 && /공유받음
 await pv.goto("about:blank"); await pv.goto(URL.split("#")[0] + "#v1=AAAAbroken___", { waitUntil: "networkidle0" });
 view.broken = await pv.evaluate(() => /공유 링크를 열지 못했습니다/.test(document.getElementById("status").textContent) && !document.body.classList.contains("view-only"));
 await ctx2.close();
+const statsNormal = await pj.evaluate(() => !!document.querySelector("script[data-cf-beacon]") && JSON.parse(document.querySelector("script[data-cf-beacon]").getAttribute("data-cf-beacon")).token.length === 32);
+ok("방문 통계: 일반 페이지에는 쿠키 없는 통계 스크립트, 공유 링크로 열 때는 불러오지 않음(작업 내용이 주소에 있으므로)", statsNormal && view.noStats, JSON.stringify({ statsNormal, noStats: view.noStats }));
 ok("내 스타일: 저장·복제·자동 저장·열기·삭제 (이 브라우저 IndexedDB)", jobs.dlgOpen && jobs.two && jobs.autosaved && jobs.opened && jobs.deleted, JSON.stringify(jobs));
 ok("공유 링크: 내용은 # 뒤에 압축(서버 전송 없음), 사진·원가 기본 제외, 원가는 고를 때만", jobs.share && jobs.shareCost && pjSent.length === 0, `길이 ${jobs.len}자 · POST ${pjSent.length}건`);
 ok("공유 링크 열기: 읽기 전용 작업지시서, 내 작업 덮어쓰지 않음, 인쇄 A4 1장, 내 스타일에 저장해 고치기, 손상 링크 안내", Object.values(view).every(Boolean) && pvErr.length === 0, JSON.stringify(view) + (pvErr[0] || ""));

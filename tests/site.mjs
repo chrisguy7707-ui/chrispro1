@@ -20,6 +20,7 @@ const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "
 const page = await browser.newPage();
 /* 봇 탐지 요청: 같은 사이트 도메인의 아주 긴 무작위 한 단계 경로 (github.io 아래에서는 /chrispro1/ 밖의 모든 경로) */
 const isGhBot = (u) => { const x = new globalThis.URL(u); return (x.hostname.endsWith("github.io") && !x.pathname.startsWith("/chrispro1/")) || (!/^(localhost|127\.0\.0\.1)$/.test(x.hostname) && /^\/[A-Za-z0-9_-]{60,}$/.test(x.pathname)); };
+const isAnalytics = (u) => /(^|\.)cloudflareinsights\.com$/.test(new globalThis.URL(u).hostname);   // 방문 통계(페이지 요약만 보냄)는 사진·작업 전송이 아님
 const isRemote = (s) => !!s && !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(s);
 /* 공개 사이트(github.io·jakji.app) 검사: GitHub CDN이 자동화 브라우저에만 봇 탐지 스크립트(사이트 루트의 무작위 경로)를 끼워 넣음.
    일반 브라우저에서는 없으므로, 우리 경로(/chrispro1/) 밖의 같은 도메인 요청은 막고 일반 방문자 기준으로 확인 */

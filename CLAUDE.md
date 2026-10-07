@@ -54,6 +54,12 @@
 - 공개 사이트 검사: `APP_URL=https://jakji.app/app.html node tests/verify.mjs`, `SITE_URL=https://jakji.app/ node tests/site.mjs`. GitHub이 자동화 브라우저에만 넣는 봇 탐지 요청(긴 무작위 경로)은 `isGhBot()`으로 걸러냄.
 - 도메인 자동 갱신·WHOIS 개인정보 보호는 Cloudflare Manage domain에서 켜 둘 것. 이메일(chris7707@naver.com)은 도메인과 별개.
 
+## 방문 통계 (Cloudflare Web Analytics, 2026-10-07 켬)
+- `analyticsToken`(site.config.json) → configure가 모든 페이지 head에 **조건부 로더**를 넣음: 주소가 공유 링크(`#v0=`·`#v1=`)이면 불러오지 않음(작업 내용이 주소 # 뒤에 있어서). 쿠키 없음.
+- Cloudflare 사이트는 DNS only(회색 구름)라 자동 설치가 안 되고 JS 스니펫만 씀. 대시보드: Analytics & Logs → Web Analytics → jakji.app.
+- 테스트는 `isAnalytics()`(cloudflareinsights.com)를 '사진·작업 외부 전송 0건' 집계에서 제외하고, 공유 링크 보기에서 통계 요청이 0건인지 따로 검사.
+- privacy.html 1항에 방문 통계 문구가 있음. 통계를 끄거나 업체를 바꾸면 함께 고칠 것.
+
 ## 0단계 준비 (설정만 넣으면 됨)
 - `customDomain` → configure가 `CNAME` 생성. 이때 `url`도 `https://jakji.com/`으로 바꾸고, 도메인 업체 DNS에 GitHub Pages 주소(A 185.199.108~111.153 또는 CNAME chrisguy7707-ui.github.io)를 넣어야 함.
 - `analyticsToken`(Cloudflare Web Analytics 32자리) → 모든 페이지에 쿠키 없는 방문 통계 스크립트. 켜기 전에 privacy.html에 방문 통계 항목 추가할 것.
@@ -126,7 +132,7 @@
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 10개 품목 × 남/여 모두 렌더링 확인.
 - 잡화(`kind: "bag"`, 지금은 `pouch`)는 성별 호칭 대신 `BAG_SIZES` S·M·L(기준 M), 치수는 완성 치수. `sizeList()`·`ensureSizeSystem()`·`renderKindControls()` 참고.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 75개, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 24개, factory·비밀 의견 포함: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 76개, 방문 통계 조건부 로딩 포함, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 24개, factory·비밀 의견 포함: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).
