@@ -54,7 +54,7 @@
 - **jakji.app** (Cloudflare Registrar). DNS: A 185.199.108~111.153 4개 + www CNAME chrisguy7707-ui.github.io, 모두 **DNS only(회색 구름)** — 주황 프록시로 바꾸면 GitHub 인증서 갱신이 막힐 수 있음. HTTPS 강제 켜짐(.app은 HSTS 필수).
 - `site.config.json` url=`https://jakji.app/`, customDomain=`jakji.app` → CNAME 파일. 옛 주소 github.io/chrispro1은 자동으로 넘어옴.
 - 공개 사이트 검사: `APP_URL=https://jakji.app/app.html node tests/verify.mjs`, `SITE_URL=https://jakji.app/ node tests/site.mjs`. GitHub이 자동화 브라우저에만 넣는 봇 탐지 요청(긴 무작위 경로)은 `isGhBot()`으로 걸러냄.
-- 도메인 자동 갱신·WHOIS 개인정보 보호는 Cloudflare Manage domain에서 켜 둘 것. 이메일(chris7707@naver.com)은 도메인과 별개.
+- 도메인 자동 갱신·WHOIS 개인정보 보호는 Cloudflare Manage domain에서 켜 둘 것. 문의 이메일(sirchris7707@gmail.com, site.config.json contactEmail)은 도메인과 별개. 문의·비밀 의견(Formspree)이 모두 이 gmail로 모임.
 
 ## 배우기 글 (애드센스 콘텐츠, 2026-10-07)
 - `learn.html`(목록) + 9편: `learn-sample`(첫 샘플~본생산)·`learn-fabric`·`learn-yield`·`learn-size`·`learn-label`·`learn-inspect`·`learn-flat`(도식화)·`learn-terms`(봉제 용어 사전)·`learn-wash`(소재별 세탁). 각 편 끝에 '자주 묻는 질문' 3개, 읽는 시간은 한글 글자 수(450자/분)로 계산한 값.
@@ -123,7 +123,7 @@
 - `[data-feedback]` 자리(문의 페이지 #feedback)와 도구의 '🔒 의견 보내기' 대화 상자에 양식을 그림. 운영자만 읽음(공개 게시판 아님).
 - `site.config.json`의 `feedbackEndpoint`(https, Formspree 같은 폼 서비스)가 있으면 POST로 바로 접수, 없으면 `contactEmail`로 내용이 채워진 mailto + 복사 대체 상자.
 - configure가 모든 페이지 head에 `window.SITE = {contactEmail, feedbackEndpoint, (adClient, adSlots)}`를 넣음. 도구는 `window.JAKJI_CONTEXT()`로 품목·사이즈·탭만 붙임(사진·작업 내용 X).
-- **지금은 Formspree 연결됨**(`feedbackEndpoint`=https://formspree.io/f/mqpeeyew, 받는 메일은 Formspree 가입 계정 chrisguy7707@gmail.com). 테스트는 `fetch`를 가로채 진짜 접수가 생기지 않게 하고(`noReal`), `JAKJI_NO_MAILTO`로 메일 앱도 안 열음.
+- **지금은 Formspree 연결됨**(`feedbackEndpoint`=https://formspree.io/f/mqpeeyew, 받는 메일은 Formspree 가입 계정 sirchris7707@gmail.com). 테스트는 `fetch`를 가로채 진짜 접수가 생기지 않게 하고(`noReal`), `JAKJI_NO_MAILTO`로 메일 앱도 안 열음.
 - (참고) 폼 서비스로 바꾸면 privacy.html '의견 보내기'에 서비스 이름·보관 기간을 먼저 적을 것.
 
 ## 생산 준비 탭 (`#prod`, 1인 브랜드·학생용)
