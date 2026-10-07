@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.SITE_URL || "http://localhost:8766/";
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
-const PAGES = ["index.html", "app.html", "guide.html", "about.html", "privacy.html", "terms.html", "contact.html"];
+const PAGES = ["index.html", "app.html", "guide.html", "factory.html", "about.html", "privacy.html", "terms.html", "contact.html"];
 
 const results = [];
 const ok = (name, pass, detail = "") => { results.push(pass); console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`); };
@@ -73,7 +73,7 @@ ok(`내부 링크·파일 ${links.size + 6}개 모두 열림`, broken.length ===
 
 /* 3. sitemap · robots */
 const sm = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
-ok("sitemap.xml에 공개 페이지 7개, 404 제외", PAGES.every((f) => sm.includes(`<loc>${cfg.url}${f === "index.html" ? "" : f}</loc>`)) && !sm.includes("404"));
+ok("sitemap.xml에 공개 페이지 8개, 404 제외", PAGES.every((f) => sm.includes(`<loc>${cfg.url}${f === "index.html" ? "" : f}</loc>`)) && !sm.includes("404"));
 ok("robots.txt가 sitemap을 가리킴", fs.readFileSync(path.join(root, "robots.txt"), "utf8").includes(`Sitemap: ${cfg.url}sitemap.xml`));
 ok("404 페이지는 검색 제외(noindex)", fs.readFileSync(path.join(root, "404.html"), "utf8").includes('content="noindex"'));
 ok("애드센스 미설정 시 ads.txt 없음", !fs.existsSync(path.join(root, "ads.txt")) || !!cfg.adsenseClient);

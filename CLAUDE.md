@@ -3,7 +3,7 @@
 옷 사진 1장 + 사이즈 선택(남 80~110 / 여 44~88) → 한국형 작업지시서(도식화 앞·뒤, 치수표, 원단·부자재, 봉제 사양)를 만드는 웹앱.
 
 ## 사이트 구조 (v0.3, 빌드 도구 없음)
-- `index.html` 대문(소개·사용 순서·기능·FAQ, JSON-LD WebApplication+FAQPage), `guide.html` 작성법(애드센스 승인용 본문 콘텐츠),
+- `index.html` 대문(소개·사용 순서·기능·FAQ, JSON-LD WebApplication+FAQPage), `guide.html` 작성법(애드센스 승인용 본문 콘텐츠), `factory.html` 공장 찾기 안내,
   `about`·`contact`·`privacy`·`terms`·`404.html`. 공통 스타일 `assets/site.css`, 광고 자리 채우기 `assets/site.js`.
 - `site.config.json` → `npm run configure`(scripts/configure.mjs)가 각 페이지의 `<!-- SITE:HEAD -->` 블록(canonical, og, 검색 인증, 애드센스 코드),
   `<!-- SITE:CONTACT -->`, `sitemap.xml`, `robots.txt`, `ads.txt`를 다시 만듦. 이 블록과 생성 파일은 손으로 고치지 말 것.
@@ -15,7 +15,7 @@
 - 분석 엔진 3단 구조 (`analyze()`):
   1. claude.ai 아티팩트로 열렸을 때: `window.claude.use("sample")` → Claude가 사진 분석 (키 불필요)
   2. (Google Gemini 경로는 2026-10-07에 제거. 다시 넣을지 검토 중 — 넣는다면 git 기록의 `analyzeWithGemini`·키 받기 탭 참고. 무료 등급 불안정·AQ. 키 문제 주의)
-  3. 키 없음(공개 사이트 기본): **기기 안 인식** `analyzeLocal()`/`applyLocal()`. 사진 올리면 자동 실행.
+  3. 키 없음(공개 사이트 기본): **기기 안 인식** `analyzeLocal()`/`applyLocal()`. 모델을 받은 뒤에는 사진 올리면 자동 실행.
      - transformers.js 4.3.0(jsDelivr) + `Xenova/mobileclip_s0` 사진 모델 **fp16**(23MB). q8 양자화 모델은 출력이 망가지므로 쓰지 말 것.
      - 글자 쪽은 `scripts/build-clip-labels.mjs`로 미리 임베딩해 `assets/clip-labels.json`(그룹별 후보: template·fit·neck·closure·rib·shape·주머니·color).
        후보 문장을 바꾸면 `npm run clip-labels`. 품목 top-1 적용 + 후보 3개 버튼, 디테일은 `LOCAL_ALLOWED`와 확률 기준을 넘을 때만 적용.
@@ -45,6 +45,7 @@
 ## 도식화 편집 탭 (캔버스)
 - `editHandles()`: 품목별 손잡이(상의 7·바지 6·스커트 3·원피스 6, 파우치 없음) = [측정부위, 위치, 끌 방향, 좌표→cm]. 끌면 `setBaseValue()` → `renderFlats()`.
 - 표시 `state.notes = {front, back}`: text·arrow·circle. `annoSVG()`로 `buildSVG()` 끝에 그림 → 작업지시서·인쇄·HTML·SVG·작업 저장에 포함. 복원은 숫자·글자만(`cleanNote`).
+- 디테일 끌기: 주머니(`chest`·`kangaroo`·`patch`·`cargo`·`bpocket`)는 `det()`로 `<g data-d data-s transform>`에 묶음. `state.offsets[이름] = {dx, dy}`(cm, 0.5 단위, ±40/±60), 좌우 쌍은 `data-s`로 x 대칭. 스타일·품목이 바뀌면 초기화, 저장·되돌리기 포함.
 - 편집기 화면은 화살촉 id를 `ed-` 접두어로 바꿈(숨긴 작업지시서 SVG의 같은 id를 가리키면 안 보임). 되돌리기는 치수표 칸 + 표시 JSON 스냅숏 40개.
 
 ## 패턴 제도 (`assets/pattern.js`, app.html의 '패턴 제도' 탭)
@@ -66,7 +67,20 @@
 - 사진 인식 모델은 Hugging Face 커밋 `LOCAL.revision`에 고정, 처음엔 사용자가 버튼을 눌러야 받음(`modelReady()`), 확신도는 `confLabel()` 높음·보통·낮음.
 - 패턴 탭은 **베타** 표시(가봉 검증 전). 실물 검증 결과가 나오면 공식과 표시를 함께 고칠 것.
 
-## 외곽선 분석 (시험, `assets/outline.js`, '외곽선' 탭)
+## 화면 순서
+- 왼쪽 패널: ① 사이즈 → ② 디테일. 사진(`#drop`·`#file`)과 인식(`#analyzeBtn`·`#guess`·`#ratioHints`)은 **'사진 분석 (시험)' 탭(`#olz`) 맨 위**로 옮김 (사진 인식이 완전하지 않아서).
+- 상태 메시지 `setStatus()`는 패널 아래 `#status`와 사진 탭 `#status2` 두 곳에 같이 씀.
+- 탭: 작업지시서 · 도식화 편집 · 생산 준비 · 패턴 제도(베타) · 사진 분석(시험). 편집·생산 준비·사진 분석 탭에서 인쇄하면 작업지시서.
+
+## 생산 준비 탭 (`#prod`, 1인 브랜드·학생용)
+- 상태 `state.prod` = { cost, colors, qty{"컬러|사이즈"}, care, careOpts, sample{name, meas, memo}, samples[] }. `snapshot().prod` ↔ `cleanProd()`(숫자·글자만, 길이 제한).
+  - snapshot에서 도식화 표시는 `marks`(예전 파일의 `notes` 객체도 읽음), `notes`는 주의사항 줄 목록 — 이름 겹쳐 주의사항이 사라지던 문제 고침.
+- ① `checks()`: [이름, 공장이 물어볼 질문, 채움, 이동할 칸, 꼭/권장]. ② `costCalc()`. ③ 발주표 → `fQty`·`fColor`, `buildCSV()`(BOM, 작업지시서·치수표·발주표·부자재·봉제·주의·원가).
+- ④ 케어라벨: 국가기술표준원 가정용 섬유제품 표시사항 7가지(혼용률·제조자명·제조국·제조연월·치수·취급상 주의·주소·전화). 성인 의류는 안전기준준수 대상(KC 마크 없음), 13세 이하 어린이 옷은 어린이제품 안전 특별법 — 문구 바뀌면 함께 고칠 것.
+- ⑤ 샘플 기록: 지시(기준 사이즈 `baseVals()`) vs 실측, 허용오차 `TOL`=1cm, 최대 20개, 두 차수 비교.
+- `factory.html`: 기관·서비스 내용은 2026-10 기준 업체·기관 소개. 특정 업체 추천·보증 아님 문구 유지.
+
+## 외곽선 분석 (시험, `assets/outline.js`, '사진 분석' 탭 아래쪽)
 - AI 없음. 테두리 색 = 배경 → 테두리와 이어진 비슷한 색을 걷어 냄(옷 안 흰 프린트는 남음) → 열기 연산 → 가장 큰 덩어리 → 무어 추적 + 더글러스-포이커.
 - 배경 얼룩 = 테두리 거리의 70% 지점 (옷이 테두리에 닿아도 버티게). 민감도 슬라이더로 임계값 조정.
 - 모양 판단은 **참고용**: 다리 두 갈래(비슷한 폭 2구간, 가운데 비어 있음)·네모(채움 80%+)만 믿을 만함. 품목 판단은 사진 인식이 담당.
@@ -78,7 +92,7 @@
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 10개 품목 × 남/여 모두 렌더링 확인.
 - 잡화(`kind: "bag"`, 지금은 `pouch`)는 성별 호칭 대신 `BAG_SIZES` S·M·L(기준 M), 치수는 완성 치수. `sizeList()`·`ensureSizeSystem()`·`renderKindControls()` 참고.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 65개, 소분류 34종·도식화 편집(끌기·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, Gemini 키 확인(가짜 응답) 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 22개: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 70개, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, Gemini 키 확인(가짜 응답) 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 23개, factory 포함: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).

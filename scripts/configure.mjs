@@ -18,6 +18,7 @@ const PAGES = [
   { file: "index.html", loc: "", priority: "1.0" },
   { file: "app.html", loc: "app.html", priority: "0.9" },
   { file: "guide.html", loc: "guide.html", priority: "0.8" },
+  { file: "factory.html", loc: "factory.html", priority: "0.6" },
   { file: "about.html", loc: "about.html", priority: "0.5" },
   { file: "contact.html", loc: "contact.html", priority: "0.3" },
   { file: "privacy.html", loc: "privacy.html", priority: "0.2" },

@@ -191,6 +191,10 @@
   .pat-calc p { margin: 0 0 6px; font-size: 12px; line-height: 1.6; }
   .pat-legend span { display: inline-block; margin-right: 12px; }
   #patPrint { display: none; }
+  .photo-box { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background-color: var(--mat); color: var(--mat-ink); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  @media (max-width: 760px) { .photo-box { grid-template-columns: 1fr; } }
+  .photo-box .pb-title { display: block; margin-bottom: 6px; font-size: 14px; } .photo-box .pb-title small { font-weight: 400; opacity: .75; }
+  .photo-box .drop img { max-height: 150px; }
   .ed-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .ed-bar button { border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 8px; padding: 7px 11px; font: inherit; font-size: 13px; cursor: pointer; }
   .ed-bar button[aria-pressed="true"] { background: var(--mat); border-color: var(--mat); color: #fff; font-weight: 700; }
@@ -203,6 +207,7 @@
   .ed-view svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
   .ed-view .hd { cursor: grab; } .ed-view .hd:hover circle { r: 7; }
   .ed-view [data-i] { cursor: pointer; }
+  .ed-view [data-d] { cursor: move; } .ed-view [data-d]:hover path { stroke: #1e5bd8; }
   .ed-tip { font: 700 9px sans-serif; fill: #c62828; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
   .olz-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; margin-top: 12px; align-items: start; }
   @media (max-width: 960px) { .olz-grid { grid-template-columns: 1fr; } }
@@ -224,7 +229,37 @@
   .olz-table th { white-space: nowrap; }
   .olz-table td.n { text-align: right; font-weight: 700; white-space: nowrap; }
   .olz-table small { color: var(--ink-soft); display: block; font-size: 11px; }
-  @media print { #olz, #edit { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
+  .prod-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .prod-nav button { border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13px; cursor: pointer; }
+  .prod-nav button[aria-pressed="true"] { background: var(--mat); border-color: var(--mat); color: #fff; font-weight: 700; }
+  .prod h3 { margin: 14px 0 6px; font-size: 15px; }
+  .prod table.pt { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+  .prod table.pt th, .prod table.pt td { border: 1px solid var(--rule); padding: 5px 7px; text-align: left; }
+  .prod table.pt th { background: #f1f1ee; font-weight: 500; }
+  .prod table.pt td.n, .prod table.pt th.n { text-align: right; white-space: nowrap; }
+  .prod table.pt input { width: 100%; min-width: 52px; padding: 5px 6px; border: 1px solid var(--rule); border-radius: 6px; font: inherit; font-size: 13px; text-align: right; background: #fff; color: var(--ink); }
+  .prod .bad { color: var(--mark); font-weight: 700; }
+  .prod .ok { color: #2f7d4f; font-weight: 700; }
+  .prod .warn { color: #a06a00; font-weight: 700; }
+  .prod .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+  .prod .row button, .chk button { border: 1px solid var(--mat); background: #fff; color: var(--mat); border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .prod .row button.primary { background: var(--mat); color: #fff; font-weight: 700; }
+  .prod textarea, .prod .pat-form textarea { width: 100%; min-height: 60px; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 7px; font: inherit; font-size: 13px; background: #fff; color: var(--ink); }
+  .chk { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; }
+  .chk li { display: grid; grid-template-columns: 28px 120px 1fr auto; gap: 8px; align-items: center; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 8px; font-size: 13px; }
+  .chk li.miss { border-color: var(--mark); background: #fff3f1; }
+  .chk li.soft { border-color: #e2b84a; background: #fffbea; }
+  .chk li b { font-size: 16px; text-align: center; }
+  @media (max-width: 600px) { .chk li { grid-template-columns: 24px 1fr; } .chk li > :nth-child(3), .chk li > :nth-child(4) { grid-column: 2; } }
+  .chk-score { font-size: 15px; margin: 4px 0; }
+  .cost-out td.n { font-weight: 700; }
+  .care-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(240px, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 760px) { .care-grid { grid-template-columns: 1fr; } }
+  .care-opts { display: grid; gap: 4px; font-size: 13px; margin-top: 6px; }
+  .care-label { white-space: pre-wrap; font: 12px/1.65 ui-monospace, Menlo, monospace; border: 1px dashed var(--ink); border-radius: 6px; padding: 12px; background: #fcfcfa; margin: 0; }
+  .care-label .bad { font-family: inherit; }
+  .flash { outline: 3px solid var(--tape) !important; outline-offset: 1px; }
+  @media print { #olz, #edit, #prod { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
   @media print {
     body { background: #fff; }
@@ -269,17 +304,7 @@
     <nav class="mini-nav" aria-label="사이트"><a href="./">홈</a><a href="guide.html">작업지시서 작성법</a><a href="about.html">소개</a></nav>
 
     <section class="step">
-      <h2><span class="n">1</span>옷 사진</h2>
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="옷 사진 선택">
-        <img id="dropImg" alt="" hidden />
-        <span id="dropTxt">사진을 끌어다 놓거나 눌러서 선택</span>
-      </div>
-      <input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden />
-      <p class="hint">정면 사진 한 장이 가장 정확합니다. 자체 디자인·자체 샘플 사진을 사용해 주세요.</p>
-    </section>
-
-    <section class="step">
-      <h2><span class="n">2</span>사이즈</h2>
+      <h2><span class="n">1</span>사이즈</h2>
       <div class="seg" role="group" aria-label="성별">
         <button id="gM" aria-pressed="true">남성 80~110</button>
         <button id="gF" aria-pressed="false">여성 44~88</button>
@@ -298,16 +323,7 @@
     </section>
 
     <section class="step">
-      <h2><span class="n">3</span>사진 분석 <span style="font-weight:400;opacity:.75">(선택)</span></h2>
-      <button class="btn" id="analyzeBtn">사진으로 도식화·작업지시서 만들기</button>
-      <p class="hint" id="manualHint" hidden><b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않습니다. 처음 한 번은 버튼을 눌러 인식 모델(약 23MB)을 받고, 그다음부터는 사진을 올리면 바로 인식합니다.</p>
-      <div class="status" id="status" role="status"></div>
-      <div class="ratio-hints" id="ratioHints" hidden></div>
-      <div class="chips" id="guess" aria-label="인식 후보" hidden></div>
-    </section>
-
-    <section class="step">
-      <h2><span class="n">4</span>디테일 확인·수정</h2>
+      <h2><span class="n">2</span>디테일 확인·수정</h2>
       <div class="grid2">
         <label class="f">대분류
           <select id="oCat"></select>
@@ -378,6 +394,7 @@
         <label class="f">품명<input type="text" id="oItem" placeholder="예: 오버핏 크루넥 반팔티" /></label>
       </div>
       <p class="hint">바꾸면 도식화와 치수표가 바로 다시 그려집니다. 원단을 고르면 원단·혼용률·중량 칸이 채워지고, 작업지시서의 글자는 오른쪽에서 직접 눌러 고칠 수 있습니다.</p>
+      <div class="status" id="status" role="status"></div>
     </section>
   </aside>
 
@@ -386,8 +403,9 @@
     <div class="tabs" role="tablist" aria-label="화면">
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
       <button role="tab" id="tabEditBtn" aria-selected="false" aria-controls="edit">도식화 편집</button>
+      <button role="tab" id="tabProdBtn" aria-selected="false" aria-controls="prod">생산 준비</button>
       <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
-      <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">외곽선 <small style="font-weight:500;opacity:.8">시험</small></button>
+      <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">사진 분석 <small style="font-weight:500;opacity:.8">시험</small></button>
     </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
@@ -498,6 +516,94 @@
         </div>
       </div>
     </section>
+    <section class="pat prod" id="prod" role="tabpanel" aria-label="생산 준비" hidden>
+      <div class="prod-nav" role="toolbar" aria-label="생산 준비 메뉴">
+        <button data-p="check" aria-pressed="true">① 빠진 항목 검사</button>
+        <button data-p="cost" aria-pressed="false">② 원가·마진</button>
+        <button data-p="order" aria-pressed="false">③ 발주표·엑셀</button>
+        <button data-p="care" aria-pressed="false">④ 케어라벨</button>
+        <button data-p="sample" aria-pressed="false">⑤ 샘플 수정 기록</button>
+        <a href="factory.html" target="_blank" rel="noopener" style="align-self:center;font-size:13px;margin-left:auto;color:var(--mat)">⑥ 공장 찾기 안내 →</a>
+      </div>
+
+      <div class="prod-pane" data-p="check">
+        <p class="pat-note">공장에 넘기기 전에 작업지시서의 빈칸을 찾습니다. <b>빨간 줄은 공장이 다시 물어볼 질문</b>, 노란 줄은 있으면 좋은 항목입니다. 줄을 누르면 그 칸으로 이동합니다.</p>
+        <p class="chk-score" id="chkScore"></p>
+        <ul class="chk" id="chkList"></ul>
+      </div>
+
+      <div class="prod-pane" data-p="cost" hidden>
+        <p class="pat-note">한 장 만드는 데 드는 돈과 남는 돈을 계산합니다. 공임은 공장 견적, 원단 단가는 원단 시장 견적으로 바꿔 넣으세요. 부가세·배송비·반품 비용은 빠져 있습니다.</p>
+        <div class="pat-form" id="costForm">
+          <label>원단 단가 (원/마)<input type="number" min="0" step="100" data-c="fab" /></label>
+          <label>요척 (마/장)<input type="number" min="0" step="0.05" data-c="yield" /></label>
+          <label>로스율 (%)<input type="number" min="0" max="50" step="1" data-c="loss" /></label>
+          <label>부자재비 (원/장)<input type="number" min="0" step="100" data-c="trim" /></label>
+          <label>공임 (원/장)<input type="number" min="0" step="100" data-c="labor" /></label>
+          <label>기타 (원/장)<input type="number" min="0" step="100" data-c="etc" title="재단·나염·자수·택·포장 등" /></label>
+          <label>샘플·패턴비 (원, 1회)<input type="number" min="0" step="1000" data-c="fixed" /></label>
+          <label>생산 수량 (장)<input type="number" min="0" step="1" data-c="qty" /></label>
+          <label>판매가 (원)<input type="number" min="0" step="1000" data-c="price" /></label>
+          <label>판매 수수료 (%)<input type="number" min="0" max="80" step="0.5" data-c="fee" title="스토어·플랫폼·카드 수수료" /></label>
+        </div>
+        <table class="pt cost-out" id="costOut"></table>
+      </div>
+
+      <div class="prod-pane" data-p="order" hidden>
+        <p class="pat-note">컬러 × 사이즈별 수량을 넣으면 합계를 내고, 작업지시서의 수량·컬러 칸에 넣을 수 있습니다. 엑셀로 내보내면 작업지시서 정보·치수표·발주표·부자재·봉제 사양이 한 파일에 들어갑니다.</p>
+        <div class="pat-form"><label class="wide">컬러 (쉼표로 구분)<input type="text" id="ordColors" maxlength="200" placeholder="예: 블랙, 아이보리, 차콜" /></label></div>
+        <div style="overflow-x:auto"><table class="pt" id="ordTable"></table></div>
+        <div class="row">
+          <button class="primary" id="ordApply">작업지시서 수량·컬러에 넣기</button>
+          <button id="ordCsv">엑셀(CSV)로 내보내기</button>
+          <span class="hint" id="ordMsg"></span>
+        </div>
+      </div>
+
+      <div class="prod-pane" data-p="care" hidden>
+        <div class="care-grid">
+          <div>
+            <p class="pat-note" style="margin-top:0">성인 의류는 「전기용품 및 생활용품 안전관리법」의 <b>안전기준준수 대상</b>이라 아래 7가지를 표시해야 합니다 (KC 마크는 붙이지 않음). <b>만 13세 이하 어린이 옷</b>은 「어린이제품 안전 특별법」에 따라 따로 인증이 필요합니다. 세탁 기호 그림은 라벨 업체에 요청하세요.</p>
+            <div class="pat-form" id="careForm">
+              <label class="wide">① 섬유 혼용률 (겉감)<input data-k="mix" maxlength="80" placeholder="예: 면 100%" /></label>
+              <label class="wide">① 섬유 혼용률 (안감, 없으면 비움)<input data-k="lining" maxlength="80" /></label>
+              <label class="wide">② 제조자명 (또는 수입자명)<input data-k="maker" maxlength="60" /></label>
+              <label>③ 제조국<input data-k="country" maxlength="30" /></label>
+              <label>④ 제조연월<input data-k="date" maxlength="20" placeholder="2026.10" /></label>
+              <label class="wide">⑤ 치수 (신체 치수)<input data-k="size" maxlength="80" /></label>
+              <label class="wide">⑦ 표시자 주소<input data-k="addr" maxlength="100" /></label>
+              <label>⑦ 전화번호<input data-k="tel" maxlength="30" /></label>
+            </div>
+            <h3>⑥ 취급상 주의사항</h3>
+            <div class="care-opts" id="careOpts"></div>
+            <div class="pat-form" style="margin-top:6px"><label class="wide">그 밖의 주의사항<input data-k="extra" maxlength="120" id="careExtra" placeholder="예: 프린트 부분은 다림질하지 마세요" /></label></div>
+          </div>
+          <div>
+            <h3 style="margin-top:0">라벨 문구 미리보기</h3>
+            <pre class="care-label" id="careOut"></pre>
+            <div class="row">
+              <button class="primary" id="careToTrim">부자재표에 케어라벨 넣기</button>
+              <button id="careCopy">문구 복사</button>
+            </div>
+            <p class="hint" style="font-size:12px">근거: 국가기술표준원 「가정용 섬유제품 안전기준」 표시사항. 표시 기준은 바뀔 수 있으니 생산 전에 <a href="https://www.kats.go.kr" target="_blank" rel="noopener">국가기술표준원</a>·라벨 업체와 확인하세요.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="prod-pane" data-p="sample" hidden>
+        <p class="pat-note">샘플이 나오면 치수표와 같은 방법으로 재서 넣으세요. 지시 치수와 <b>±1cm</b>(작업지시서 허용오차)보다 차이 나는 곳을 빨갛게 표시합니다. 차수별로 저장해 두고 비교할 수 있습니다.</p>
+        <div class="pat-form"><label class="wide">샘플 이름<input id="smpName" maxlength="40" /></label></div>
+        <div style="overflow-x:auto"><table class="pt" id="smpTable"></table></div>
+        <p id="smpSum" class="chk-score"></p>
+        <label style="font-size:13px;display:block;margin-top:6px">수정할 점<textarea id="smpMemo" maxlength="500" placeholder="예: 소매 1cm 줄임, 넥 시보리 늘어남 → 시보리 길이 2cm 줄임"></textarea></label>
+        <div class="row"><button class="primary" id="smpSave">이 샘플 기록 저장</button><span class="hint" id="smpMsg"></span></div>
+        <h3>저장한 샘플</h3>
+        <div style="overflow-x:auto"><table class="pt" id="smpList"></table></div>
+        <div class="row" id="smpCmpBar" hidden>비교: <select id="smpA"></select> → <select id="smpB"></select></div>
+        <div style="overflow-x:auto"><table class="pt" id="smpCmp"></table></div>
+      </div>
+    </section>
+
     <section class="pat" id="edit" role="tabpanel" aria-label="도식화 편집" hidden>
       <div class="ed-bar" role="toolbar" aria-label="편집 도구">
         <button data-tool="move" aria-pressed="true" title="빨간 손잡이를 끌어 치수를 바꾸거나, 파란 표시를 골라 옮기기">✋ 끌기·고르기</button>
@@ -509,6 +615,7 @@
         <button id="edDel" title="고른 표시 지우기 (Delete 키)">선택 지우기</button>
         <button id="edUndo" title="되돌리기 (Ctrl·Cmd+Z)">↶ 되돌리기</button>
         <button id="edClear">표시 모두 지우기</button>
+        <button id="edReset" title="끌어 옮긴 주머니 등을 처음 자리로">디테일 위치 처음으로</button>
       </div>
       <p class="pat-note" id="edNote" role="status">빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.</p>
       <div class="ed-grid">
@@ -516,7 +623,26 @@
         <figure><div class="ed-view" id="edBack"></div><figcaption>뒤판 BACK · 표시만</figcaption></figure>
       </div>
     </section>
-    <section class="pat" id="olz" role="tabpanel" aria-label="외곽선 분석" hidden>
+    <section class="pat" id="olz" role="tabpanel" aria-label="사진 분석 (시험)" hidden>
+      <div class="photo-box">
+        <div>
+          <b class="pb-title">옷 사진</b>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="옷 사진 선택">
+            <img id="dropImg" alt="" hidden />
+            <span id="dropTxt">사진을 끌어다 놓거나 눌러서 선택</span>
+          </div>
+          <input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden />
+          <p class="hint">정면 사진 한 장, 자체 디자인·자체 샘플 사진을 사용해 주세요. 사진은 작업지시서의 참고 사진 칸에 들어갑니다.</p>
+        </div>
+        <div>
+          <b class="pb-title">사진으로 품목 알아보기 <small>(시험 · 정확도 약 90%)</small></b>
+          <button class="btn" id="analyzeBtn">사진으로 품목·디테일 알아보기</button>
+          <p class="hint" id="manualHint" hidden><b>기기 안에서 무료로</b> 품목·디테일·컬러를 인식합니다. 사진은 밖으로 나가지 않습니다. 처음 한 번은 인식 모델(약 23MB)을 받습니다. 소분류(예: 테니스 스커트)는 직접 골라 주세요.</p>
+          <div class="status" id="status2" role="status"></div>
+          <div class="chips" id="guess" aria-label="인식 후보" hidden></div>
+          <div class="ratio-hints" id="ratioHints" hidden></div>
+        </div>
+      </div>
       <details class="pat-beta" open>
         <summary><b>시험 기능</b> · 사진에서 옷의 외곽선을 따서 모양을 판단하고, 기준 길이를 알려 주면 대략의 치수(±2~3cm)를 잽니다. AI 없이 기기 안에서 계산합니다.</summary>
         <ol>
@@ -749,6 +875,8 @@ const state = {
          chest: false, kangaroo: false, patch: false, side: true, back: true, cargo: false, pleat: false },
   ai: null,
   notes: { front: [], back: [] },   // 도식화 편집: 메모·화살표·동그라미
+  offsets: {},                      // 도식화 편집: 끌어 옮긴 디테일 위치 (cm)
+  prod: { cost: { loss: 5, fee: 0 }, colors: "", qty: {}, care: {}, careOpts: null, sample: { name: "", meas: {}, memo: "" }, samples: [] },   // 생산 준비 탭
 };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -843,6 +971,13 @@ function dim(x1, y1, x2, y2, code, lx, ly) {
     <circle cx="${lx}" cy="${ly}" r="7" fill="#c62828"/><text x="${lx}" y="${ly + 3.6}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff" font-family="sans-serif">${code}</text></g>`;
 }
 const DEFS = `<defs><marker id="ar" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="#c62828"/></marker></defs>`;
+
+/* 끌어 옮긴 디테일 위치: state.offsets[이름] = { dx, dy } (cm). 좌우 한 쌍은 side로 x를 대칭 */
+const DETAIL_NAMES = { chest: "가슴 주머니", kangaroo: "캥거루 주머니", patch: "아웃포켓", cargo: "카고 주머니", bpocket: "뒷주머니" };
+function det(key, side, k, inner) {
+  const o = (state.offsets && state.offsets[key]) || { dx: 0, dy: 0 };
+  return `<g data-d="${key}" data-s="${side}" transform="translate(${(o.dx * k * side).toFixed(1)},${(o.dy * k).toFixed(1)})">${inner}</g>`;
+}
 
 /* 기준 사이즈 열(화면에서 고친 값 포함) → { 측정부위: cm }. 도식화는 이 비율로 그림 */
 const specKey = () => [state.opt.template, state.opt.style, state.gender, state.base, state.opt.fit, state.opt.shape].join("|");
@@ -987,12 +1122,12 @@ function drawTop(view, o, t) {
       out += `<rect x="${cx - 3}" y="${topY + 2}" width="6" height="10" rx="1.5" fill="#fff" stroke="#1d1d1b" stroke-width="1"/>`;
     }
     if (o.chest) { const pw = 11 * k, ph = 13 * k, x = cx + bw * 0.22, y = armY - 4 * k;
-      out += P(`M${x},${y} h${pw} v${ph} l-${pw / 2},${2 * k} l-${pw / 2},-${2 * k} Z`); out += ST(`M${x + 2},${y + 2.5 * k} h${pw - 4}`); }
+      out += det("chest", 1, k, P(`M${x},${y} h${pw} v${ph} l-${pw / 2},${2 * k} l-${pw / 2},-${2 * k} Z`) + ST(`M${x + 2},${y + 2.5 * k} h${pw - 4}`)); }
     if (o.kangaroo) { const pw = CH * 0.6 * k, ph = 20 * k, y = hemY - (ribbed ? 6 * k : 2 * k) - ph;
-      out += P(`M${cx - pw / 2},${y + ph} L${cx - pw * 0.38},${y} L${cx + pw * 0.38},${y} L${cx + pw / 2},${y + ph} Z`);
-      out += ST(`M${cx - pw * 0.38 + 3},${y + 3} L${cx - pw / 2 + 2},${y + ph}`); out += ST(`M${cx + pw * 0.38 - 3},${y + 3} L${cx + pw / 2 - 2},${y + ph}`); }
+      out += det("kangaroo", 1, k, P(`M${cx - pw / 2},${y + ph} L${cx - pw * 0.38},${y} L${cx + pw * 0.38},${y} L${cx + pw / 2},${y + ph} Z`)
+        + ST(`M${cx - pw * 0.38 + 3},${y + 3} L${cx - pw / 2 + 2},${y + ph}`) + ST(`M${cx + pw * 0.38 - 3},${y + 3} L${cx + pw / 2 - 2},${y + ph}`)); }
     if (o.patch) { const pw = Math.min(hw - 10, 17 * k), ph = 17 * k; for (const sgn of [-1, 1]) { const x = sgn < 0 ? cx - hw + 8 : cx + hw - 8 - pw, y = hemY - ph - 6 * k;
-      out += P(`M${x},${y} h${pw} v${ph} h-${pw} Z`); out += ST(`M${x},${y + 4 * k} h${pw}`); } }
+      out += det("patch", sgn, k, P(`M${x},${y} h${pw} v${ph} h-${pw} Z`) + ST(`M${x},${y + 4 * k} h${pw}`)); } }
   }
   return { svg: out, hemY, sh, shY, bw, armY, cx, hw, k, top, nw, neckDepth, slv: o.sleeve === "none" ? null : sleeveGeo(1), raglanOff: raglan ? Math.hypot(sh - nw, shY - top) : 0 };
 }
@@ -1049,16 +1184,17 @@ function drawPants(view, o) {
     out += L(`M${cx},${f(yb)} L${cx},${f(crotchY)}`);
     if (o.back && o.bpocket !== "welt") {        // 요크 + 아웃포켓 (청바지형)
       out += L(`M${f(wL)},${f(yb + 14)} L${cx},${f(yb + 26)} L${f(wR)},${f(yb + 14)}`); out += ST(`M${f(wL)},${f(yb + 18)} L${cx},${f(yb + 30)} L${f(wR)},${f(yb + 18)}`);
-      const pw = 14 * k, ph = 15 * k; for (const x of [cx - (W / 4) * k - pw / 2, cx + (W / 4) * k - pw / 2]) { out += P(`M${f(x)},${f(yb + 32)} h${f(pw)} v${f(ph)} l-${f(pw / 2)},${f(2.5 * k)} l-${f(pw / 2)},-${f(2.5 * k)} Z`); out += ST(`M${f(x + 3)},${f(yb + 36)} h${f(pw - 6)}`); }
+      const pw = 14 * k, ph = 15 * k; for (const sgn of [-1, 1]) { const x = cx + sgn * (W / 4) * k - pw / 2;
+        out += det("bpocket", sgn, k, P(`M${f(x)},${f(yb + 32)} h${f(pw)} v${f(ph)} l-${f(pw / 2)},${f(2.5 * k)} l-${f(pw / 2)},-${f(2.5 * k)} Z`) + ST(`M${f(x + 3)},${f(yb + 36)} h${f(pw - 6)}`)); }
     } else if (o.back) {                          // 다트 + 입술 주머니(웰트)
       for (const sgn of [-1, 1]) { const x = cx + sgn * (W / 4) * k; out += L(`M${f(x - 2)},${f(yb)} L${f(x)},${f(yb + 10 * k)} L${f(x + 2)},${f(yb)}`);
-        out += P(`M${f(x - 6.5 * k)},${f(yb + 7 * k)} h${f(13 * k)} v${f(1.2 * k)} h-${f(13 * k)} Z`); }
+        out += det("bpocket", sgn, k, P(`M${f(x - 6.5 * k)},${f(yb + 7 * k)} h${f(13 * k)} v${f(1.2 * k)} h-${f(13 * k)} Z`)); }
     }
   }
   if (o.cargo) for (const sgn of [-1, 1]) {        // 카고 주머니 (허벅지 옆, 그 높이의 옆선 안쪽에 붙임)
     const y = crotchY + 6 * k, pw = 14 * k, ph = 17 * k, t = (y + ph / 2 - hipY) / (hemY - hipY);
     const edge = hipR + (outerR - hipR) * t, ow = sgn > 0 ? edge : 2 * cx - edge, x = sgn > 0 ? ow - pw - 3 : ow + 3;
-    out += P(`M${f(x)},${f(y)} h${f(pw)} v${f(ph)} h-${f(pw)} Z`); out += P(`M${f(x - 1)},${f(y - 1)} h${f(pw + 2)} v${f(5 * k)} h-${f(pw + 2)} Z`); out += ST(`M${f(x + 2)},${f(y + 7 * k)} h${f(pw - 4)}`);
+    out += det("cargo", sgn, k, P(`M${f(x)},${f(y)} h${f(pw)} v${f(ph)} h-${f(pw)} Z`) + P(`M${f(x - 1)},${f(y - 1)} h${f(pw + 2)} v${f(5 * k)} h-${f(pw + 2)} Z`) + ST(`M${f(x + 2)},${f(y + 7 * k)} h${f(pw - 4)}`));
   }
   return { svg: out, hemY, wL, wR, crotchY, cx, hipY, hipL, hipR, outerR, innerR, k, legC, g, TH };
 }
@@ -1240,7 +1376,7 @@ function renderKindControls() {
   document.querySelector('.checks[aria-label="주머니"]').hidden = bag;
   $("specCap").textContent = bag ? "치수표 (단위 cm, 완성 치수)" : "치수표 (단위 cm, 단면 기준)";
 }
-function renderAll() { ensureSizeSystem(); renderKindControls(); renderSizeChips(); renderLabelBox(); renderSpec(); renderFlats(); fitPrint(); }
+function renderAll() { ensureSizeSystem(); renderKindControls(); renderSizeChips(); renderLabelBox(); renderSpec(); renderFlats(); fitPrint(); if (typeof activeTab !== "undefined" && activeTab === "prod") renderProd(); }
 function renderContent() { renderTrims(); renderSew(); fitPrint(); }
 
 /* ====================================================================== 옵션 입력 연결 */
@@ -1260,7 +1396,7 @@ function chooseStyle(id) {
   const st = STYLES[id]; if (!st) return;
   const changedTpl = st.template !== state.opt.template;
   state.opt.template = st.template; state.opt.style = id;
-  applyTemplateDefaults(); Object.assign(state.opt, st.opt || {}); state.ai = null;
+  applyTemplateDefaults(); Object.assign(state.opt, st.opt || {}); state.ai = null; state.offsets = {};
   syncControls(); renderAll(); $("fItem").textContent = $("oItem").value || itemName();
   if (changedTpl) renderFabricOptions(); renderContent();
 }
@@ -1274,7 +1410,7 @@ function syncControls() {
 for (const [id, k] of Object.entries(optMap)) $(id).addEventListener("change", () => {
   state.opt[k] = $(id).value;
   // 품목을 직접 바꾸면 이전 품목의 AI 부자재·봉제 사양은 맞지 않으므로 그 품목 기본값으로
-  if (k === "template") { state.opt.style = DEFAULT_STYLE[state.opt.template]; applyTemplateDefaults(); Object.assign(state.opt, STYLES[state.opt.style].opt || {}); state.ai = null; }
+  if (k === "template") { state.offsets = {}; state.opt.style = DEFAULT_STYLE[state.opt.template]; applyTemplateDefaults(); Object.assign(state.opt, STYLES[state.opt.style].opt || {}); state.ai = null; }
   renderAll(); if (k === "template") { $("fItem").textContent = $("oItem").value || itemName(); renderFabricOptions(); renderContent(); }
 });
 for (const [id, k] of Object.entries(chkMap)) $(id).addEventListener("change", () => { state.opt[k] = $(id).checked; renderFlats(); });
@@ -1347,8 +1483,9 @@ async function takeFile(file) {
     $("sheetPhoto").innerHTML = `<img src="${state.photo.dataUrl}" alt="참고 사진" />`;
     $("sheetPhoto").querySelector("img").addEventListener("load", fitPrint);
     $("guess").hidden = true;
+    if (activeTab === "olz") runOutline();
     if (localMode() && modelReady()) analyze();   // 모델을 이미 받은 브라우저면 바로 기기 안 인식
-    else if (localMode()) setStatus(`사진을 불러왔습니다. 자동 인식을 쓰려면 위 노란 버튼을 누르세요. 처음 한 번 인식 모델 약 ${LOCAL.sizeMB}MB를 받습니다 (Wi-Fi 권장). 인식 없이 4단계에서 직접 골라도 됩니다.`);
+    else if (localMode()) setStatus(`사진을 불러왔습니다. 자동 인식을 쓰려면 노란 버튼을 누르세요. 처음 한 번 인식 모델 약 ${LOCAL.sizeMB}MB를 받습니다 (Wi-Fi 권장). 인식 없이 왼쪽 2단계(디테일)에서 직접 골라도 됩니다.`);
     else setStatus("사진을 불러왔습니다. '사진으로 도식화·작업지시서 만들기'를 누르세요.");
   } catch (e) { setStatus("사진을 읽지 못했습니다. 다른 파일로 시도해 주세요.", true); }
 }
@@ -1360,7 +1497,7 @@ drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.ad
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); takeFile(e.dataTransfer.files[0]); });
 
-function setStatus(msg, err = false) { const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
+function setStatus(msg, err = false) { for (const id of ["status", "status2"]) { const s = $(id); s.textContent = msg; s.className = "status" + (err ? " err" : ""); } }
 
 /* ====================================================================== AI 분석 */
 const PROMPT = `당신은 한국 의류 생산 현장(동대문 공장)의 작업지시서를 쓰는 테크니컬 디자이너입니다.
@@ -1525,6 +1662,7 @@ async function analyzeLocal() {
 }
 function applyLocal({ tpl, color, emb, labels }, template = tpl[0].c) {
   const o = state.opt;
+  if (o.template !== template) state.offsets = {};
   o.template = template; o.style = DEFAULT_STYLE[template]; applyTemplateDefaults();   // 품목 기본 스타일·디테일에서 시작
   const kind = T[template].kind, sure = (g, only, min = 0.5) => { const r = rankGroup(labels, emb, g, only)[0]; return r.p >= min ? r.c : null; };
   const fit = sure("fit", null, 0.6); if (fit) o.fit = fit;
@@ -1555,22 +1693,22 @@ async function analyze() {
       applyLocal(r);
       const top = r.tpl[0];
       const conf = confLabel(r.tpl);
-      setStatus(`기기 안에서 인식했습니다: ${T[top.c].name} (확신 ${conf})${r.color.p >= 0.3 ? " · " + r.color.c : ""}. ${conf === "낮음" ? "확신이 낮습니다. 아래 후보 중에서 맞는 품목을 골라 주세요." : "틀리면 아래 후보를 누르거나 4단계에서 고르세요."}`);
+      setStatus(`기기 안에서 인식했습니다: ${T[top.c].name} (확신 ${conf})${r.color.p >= 0.3 ? " · " + r.color.c : ""}. ${conf === "낮음" ? "확신이 낮습니다. 아래 후보 중에서 맞는 품목을 골라 주세요." : "틀리면 아래 후보를 누르거나 왼쪽 2단계(디테일)에서 고르세요."}`);
       return;
     }
     const r = await sampleFn.json(PROMPT, { images: state.photo.blob });   // claude.ai 안: Claude 분석
     applyAI(r);
     $("guess").hidden = true;
-    setStatus("완료했습니다. 4단계에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.");
+    setStatus("완료했습니다. 왼쪽 2단계(디테일)에서 디테일을 확인하고, 치수는 샘플 실측으로 고쳐 주세요.");
   } catch (e) {
     const code = e && e.code;
-    const msg = code === "not_granted" ? "Claude 사용이 허용되지 않았습니다. 4단계에서 직접 선택해 주세요."
+    const msg = code === "not_granted" ? "Claude 사용이 허용되지 않았습니다. 왼쪽 2단계(디테일)에서 직접 선택해 주세요."
       : code === "rate_limited" ? "요청이 많습니다. 잠시 후 다시 눌러 주세요."
       : code === "invalid_json" ? "결과를 읽지 못했습니다. 한 번 더 눌러 주세요."
       : /Load failed|Failed to fetch|NetworkError/i.test(e?.message || "") ? "연결에 실패했습니다. 인터넷 연결을 확인하고 잠시 후 다시 눌러 주세요."
       : localMode() ? "기기 안 인식에 실패했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요."
       : (e && e.message) || "분석에 실패했습니다.";
-    setStatus(msg + " (4단계에서 직접 선택해도 작업지시서를 만들 수 있습니다.)", true);
+    setStatus(msg + " (왼쪽 2단계(디테일)에서 직접 선택해도 작업지시서를 만들 수 있습니다.)", true);
   } finally { btn.disabled = false; }
 }
 $("analyzeBtn").addEventListener("click", analyze);
@@ -1627,9 +1765,10 @@ function fillFromWorksheet() {
 }
 function setTab(t) {
   activeTab = t;
-  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit");
-  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("edit").hidden = t !== "edit";
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit"); $("tabProdBtn").setAttribute("aria-selected", t === "prod");
+  $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("edit").hidden = t !== "edit"; $("prod").hidden = t !== "prod";
   if (t === "edit") renderEditor();
+  if (t === "prod") renderProd();
   if (t === "olz") runOutline();
   document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
   if (t === "pat") { syncPatternToTemplate(); applyPendingPattern(); }
@@ -1638,6 +1777,7 @@ $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
 $("tabOlzBtn").addEventListener("click", () => setTab("olz"));
 $("tabEditBtn").addEventListener("click", () => setTab("edit"));
+$("tabProdBtn").addEventListener("click", () => setTab("prod"));
 
 /* ====================================================================== 도식화 편집 (캔버스)
    손잡이(앞판) = 치수표 기준 사이즈 값. 끌면 setBaseValue → 도식화 다시. 메모·화살표·동그라미 = state.notes */
@@ -1701,17 +1841,17 @@ function renderEditor() {
       el.append(g);
     }
   }
-  $("edNote").textContent = isBag() ? "파우치는 손잡이 편집을 아직 지원하지 않습니다. 메모·화살표·동그라미는 넣을 수 있습니다."
-    : "빨간 손잡이를 끌면 치수표 기준 사이즈 값이 바뀌고 도식화도 따라 바뀝니다. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.";
+  if (!ed.drag) $("edNote").textContent = isBag() ? "파우치는 손잡이 편집을 아직 지원하지 않습니다. 메모·화살표·동그라미는 넣을 수 있습니다."
+    : "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.";
 }
 function pushUndo() {
-  ed.undo.push({ spec: [...$("specTable").querySelectorAll("td[contenteditable]")].map((td) => td.textContent), key: $("specTable").dataset.key, notes: JSON.stringify(state.notes) });
+  ed.undo.push({ spec: [...$("specTable").querySelectorAll("td[contenteditable]")].map((td) => td.textContent), key: $("specTable").dataset.key, notes: JSON.stringify(state.notes), offsets: JSON.stringify(state.offsets) });
   if (ed.undo.length > 40) ed.undo.shift();
 }
 function undoEdit() {
   const u = ed.undo.pop(); if (!u) return;
   if (u.key === $("specTable").dataset.key) [...$("specTable").querySelectorAll("td[contenteditable]")].forEach((td, i) => { if (u.spec[i] != null) td.textContent = u.spec[i]; });
-  state.notes = JSON.parse(u.notes); ed.sel = { view: null, i: -1 };
+  state.notes = JSON.parse(u.notes); state.offsets = JSON.parse(u.offsets || "{}"); ed.sel = { view: null, i: -1 };
   renderFlats(); fitPrint(); scheduleSave(); renderEditor();
 }
 function setTool(t) { ed.tool = t; document.querySelectorAll(".ed-bar [data-tool]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tool === t)); }
@@ -1724,6 +1864,11 @@ for (const box of [$("edFront"), $("edBack")]) {
     if (ed.tool === "move" && hd) {
       const h = editHandles()[+hd.dataset.h]; if (!h) return;
       pushUndo(); ed.drag = { kind: "handle", h, view }; box.setPointerCapture(e.pointerId); e.preventDefault(); return;
+    }
+    const dt = e.target.closest("[data-d]");
+    if (ed.tool === "move" && !an && dt) {          // 주머니 등 디테일 끌어 옮기기 (좌우 쌍은 대칭)
+      const key = dt.dataset.d, side = +dt.dataset.s || 1, k = currentK();
+      pushUndo(); ed.drag = { kind: "detail", key, side, k, last: p, moved: false }; box.setPointerCapture(e.pointerId); e.preventDefault(); return;
     }
     if (ed.tool === "move" && an) {
       ed.sel = { view, i: +an.dataset.i }; pushUndo(); ed.drag = { kind: "anno", view, i: +an.dataset.i, last: p }; box.setPointerCapture(e.pointerId); renderEditor(); return;
@@ -1746,6 +1891,13 @@ for (const box of [$("edFront"), $("edBack")]) {
       if (cm !== d.cm) { d.cm = cm; setBaseValue(h.part, cm); renderFlats(); $("edNote").textContent = `${h.part} → ${cm}cm (기준 사이즈 ${state.base}, 다른 사이즈도 같은 차이만큼)`; }
       return;
     }
+    if (d.kind === "detail") {
+      const o = state.offsets[d.key] || (state.offsets[d.key] = { dx: 0, dy: 0 });
+      o.dx = Math.max(-40, Math.min(40, o.dx + ((p.x - d.last.x) / d.k) * d.side)); o.dy = Math.max(-60, Math.min(60, o.dy + (p.y - d.last.y) / d.k));
+      d.last = p; d.moved = true; renderFlats();
+      $("edNote").textContent = `${DETAIL_NAMES[d.key] || d.key} 위치: 가로 ${o.dx >= 0 ? "+" : ""}${o.dx.toFixed(1)}cm · 세로 ${o.dy >= 0 ? "+" : ""}${o.dy.toFixed(1)}cm (처음 자리 기준)`;
+      return;
+    }
     const a = state.notes[d.view][d.i]; if (!a) return;
     if (d.kind === "anno") { const dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
       if (a.t === "arrow") { a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; } else { a.x += dx; a.y += dy; } renderEditor(); return; }
@@ -1756,6 +1908,7 @@ for (const box of [$("edFront"), $("edBack")]) {
     const d = ed.drag; if (!d) return; ed.drag = null;
     if (d.kind === "new") { const a = state.notes[d.view][d.i]; if (a && ((a.t === "arrow" && Math.hypot(a.x2 - a.x1, a.y2 - a.y1) < 6) || (a.t === "circle" && a.r < 4))) { state.notes[d.view].splice(d.i, 1); ed.undo.pop(); } else ed.sel = { view: d.view, i: d.i }; }
     if (d.kind === "handle" && d.cm == null) ed.undo.pop();
+    if (d.kind === "detail") { if (!d.moved) ed.undo.pop(); else { const o = state.offsets[d.key]; o.dx = Math.round(o.dx * 2) / 2; o.dy = Math.round(o.dy * 2) / 2; } }   // 0.5cm 단위
     renderFlats(); fitPrint(); scheduleSave(); renderEditor();
   };
   box.addEventListener("pointerup", end); box.addEventListener("pointercancel", end);
@@ -1763,6 +1916,12 @@ for (const box of [$("edFront"), $("edBack")]) {
 function deleteSelected() { const { view, i } = ed.sel; if (!view || i < 0) return; pushUndo(); state.notes[view].splice(i, 1); ed.sel = { view: null, i: -1 }; renderFlats(); scheduleSave(); renderEditor(); }
 $("edDel").addEventListener("click", deleteSelected);
 $("edUndo").addEventListener("click", undoEdit);
+$("edReset").addEventListener("click", () => { if (!Object.keys(state.offsets).length) return; pushUndo(); state.offsets = {}; renderFlats(); scheduleSave(); renderEditor(); });
+/* 지금 품목 도식화의 배율 (svg 단위 / cm) */
+function currentK() {
+  const t = T[state.opt.template];
+  return t.kind === "pants" ? drawPants("front", state.opt).k : t.kind === "skirt" ? skirtGeom().k : drawTop("front", state.opt, t).k;
+}
 $("edClear").addEventListener("click", () => { if (!state.notes.front.length && !state.notes.back.length) return; pushUndo(); state.notes = { front: [], back: [] }; ed.sel = { view: null, i: -1 }; renderFlats(); scheduleSave(); renderEditor(); });
 document.addEventListener("keydown", (e) => {
   if (activeTab !== "edit" || e.target.matches("input, textarea, [contenteditable]")) return;
@@ -1844,7 +2003,7 @@ function buildPatPrint() {
 }
 function preparePrint() {
   document.body.classList.toggle("print-pattern", activeTab === "pat");
-  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit");   // 외곽선·키 탭에서 인쇄하면 작업지시서를 인쇄
+  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit" || activeTab === "prod");   // 사진 분석·편집·생산 준비 탭에서 인쇄하면 작업지시서를 인쇄
   if (activeTab === "pat") buildPatPrint();
   else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
@@ -1860,7 +2019,7 @@ const OLZ_KIND = () => { const k = T[state.opt.template].kind; return k === "pan
 const olzOpt = () => ({ hood: state.opt.neck === "hood" || state.opt.template === "hoodie" });
 const GUESS_NAME = { pants: "바지", shorts: "반바지", top: "상의", pouch: "파우치·가방", skirt: "스커트", dress: "원피스", unknown: "판단 어려움" };
 async function runOutline(force) {
-  if (!state.photo) { $("olzNote").textContent = "먼저 1단계에서 옷 사진을 올려 주세요."; $("olzRows").innerHTML = ""; return; }
+  if (!state.photo) { $("olzNote").textContent = "먼저 위에서 옷 사진을 올려 주세요."; $("olzRows").innerHTML = ""; return; }
   if (olz.photo !== state.photo || force) {
     olz.photo = state.photo; olz.line = []; olz.pxPerCm = null;
     const { canvas, img } = await Outline.loadImage(state.photo.blob); olz.canvas = canvas; olz.img = img;
@@ -1941,6 +2100,286 @@ $("olzSens").addEventListener("input", () => { $("olzSensV").textContent = (+$("
 $("olzApply").addEventListener("click", applyOutline);
 $("olzSvg").addEventListener("click", () => { if (olz.res) saveFile(`외곽선_${styleNo()}.svg`, Outline.contourSVG(olz.res, olz.pxPerCm), "image/svg+xml"); });
 
+/* ====================================================================== 생산 준비 (1인 브랜드·학생)
+   ① 빠진 항목 검사 ② 원가·마진 ③ 발주표·엑셀(CSV) ④ 케어라벨(법정 표시 7항목) ⑤ 샘플 수정 기록. 상태는 state.prod */
+let prodPane = "check";
+const txt = (id) => $(id).textContent.trim();
+const won = (n) => (Number.isFinite(n) ? Math.round(n).toLocaleString("ko-KR") + "원" : "–");
+const pct = (n) => (Number.isFinite(n) ? (Math.round(n * 1000) / 10) + "%" : "–");
+document.querySelectorAll(".prod-nav button").forEach((b) => b.addEventListener("click", () => { prodPane = b.dataset.p; renderProd(); }));
+function renderProd() {
+  document.querySelectorAll(".prod-nav button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.p === prodPane));
+  document.querySelectorAll(".prod-pane").forEach((n) => { n.hidden = n.dataset.p !== prodPane; });
+  ({ check: renderCheck, cost: renderCost, order: renderOrder, care: renderCare, sample: renderSample })[prodPane]();
+}
+
+/* ① 빠진 항목 검사: [이름, 공장이 물어볼 질문, 채워졌나, 이동할 칸, 꼭(true)/권장(false)] */
+function specFilled() { const tds = [...$("specTable").querySelectorAll("td[contenteditable]")]; return tds.length > 0 && tds.every((td) => Number.isFinite(parseFloat(td.textContent))); }
+function careDone() { const c = state.prod.care; return ["mix", "maker", "country", "date", "size", "addr", "tel"].every((k) => c[k] && !/__/.test(c[k])); }
+function checks() {
+  const trims = [...$("trimTable").querySelectorAll("tbody tr")].filter((tr) => tr.children[1]?.textContent.trim());
+  const y = txt("fYield");
+  return [
+    ["브랜드", "어느 브랜드 옷인가요? 라벨·택에 들어갈 이름이 필요해요.", !!txt("fBrand"), "fBrand", true],
+    ["스타일 No.", "스타일 번호가 뭔가요? 샘플·본생산을 구분해야 해요.", !!txt("fStyle"), "fStyle", true],
+    ["품명", "무슨 옷이라고 부를까요?", !!txt("fItem"), "fItem", true],
+    ["수량", "몇 장 만드나요? 컬러·사이즈별로 나눠 주세요.", !!txt("fQty"), "fQty", true],
+    ["납기", "언제까지 필요한가요?", !!txt("fDue"), "fDue", true],
+    ["컬러", "무슨 색으로 몇 가지인가요?", !!txt("fColor"), "fColor", true],
+    ["원단", "원단은 무엇이고, 누가 준비하나요(공장 사입 / 지정 원단)?", !!txt("fFabric"), "fFabric", true],
+    ["혼용률", "혼용률이 어떻게 되나요? 케어라벨에 꼭 들어가요.", !!txt("fMix"), "fMix", true],
+    ["중량·조직", "원단 두께(중량)·조직은요? 미싱 바늘·땀수가 달라져요.", !!txt("fWeight"), "fWeight", false],
+    ["요척", "한 장에 원단이 몇 마 드나요? 원단 발주량을 정해야 해요.", !!y && !/실측 후/.test(y), "fYield", false],
+    ["치수표", "치수표에 빈 칸이 있어요. 모든 사이즈 값을 주세요.", specFilled(), "specTable", true],
+    ["부자재", "단추·지퍼·라벨은 어떤 규격으로 몇 개인가요?", trims.length > 0, "trimTable", true],
+    ["봉제 사양", "어떤 미싱으로 박나요? (오버록·2본침·커버스티치 등)", lines($("sewList")).length >= 3, "sewList", true],
+    ["참고 사진", "실물·샘플 사진이나 참고 이미지가 있나요?", !!state.photo, "olz", false],
+    ["케어라벨", "케어라벨 문구(혼용률·제조자·세탁 방법)는 누가 정하나요?", careDone(), "care", true],
+    ["샘플 실측", "샘플 치수는 확인했나요? 몇 차 샘플인가요?", state.prod.samples.length > 0, "sample", false],
+    ["공장", "어느 공장에 맡기나요? (학생 과제는 비워도 됨)", !!txt("fFactory"), "fFactory", false],
+  ];
+}
+function renderCheck() {
+  const cs = checks(), must = cs.filter((c) => c[4]), okMust = must.filter((c) => c[2]).length;
+  $("chkScore").innerHTML = okMust === must.length
+    ? `<span class="ok">꼭 필요한 ${must.length}개 항목을 모두 채웠습니다.</span> 노란 항목까지 채우면 공장과 주고받는 질문이 줄어듭니다.`
+    : `꼭 필요한 항목 <b>${okMust} / ${must.length}</b> · <span class="bad">공장이 물어볼 질문 ${must.length - okMust}개</span>`;
+  $("chkList").innerHTML = cs.map(([name, q, ok, go, need], i) =>
+    `<li class="${ok ? "" : need ? "miss" : "soft"}"><b class="${ok ? "ok" : need ? "bad" : "warn"}">${ok ? "✓" : need ? "✗" : "△"}</b><span>${esc(name)}${need ? "" : " <small>(권장)</small>"}</span><span>${ok ? "채움" : "“" + esc(q) + "”"}</span>${ok ? "<span></span>" : `<button data-i="${i}">채우러 가기</button>`}</li>`).join("");
+  $("chkList").querySelectorAll("button[data-i]").forEach((b) => b.addEventListener("click", () => goFill(cs[+b.dataset.i][3])));
+}
+function goFill(go) {
+  if (["cost", "order", "care", "sample"].includes(go)) { prodPane = go; renderProd(); return; }
+  if (go === "olz") { setTab("olz"); $("drop").focus(); return; }
+  setTab("sheet");
+  const n = $(go); n.scrollIntoView({ block: "center" }); n.classList.add("flash"); setTimeout(() => n.classList.remove("flash"), 1600);
+  if (n.isContentEditable) n.focus(); else n.querySelector("[contenteditable]")?.focus();
+}
+
+/* ② 원가·마진 */
+function costCalc() {
+  const c = state.prod.cost, v = (k) => (Number.isFinite(+c[k]) ? +c[k] : 0);
+  const fabric = v("fab") * v("yield") * (1 + v("loss") / 100);
+  const qty = v("qty") || orderTotal();
+  const fixedEach = qty > 0 ? v("fixed") / qty : 0;
+  const unit = fabric + v("trim") + v("labor") + v("etc") + fixedEach;
+  const price = v("price"), fee = price * v("fee") / 100, profit = price - fee - unit;
+  return { fabric, fixedEach, unit, qty, price, fee, profit, rate: price ? unit / price : NaN, margin: price ? profit / price : NaN };
+}
+function renderCost() {
+  const c = state.prod.cost;
+  if (c.yield == null) { const y = parseFloat(txt("fYield")); if (Number.isFinite(y)) c.yield = y; }
+  $("costForm").querySelectorAll("[data-c]").forEach((n) => { if (document.activeElement !== n) n.value = c[n.dataset.c] ?? ""; });
+  const r = costCalc(), round100 = (x) => Math.ceil(x / 100) * 100;
+  const rows = [
+    ["원단비 (요척 × 단가 × 로스)", won(r.fabric)],
+    ["샘플·패턴비 나눠 넣기", r.qty ? `${won(r.fixedEach)} <small>(${r.qty.toLocaleString("ko-KR")}장 기준)</small>` : "수량을 넣으면 나눠 계산"],
+    ["<b>장당 원가</b>", `<b>${won(r.unit)}</b>`],
+  ];
+  if (r.price) rows.push(
+    ["원가율 (원가 ÷ 판매가)", `<span class="${r.rate > 0.45 ? "bad" : r.rate > 0.35 ? "warn" : "ok"}">${pct(r.rate)}</span>`],
+    ["판매 수수료", won(r.fee)],
+    ["<b>장당 남는 돈</b>", `<b class="${r.profit < 0 ? "bad" : ""}">${won(r.profit)}</b> <small>(마진율 ${pct(r.margin)})</small>`]);
+  if (r.qty) rows.push(["총 생산비", won(r.unit * r.qty)]);
+  if (r.qty && r.price) rows.push(["다 팔았을 때 남는 돈", `<b class="${r.profit < 0 ? "bad" : ""}">${won(r.profit * r.qty)}</b>`]);
+  if (r.unit > 0) rows.push(["참고 판매가 (원가율 30% / 25%)", `${won(round100(r.unit / 0.3))} / ${won(round100(r.unit / 0.25))} <small>(수수료 별도)</small>`]);
+  $("costOut").innerHTML = rows.map(([a, b]) => `<tr><th>${a}</th><td class="n">${b}</td></tr>`).join("");
+}
+$("costForm").addEventListener("input", (e) => {
+  const k = e.target.dataset.c; if (!k) return;
+  const x = parseFloat(e.target.value); state.prod.cost[k] = Number.isFinite(x) && x >= 0 ? x : null; renderCost();
+});
+
+/* ③ 발주표 (컬러 × 사이즈) + 엑셀(CSV) */
+const ordColors = () => [...new Set(state.prod.colors.split(/[,，、\/]/).map((x) => x.trim()).filter(Boolean))].slice(0, 12);
+const ordSizes = () => sizeList().filter((x) => state.sizes.has(x));
+const qtyOf = (c, z) => +state.prod.qty[c + "|" + z] || 0;
+const orderTotal = () => ordColors().reduce((a, c) => a + ordSizes().reduce((b, z) => b + qtyOf(c, z), 0), 0);
+function renderOrder() {
+  if (!state.prod.colors) state.prod.colors = txt("fColor") || $("oColor").value.trim();
+  if (document.activeElement !== $("ordColors")) $("ordColors").value = state.prod.colors;
+  const cs = ordColors(), zs = ordSizes();
+  if (!cs.length) { $("ordTable").innerHTML = `<tr><td>위 칸에 컬러를 넣으면 표가 생깁니다.</td></tr>`; return; }
+  const colSum = (z) => cs.reduce((a, c) => a + qtyOf(c, z), 0), rowSum = (c) => zs.reduce((a, z) => a + qtyOf(c, z), 0);
+  $("ordTable").innerHTML = `<tr><th>컬러 \\ 사이즈</th>${zs.map((z) => `<th class="n">${sizeLabel(z, true)}</th>`).join("")}<th class="n">합계</th></tr>`
+    + cs.map((c) => `<tr><th>${esc(c)}</th>${zs.map((z) => `<td><input type="number" min="0" step="1" data-q="${esc(c + "|" + z)}" value="${qtyOf(c, z) || ""}" aria-label="${esc(c)} ${esc(sizeLabel(z))} 수량" /></td>`).join("")}<td class="n" data-rs="${esc(c)}">${rowSum(c)}</td></tr>`).join("")
+    + `<tr><th>합계</th>${zs.map((z) => `<td class="n" data-cs="${esc(z)}">${colSum(z)}</td>`).join("")}<td class="n"><b id="ordTotal">${orderTotal()}</b>장</td></tr>`;
+}
+$("ordColors").addEventListener("input", (e) => { state.prod.colors = e.target.value.slice(0, 200); renderOrder(); });
+$("ordTable").addEventListener("input", (e) => {
+  const k = e.target.dataset.q; if (!k) return;
+  const x = Math.max(0, Math.min(1e6, Math.round(+e.target.value || 0)));
+  if (x) state.prod.qty[k] = x; else delete state.prod.qty[k];
+  const cs = ordColors(), zs = ordSizes();
+  cs.forEach((c) => { const n = $("ordTable").querySelector(`[data-rs="${CSS.escape(c)}"]`); if (n) n.textContent = zs.reduce((a, z) => a + qtyOf(c, z), 0); });
+  zs.forEach((z) => { const n = $("ordTable").querySelector(`[data-cs="${CSS.escape(z)}"]`); if (n) n.textContent = cs.reduce((a, c) => a + qtyOf(c, z), 0); });
+  $("ordTotal").textContent = orderTotal();
+});
+$("ordApply").addEventListener("click", () => {
+  const cs = ordColors(), t = orderTotal();
+  if (!cs.length) { $("ordMsg").textContent = "컬러를 먼저 넣어 주세요."; return; }
+  $("fColor").textContent = cs.join(", ");
+  if (t) $("fQty").textContent = `${t.toLocaleString("ko-KR")}장`;
+  $("ordMsg").textContent = `작업지시서에 넣었습니다: 컬러 ${cs.length}가지${t ? `, 수량 ${t}장` : ""}.`; fitPrint(); scheduleSave();
+});
+const csvCell = (x) => `"${String(x ?? "").replace(/"/g, '""')}"`;
+function buildCSV() {
+  const out = [], row = (...a) => out.push(a.map(csvCell).join(","));
+  row("[작업지시서]", styleNo());
+  for (const id of ["fBrand", "fStyle", "fSeason", "fDate", "fItem", "fQty", "fDue", "fDesigner", "fFactory", "fColor", "fFabric", "fMix", "fWeight", "fYield"]) row($(id).previousElementSibling?.textContent || id, txt(id));
+  row("사이즈", $("fSizes").textContent);
+  out.push(""); row("[치수표]", $("specCap").textContent);
+  $("specTable").querySelectorAll("tr").forEach((tr) => row(...[...tr.children].map((td) => td.textContent.trim())));
+  const cs = ordColors(), zs = ordSizes();
+  if (cs.length) {
+    out.push(""); row("[발주표]");
+    row("컬러", ...zs.map((z) => sizeLabel(z)), "합계");
+    cs.forEach((c) => row(c, ...zs.map((z) => qtyOf(c, z)), zs.reduce((a, z) => a + qtyOf(c, z), 0)));
+    row("합계", ...zs.map((z) => cs.reduce((a, c) => a + qtyOf(c, z), 0)), orderTotal());
+  }
+  out.push(""); row("[부자재]"); row("구분", "품목", "규격·컬러", "수량");
+  $("trimTable").querySelectorAll("tbody tr").forEach((tr) => { const c = [...tr.children].map((td) => td.textContent.trim()); if (c.some(Boolean)) row(...c); });
+  out.push(""); row("[봉제 사양]"); lines($("sewList")).forEach((x, i) => row(i + 1, x));
+  out.push(""); row("[주의사항]"); lines($("noteList")).forEach((x) => row(x));
+  const r = costCalc();
+  if (r.unit > 0) { out.push(""); row("[원가]"); row("장당 원가", Math.round(r.unit)); if (r.price) { row("판매가", r.price); row("장당 남는 돈", Math.round(r.profit)); } }
+  return "﻿" + out.join("\r\n");
+}
+$("ordCsv").addEventListener("click", () => saveFile(`작업지시서_${styleNo()}.csv`, buildCSV(), "text/csv;charset=utf-8"));
+
+/* ④ 케어라벨: 가정용 섬유제품 표시사항 7가지 */
+const CARE_OPTS = ["물세탁 30℃, 중성세제 사용", "손세탁 권장", "드라이클리닝 가능", "물세탁 금지, 드라이클리닝만", "염소계 표백제 사용 금지", "기계 건조 금지, 그늘에 뉘어 말림",
+  "다림질 중온(140~160℃), 덧천 사용", "뒤집어서 세탁망에 넣어 세탁", "진한 색은 처음 몇 번 단독 세탁 (이염 주의)", "비틀어 짜지 마세요"];
+const CARE_DEF = [0, 4, 5, 6, 8];
+function careSizeDefault() {
+  if (isBag()) return `${state.base} 사이즈 (완성 치수는 치수표 참고)`;
+  const inch = INCH[state.gender][state.base];
+  if (isBottom() && inch) return `허리둘레 ${Math.round(inch * 2.54)}cm (${inch}인치)`;
+  return state.gender === "m" ? `가슴둘레 ${state.base}cm, 키 ___cm` : `가슴둘레 __cm, 키 ___cm (호칭 ${state.base})`;
+}
+function careText() {
+  const c = state.prod.care, m = (x) => (x && x.trim() ? x.trim() : "[입력 필요]");
+  const opts = (state.prod.careOpts || []).map((i) => CARE_OPTS[i]).concat(c.extra ? [c.extra] : []);
+  return [`섬유의 조성: 겉감 ${m(c.mix)}${c.lining ? `\n            안감 ${c.lining}` : ""}`, `제조자명: ${m(c.maker)}`, `제조국: ${m(c.country)}`, `제조연월: ${m(c.date)}`,
+    `치수: ${m(c.size)}`, `취급상 주의사항:${opts.length ? opts.map((x) => `\n  · ${x}`).join("") : " [입력 필요]"}`, `주소: ${m(c.addr)}`, `전화: ${m(c.tel)}`].join("\n");
+}
+function renderCare() {
+  const c = state.prod.care, d = new Date();
+  if (!c.mix) c.mix = txt("fMix"); if (!c.maker) c.maker = txt("fBrand"); c.country ??= "대한민국";
+  c.date ??= `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}`; c.size ??= careSizeDefault();
+  if (!state.prod.careOpts) state.prod.careOpts = [...CARE_DEF];
+  document.querySelectorAll("#careForm [data-k], #careExtra").forEach((n) => { if (document.activeElement !== n) n.value = c[n.dataset.k] ?? ""; });
+  $("careOpts").innerHTML = CARE_OPTS.map((t, i) => `<label><input type="checkbox" data-o="${i}" ${state.prod.careOpts.includes(i) ? "checked" : ""}/> ${esc(t)}</label>`).join("");
+  showCare();
+}
+function showCare() { $("careOut").innerHTML = esc(careText()).replace(/\[입력 필요\]|_{2,}/g, (x) => `<span class="bad">${x}</span>`); }
+document.querySelectorAll("#careForm, #careExtra").forEach((n) => n.addEventListener("input", (e) => { const k = e.target.dataset.k; if (!k) return; state.prod.care[k] = e.target.value.slice(0, 120); showCare(); }));
+$("careOpts").addEventListener("change", (e) => {
+  const i = +e.target.dataset.o; if (!Number.isInteger(i)) return;
+  const set = new Set(state.prod.careOpts); e.target.checked ? set.add(i) : set.delete(i); state.prod.careOpts = [...set].sort((a, b) => a - b); showCare();
+});
+$("careToTrim").addEventListener("click", () => {
+  const c = state.prod.care, spec = `법정 표시 7항목 · ${c.mix || "혼용률 미입력"} · ${c.country || ""} 제조`.slice(0, 120);
+  const body = $("trimTable").querySelector("tbody");
+  let tr = [...body.querySelectorAll("tr")].find((r) => r.children[1]?.textContent.includes("케어라벨"));
+  if (!tr) { tr = document.createElement("tr"); tr.innerHTML = "<td contenteditable></td>".repeat(4); const empty = [...body.querySelectorAll("tr")].find((r) => ![...r.children].some((td) => td.textContent.trim())); body.insertBefore(tr, empty || null); }
+  [["라벨"], ["케어라벨"], [spec], ["1"]].forEach(([v], i) => (tr.children[i].textContent = v));
+  $("careToTrim").textContent = "부자재표에 넣었습니다 ✓"; setTimeout(() => ($("careToTrim").textContent = "부자재표에 케어라벨 넣기"), 1800); fitPrint(); scheduleSave();
+});
+$("careCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(careText()); $("careCopy").textContent = "복사했습니다 ✓"; } catch (e) { $("careCopy").textContent = "복사 실패 – 직접 선택해 복사"; } setTimeout(() => ($("careCopy").textContent = "문구 복사"), 1800); });
+
+/* ⑤ 샘플 수정 기록: 지시(기준 사이즈) vs 실측, ±1cm 넘으면 빨강 */
+const TOL = 1;
+const specRows = () => [...$("specTable").querySelectorAll("tr")].slice(1).map((tr) => ({ code: tr.children[0].textContent.trim(), part: tr.children[1].textContent.trim() }));
+const fmtD = (d) => (d > 0 ? "+" : "") + (Math.round(d * 10) / 10);
+function renderSample() {
+  const sm = state.prod.sample, vals = baseVals(), rows = specRows();
+  if (!sm.name) sm.name = `${state.prod.samples.length + 1}차 샘플`;
+  if (document.activeElement !== $("smpName")) $("smpName").value = sm.name;
+  if (document.activeElement !== $("smpMemo")) $("smpMemo").value = sm.memo;
+  $("smpTable").innerHTML = `<tr><th>기호</th><th>측정부위</th><th class="n">지시 (${esc(sizeLabel(state.base))})</th><th class="n" style="width:110px">샘플 실측</th><th class="n">차이</th></tr>`
+    + rows.map((r) => `<tr><td>${esc(r.code)}</td><td>${esc(r.part)}</td><td class="n">${vals[r.part] ?? ""}</td><td><input type="number" step="0.1" data-m="${esc(r.part)}" value="${sm.meas[r.part] ?? ""}" aria-label="${esc(r.part)} 실측" /></td><td class="n" data-d="${esc(r.part)}"></td></tr>`).join("");
+  sampleDiffs(); renderSampleList();
+}
+function sampleDiffs() {
+  const sm = state.prod.sample, vals = baseVals(); let over = 0, n = 0;
+  $("smpTable").querySelectorAll("[data-d]").forEach((td) => {
+    const p = td.dataset.d, m = sm.meas[p], v = vals[p];
+    if (m == null || v == null) { td.textContent = ""; td.className = "n"; return; }
+    const d = m - v; n++; if (Math.abs(d) > TOL) over++;
+    td.textContent = fmtD(d); td.className = "n " + (Math.abs(d) > TOL ? "bad" : "ok");
+  });
+  $("smpSum").innerHTML = !n ? "실측값을 넣으면 차이를 계산합니다." : over ? `<span class="bad">허용오차(±${TOL}cm)를 넘은 곳 ${over}개</span> / 잰 곳 ${n}개` : `<span class="ok">잰 곳 ${n}개 모두 허용오차(±${TOL}cm) 안</span>`;
+}
+$("smpTable").addEventListener("input", (e) => {
+  const p = e.target.dataset.m; if (!p) return;
+  const x = parseFloat(e.target.value);
+  if (Number.isFinite(x) && x > 0 && x < 1000) state.prod.sample.meas[p] = x; else delete state.prod.sample.meas[p];
+  sampleDiffs();
+});
+$("smpName").addEventListener("input", (e) => { state.prod.sample.name = e.target.value.slice(0, 40); });
+$("smpMemo").addEventListener("input", (e) => { state.prod.sample.memo = e.target.value.slice(0, 500); });
+$("smpSave").addEventListener("click", () => {
+  const sm = state.prod.sample, vals = baseVals();
+  if (!Object.keys(sm.meas).length) { $("smpMsg").textContent = "실측값을 하나 이상 넣어 주세요."; return; }
+  if (state.prod.samples.length >= 20) { $("smpMsg").textContent = "샘플 기록은 20개까지 저장합니다. 오래된 기록을 지워 주세요."; return; }
+  const d = new Date();
+  state.prod.samples.push({ name: sm.name || `${state.prod.samples.length + 1}차 샘플`, date: `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`,
+    size: sizeLabel(state.base), memo: sm.memo, rows: specRows().map((r) => ({ part: r.part, spec: vals[r.part] ?? null, meas: sm.meas[r.part] ?? null })) });
+  $("smpMsg").textContent = `「${state.prod.samples.at(-1).name}」을 저장했습니다.`;
+  state.prod.sample = { name: "", meas: {}, memo: "" };
+  renderSample(); renderSampleList(true); scheduleSave();
+});
+const overCount = (s) => s.rows.filter((r) => r.meas != null && r.spec != null && Math.abs(r.meas - r.spec) > TOL).length;
+function renderSampleList(latest = false) {
+  const ss = state.prod.samples;
+  $("smpList").innerHTML = !ss.length ? `<tr><td>아직 저장한 샘플이 없습니다.</td></tr>`
+    : `<tr><th>샘플</th><th>날짜</th><th>사이즈</th><th class="n">허용오차 넘음</th><th>수정할 점</th><th></th></tr>`
+      + ss.map((s, i) => `<tr><td>${esc(s.name)}</td><td>${esc(s.date)}</td><td>${esc(s.size)}</td><td class="n ${overCount(s) ? "bad" : "ok"}">${overCount(s)}곳</td><td>${esc(s.memo)}</td><td><button data-del="${i}" style="border:1px solid var(--rule);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer">지우기</button></td></tr>`).join("");
+  $("smpCmpBar").hidden = ss.length < 2;
+  const opt = (sel) => ss.map((s, i) => `<option value="${i}" ${i === sel ? "selected" : ""}>${esc(s.name)} (${esc(s.date)})</option>`).join("");
+  // 새로 저장·삭제하면 바로 앞 샘플 → 마지막 샘플 비교
+  const b = latest || $("smpB").value === "" || +$("smpB").value >= ss.length ? ss.length - 1 : +$("smpB").value;
+  const a = latest ? ss.length - 2 : Math.min(+$("smpA").value || 0, ss.length - 1);
+  $("smpA").innerHTML = opt(Math.max(0, ss.length >= 2 && a === b ? b - 1 : a)); $("smpB").innerHTML = opt(b);
+  renderCompare();
+}
+function renderCompare() {
+  const ss = state.prod.samples;
+  if (ss.length < 2) { $("smpCmp").innerHTML = ""; return; }
+  const A = ss[+$("smpA").value], B = ss[+$("smpB").value];
+  const parts = [...new Set([...A.rows, ...B.rows].map((r) => r.part))];
+  const get = (s, p) => s.rows.find((r) => r.part === p) || {};
+  const cell = (r) => (r.meas == null ? "<td class=\"n\">–</td>" : `<td class="n ${r.spec != null && Math.abs(r.meas - r.spec) > TOL ? "bad" : ""}">${r.meas}</td>`);
+  $("smpCmp").innerHTML = `<tr><th>측정부위</th><th class="n">지시</th><th class="n">${esc(A.name)}</th><th class="n">${esc(B.name)}</th><th class="n">변화</th></tr>`
+    + parts.map((p) => { const a = get(A, p), b = get(B, p), ch = a.meas != null && b.meas != null ? fmtD(b.meas - a.meas) : "";
+      return `<tr><td>${esc(p)}</td><td class="n">${b.spec ?? a.spec ?? ""}</td>${cell(a)}${cell(b)}<td class="n">${ch}</td></tr>`; }).join("");
+}
+$("smpList").addEventListener("click", (e) => {
+  const i = e.target.dataset.del; if (i == null) return;
+  if (!confirm(`「${state.prod.samples[+i].name}」 기록을 지울까요?`)) return;
+  state.prod.samples.splice(+i, 1); renderSampleList(true); scheduleSave();
+});
+["smpA", "smpB"].forEach((id) => $(id).addEventListener("change", renderCompare));
+
+/* 작업 파일에서 읽은 생산 준비 값: 숫자·글자만, 길이 제한 */
+function cleanProd(p) {
+  const out = { cost: { loss: 5, fee: 0 }, colors: "", qty: {}, care: {}, careOpts: null, sample: { name: "", meas: {}, memo: "" }, samples: [] };
+  if (!p || typeof p !== "object") return out;
+  const n = (x, max = 1e9) => (x != null && Number.isFinite(+x) && +x >= 0 && +x <= max ? +x : null);
+  for (const k of ["fab", "yield", "loss", "trim", "labor", "etc", "fixed", "qty", "price", "fee"]) { const v = n(p.cost?.[k]); if (v != null) out.cost[k] = v; }
+  out.colors = str(p.colors, 200);
+  for (const [k, v] of Object.entries(p.qty || {}).slice(0, 300)) { const x = n(v, 1e6); if (x) out.qty[str(k, 80)] = Math.round(x); }
+  for (const k of ["mix", "lining", "maker", "country", "date", "size", "addr", "tel", "extra"]) if (typeof p.care?.[k] === "string") out.care[k] = str(p.care[k], 120);
+  if (Array.isArray(p.careOpts)) out.careOpts = [...new Set(p.careOpts.filter((i) => Number.isInteger(i) && i >= 0 && i < CARE_OPTS.length))];
+  const meas = (o) => Object.fromEntries(Object.entries(o || {}).slice(0, 40).map(([k, v]) => [str(k, 30), n(v, 999)]).filter(([, v]) => v != null));
+  out.sample = { name: str(p.sample?.name, 40), meas: meas(p.sample?.meas), memo: str(p.sample?.memo, 500) };
+  if (Array.isArray(p.samples)) out.samples = p.samples.slice(0, 20).filter((s) => s && typeof s === "object").map((s) => ({
+    name: str(s.name, 40), date: str(s.date, 20), size: str(s.size, 20), memo: str(s.memo, 500),
+    rows: Array.isArray(s.rows) ? s.rows.slice(0, 40).map((r) => ({ part: str(r?.part, 30), spec: n(r?.spec, 999), meas: n(r?.meas, 999) })) : [] }));
+  return out;
+}
+
 /* ====================================================================== 작업 저장 · 열기 · 자동 저장
    저장 내용: 선택 상태, 작업지시서 글자(머리 정보·치수표 수정·부자재·봉제·주의), 4단계 입력, 사진, 패턴 탭 입력.
    다시 열 때는 글자만 넣고(textContent) HTML은 받지 않음 → 다른 사람이 준 파일도 안전하게 열 수 있음 */
@@ -1956,7 +2395,7 @@ function snapshot(withPhoto = true) {
     sew: lines($("sewList")), notes: lines($("noteList")),
     photo: withPhoto && state.photo ? state.photo.dataUrl : null,
     pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null,
-    notes: state.notes };
+    marks: state.notes, offsets: state.offsets, prod: state.prod };
 }
 const str = (x, max = 300) => String(x ?? "").slice(0, max);
 async function restore(j) {
@@ -1998,8 +2437,12 @@ async function restore(j) {
     : a && a.t === "arrow" ? { t: "arrow", x1: num(a.x1), y1: num(a.y1), x2: num(a.x2), y2: num(a.y2) }
     : a && a.t === "circle" ? { t: "circle", x: num(a.x), y: num(a.y), r: Math.min(200, Math.abs(num(a.r))) } : null;
   state.notes = { front: [], back: [] };
-  for (const vw of ["front", "back"]) if (Array.isArray(j.notes?.[vw])) state.notes[vw] = j.notes[vw].slice(0, 60).map(cleanNote).filter(Boolean);
-  renderFlats();
+  const marks = j.marks || (j.notes && !Array.isArray(j.notes) ? j.notes : null);   // 예전 파일은 notes 에 들어 있음
+  for (const vw of ["front", "back"]) if (Array.isArray(marks?.[vw])) state.notes[vw] = marks[vw].slice(0, 60).map(cleanNote).filter(Boolean);
+  state.prod = cleanProd(j.prod);
+  state.offsets = {};
+  for (const [key, o] of Object.entries(j.offsets || {})) if (DETAIL_NAMES[key] && o) state.offsets[key] = { dx: Math.max(-40, Math.min(40, num(o.dx))), dy: Math.max(-60, Math.min(60, num(o.dy))) };
+  renderFlats(); if (activeTab === "prod") renderProd();
   pendingPattern = j.pattern && Pattern.TYPES[j.pattern.type] ? j.pattern : null;
   if (activeTab === "pat") applyPendingPattern();
   fitPrint();

@@ -46,7 +46,7 @@ const waitDone = () => page.waitForFunction(() => /인식했습니다|실패/.te
 const hfBefore = sent.length;
 ok("첫 사진: 모델(23MB)을 받기 전에 묻고 자동으로 받지 않음",
   (await page.$eval("#status", (n) => n.textContent.includes("23MB"))) && !(await page.evaluate(() => /인식했습니다/.test(document.getElementById("status").textContent))));
-await page.click("#analyzeBtn");
+await page.$eval("#analyzeBtn", (b) => b.click());
 await waitDone();
 ok("버튼을 누르면 기기 안 인식, 확신도는 높음·보통·낮음으로 표시 (퍼센트 없음)",
   await page.$eval("#status", (n) => /확신 (높음|보통|낮음)/.test(n.textContent) && !/%/.test(n.textContent)) && (await page.$$eval("#guess small", (a) => a.every((x) => /순위/.test(x.textContent)))));
@@ -247,7 +247,7 @@ ok("컬러·품명 입력 → 작업지시서", await page.evaluate(() => {
 
 /* 7. 키 없이 분석 버튼 → 기기 안 인식, 사진을 밖으로 보내는 요청 없음 */
 await page.evaluate(() => { document.getElementById("status").textContent = ""; });
-await page.click("#analyzeBtn"); await waitDone();
+await page.$eval("#analyzeBtn", (b) => b.click()); await waitDone();
 ok("키 없이 분석 → 기기 안 인식, 사진 외부 전송 0건 (POST·Gemini 요청 없음)",
   sent.length === 0 && (await page.$eval("#status", (n) => !n.className.includes("err") && n.textContent.includes("기기 안에서 인식"))), sent.slice(0, 2).join(" | "));
 
@@ -410,6 +410,34 @@ ok("표시가 작업 저장 파일에 들어가고 다시 열면 그대로", reo
 await page.evaluate(() => preparePrint());
 const edPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
 ok("편집 탭에서 인쇄하면 작업지시서 A4 가로 1장 (표시 포함)", edPdf.length === 1 && !isPortrait(edPdf[0]), edPdf.join(" "));
+/* 디테일 끌어 옮기기 */
+await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); chooseStyle("zip_jumper"); document.getElementById("tabEditBtn").click(); });
+const ctr = (sel) => page.evaluate((sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, sel);
+const pp = await ctr('#edFront [data-d="patch"][data-s="1"] path');
+await page.mouse.move(pp.x, pp.y); await page.mouse.down(); await page.mouse.move(pp.x + 20, pp.y - 30, { steps: 8 }); await page.mouse.up();
+const dt1 = await page.evaluate(() => ({ off: { ...state.offsets.patch }, L: document.querySelector('#svgFront [data-d="patch"][data-s="-1"]').getAttribute("transform"), R: document.querySelector('#svgFront [data-d="patch"][data-s="1"]').getAttribute("transform"), html: sheetHTML().includes('data-d="patch"') }));
+const tx = (t) => +t.match(/translate\(([-\d.]+)/)[1];
+ok("디테일 끌기: 아웃포켓을 끌면 0.5cm 단위로 옮겨지고, 반대쪽 주머니는 좌우 대칭으로 같이 이동, 작업지시서·HTML에 반영",
+  dt1.off.dy < 0 && dt1.off.dx > 0 && dt1.off.dx * 2 === Math.round(dt1.off.dx * 2) && tx(dt1.L) === -tx(dt1.R) && dt1.html, JSON.stringify(dt1).slice(0, 160));
+const dtJob = await page.evaluate(() => JSON.stringify(snapshot()));
+await page.click("#edReset");
+const dtReset = await page.evaluate(() => JSON.stringify(state.offsets));
+await page.click("#edUndo");
+const dtUndo = await page.evaluate(() => ({ ...state.offsets.patch }));
+await page.evaluate(() => chooseStyle("hoodie"));
+const dtStyle = await page.evaluate(() => JSON.stringify(state.offsets));
+const p6 = await browser.newPage();
+await p6.evaluateOnNewDocument(() => { try { localStorage.removeItem("wo_autosave"); } catch (e) {} });
+await p6.goto(URL, { waitUntil: "networkidle0" });
+fs.writeFileSync(new URL_("job_detail.json", OUT), dtJob.replace(/"patch":\{"dx":[-\d.]+/, '"patch":{"dx":999,"__x":1'));   // 범위 밖 값
+await (await p6.$("#jobFile")).uploadFile(new URL_("job_detail.json", OUT).pathname);
+await p6.waitForFunction(() => /작업 파일을 열었습니다/.test(document.getElementById("status").textContent), { timeout: 10000 });
+const dtOpen = await p6.evaluate(() => ({ off: state.offsets.patch, tf: document.querySelector('#svgFront [data-d="patch"][data-s="1"]')?.getAttribute("transform") }));
+await p6.close();
+ok("디테일 위치: '처음으로'·되돌리기·스타일 바꾸면 초기화, 저장 파일로 다시 열기 (이상한 값은 범위 안으로)",
+  dtReset === "{}" && dtUndo.dx === dt1.off.dx && dtStyle === "{}" && dtOpen.off && dtOpen.off.dx === 40 && !("__x" in dtOpen.off), JSON.stringify({ dtReset, dtUndo, dtStyle, dtOpen }).slice(0, 200));
+await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); document.getElementById("tabEditBtn").click(); });
+
 const handleKinds = await page.evaluate(() => {
   const out = {};
   for (const t of ["pants", "skirt", "dress", "pouch"]) { const s = document.getElementById("oTemplate"); s.value = t; s.dispatchEvent(new Event("change")); out[t] = editHandles().length; renderEditor(); out[t + "Dom"] = document.querySelectorAll("#edFront .hd").length; }
@@ -527,6 +555,67 @@ await page.evaluate(() => preparePrint());
 const olzPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
 ok("외곽선 탭에서 인쇄하면 작업지시서 A4 가로 1장", olzPdf.length === 1 && !isPortrait(olzPdf[0]), olzPdf.join(" "));
 await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); const s = document.getElementById("oTemplate"); s.value = "top_short"; s.dispatchEvent(new Event("change")); });
+
+/* 8-5. 화면 순서 · 생산 준비 탭 (빠진 항목 · 원가 · 발주표·CSV · 케어라벨 · 샘플 기록) */
+const order = await page.evaluate(() => ({
+  steps: [...document.querySelectorAll(".panel .step h2")].map((h) => h.textContent.replace(/\s+/g, "")),
+  photoInOlz: !!document.querySelector("#olz #drop") && !!document.querySelector("#olz #analyzeBtn") && !!document.querySelector("#olz #file"),
+  tab: document.getElementById("tabOlzBtn").textContent.trim(),
+}));
+ok("메인 순서 ① 사이즈 → ② 디테일, 사진·인식은 사진 분석(시험) 탭으로", order.steps[0].startsWith("1사이즈") && order.steps[1].startsWith("2디테일") && order.steps.length === 2 && order.photoInOlz && /사진 분석/.test(order.tab), JSON.stringify(order));
+const prod = await page.evaluate(async () => {
+  const q = (x) => document.querySelector(x), fire = (n, v) => { n.value = v; n.dispatchEvent(new Event("input", { bubbles: true })); };
+  const r = {};
+  ["fBrand", "fQty", "fColor", "fMix", "fDue"].forEach((id) => (document.getElementById(id).textContent = ""));
+  document.getElementById("tabProdBtn").click();
+  const missBefore = [...document.querySelectorAll("#chkList li.miss")].map((li) => li.children[1].textContent);
+  document.getElementById("fBrand").textContent = "겸이네"; renderProd();
+  const missAfter = [...document.querySelectorAll("#chkList li.miss")].map((li) => li.children[1].textContent);
+  r.check = missBefore.includes("브랜드") && !missAfter.includes("브랜드") && missBefore.includes("수량") && /공장이 물어볼 질문/.test(q("#chkScore").textContent);
+  q("#chkList li.miss button").click(); r.goFill = activeTab === "sheet"; document.getElementById("tabProdBtn").click();
+  // 원가: 8000원 × 1.5마 × 로스 5% + 부자재 1500 + 공임 6000 + 샘플비 300,000 ÷ 100장 = 23,100원
+  q('.prod-nav [data-p="cost"]').click();
+  for (const [k, v] of [["fab", 8000], ["yield", 1.5], ["loss", 5], ["trim", 1500], ["labor", 6000], ["etc", 0], ["fixed", 300000], ["qty", 100], ["price", 49000], ["fee", 10]]) fire(q(`[data-c="${k}"]`), v);
+  const c = costCalc(); r.cost = Math.round(c.unit) === 23100 && Math.round(c.profit) === 21000 && /23,100원/.test(q("#costOut").textContent);
+  // 발주표
+  q('.prod-nav [data-p="order"]').click(); fire(q("#ordColors"), "블랙, 아이보리");
+  const ins = [...document.querySelectorAll("#ordTable input")]; ins.forEach((n, i) => fire(n, i + 1));
+  const n = ins.length; r.orderCells = n === 2 * state.sizes.size;
+  r.total = +q("#ordTotal").textContent === (n * (n + 1)) / 2;
+  q("#ordApply").click(); r.apply = document.getElementById("fColor").textContent === "블랙, 아이보리" && document.getElementById("fQty").textContent === `${(n * (n + 1)) / 2}장`;
+  const csv = buildCSV(); r.csv = csv.startsWith("﻿") && ["[작업지시서]", "[치수표]", "[발주표]", "[부자재]", "[봉제 사양]", "[원가]"].every((x) => csv.includes(x)) && csv.includes('"블랙","1"');
+  // 케어라벨
+  document.getElementById("fMix").textContent = "면 100%";
+  q('.prod-nav [data-p="care"]').click();
+  const t0 = q("#careOut").textContent;
+  r.care7 = ["섬유의 조성", "제조자명", "제조국", "제조연월", "치수", "취급상 주의사항", "주소", "전화"].every((x) => t0.includes(x)) && t0.includes("면 100%") && t0.includes("겸이네") && t0.includes("대한민국") && q("#careOut .bad") !== null;
+  fire(q('#careForm [data-k="addr"]'), "서울시 중구"); fire(q('#careForm [data-k="tel"]'), "02-000-0000"); fire(q('#careForm [data-k="size"]'), "가슴둘레 100cm, 키 175cm");
+  r.careDone = careDone() && !q("#careOut .bad");
+  q("#careToTrim").click(); q("#careToTrim").click();
+  r.careTrim = [...document.querySelectorAll("#trimTable tbody tr")].filter((tr) => tr.children[1].textContent === "케어라벨").length === 1;
+  // 샘플 기록: 1차 총장 +3(넘음), 2차 총장 +0.5(안)
+  q('.prod-nav [data-p="sample"]').click();
+  const spec = baseVals()["총장"];
+  fire(q('#smpTable [data-m="총장"]'), spec + 3); r.over = q('#smpTable [data-d="총장"]').classList.contains("bad") && /넘은 곳 1개/.test(q("#smpSum").textContent);
+  q("#smpSave").click();
+  fire(q('#smpTable [data-m="총장"]'), spec + 0.5); r.inTol = q('#smpTable [data-d="총장"]').classList.contains("ok");
+  fire(q("#smpMemo"), "총장 2.5cm 줄임"); q("#smpSave").click();
+  const cmp = q("#smpCmp").textContent;
+  r.compare = state.prod.samples.length === 2 && cmp.includes("1차 샘플") && cmp.includes("2차 샘플") && cmp.includes("-2.5") && q("#smpList").textContent.includes("총장 2.5cm 줄임");
+  // 저장 → 열기: 생산 준비 값 유지, 주의사항(notes)도 유지, 위험한 글자는 글자로만
+  const j = JSON.parse(JSON.stringify(snapshot(false))); const notesBefore = j.notes.length;
+  j.prod.samples[0].name = '<img src=x onerror="window.__x=1">'; j.prod.cost.fab = "abc"; j.prod.qty["블랙|90"] = -5;
+  state.prod.samples = []; await restore(JSON.parse(JSON.stringify(j))); renderProd();
+  r.restoreProd = state.prod.samples.length === 2 && state.prod.cost.fab === undefined && state.prod.qty["블랙|90"] === undefined && state.prod.colors === "블랙, 아이보리" && careDone();
+  r.restoreSafe = !window.__x && !document.querySelector("#smpList img") && state.prod.samples[0].name.startsWith("<img");
+  r.restoreNotes = lines(document.getElementById("noteList")).length === notesBefore && notesBefore > 0;
+  return r;
+});
+ok("생산 준비: 빠진 항목 검사(공장 질문)·원가 23,100원·발주표 합계·CSV·케어라벨 7항목·샘플 ±1cm 비교·저장/열기", Object.values(prod).every(Boolean), JSON.stringify(prod));
+await page.evaluate(() => preparePrint());
+const prodPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
+ok("생산 준비 탭에서 인쇄하면 작업지시서 A4 가로 1장", prodPdf.length === 1 && !isPortrait(prodPdf[0]), prodPdf.join(" "));
+await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
 
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });
