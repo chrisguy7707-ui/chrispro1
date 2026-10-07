@@ -1,4 +1,4 @@
-/* 옷만들기 도면 메이커 — 패턴 제도 엔진
+/* 마름 — 패턴 제도 엔진
    치수(cm)를 받아 패턴 조각(완성선·시접·다트·너치·식서·골선)을 계산하고 SVG로 그립니다.
    좌표 단위는 cm, y는 아래로 증가. 조각 외곽선은 시계 방향(화면 기준) 닫힌 다각형이며
    edges[i]는 점 i → i+1 변의 시접(cm). 골선은 시접 0.
@@ -273,7 +273,7 @@
   /* mode: "view"(화면 맞춤) | "real"(실물 크기 mm) | region {x,y,w,h}(cm, 분할 인쇄 한 장) */
   function svg(dr, lay, mode = "view", title = "") {
     const body = lay.placed.map((pl) => pieceSVG(pl, title)).join("");
-    const font = 'font-family="IBM Plex Sans KR, Apple SD Gothic Neo, Malgun Gothic, sans-serif"';
+    const font = 'font-family="Pretendard Variable, Pretendard, Apple SD Gothic Neo, Malgun Gothic, sans-serif"';
     if (mode === "view") return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${lay.w} ${lay.h}" ${font} role="img" aria-label="패턴 제도도">${DEFS}<rect width="${lay.w}" height="${lay.h}" fill="#fff"/>${body}</svg>`;
     if (mode === "real") return `<svg xmlns="http://www.w3.org/2000/svg" width="${lay.w * 10}mm" height="${lay.h * 10}mm" viewBox="0 0 ${lay.w} ${lay.h}" ${font}>${DEFS}<rect width="${lay.w}" height="${lay.h}" fill="#fff"/>${body}</svg>`;
     const r = mode;

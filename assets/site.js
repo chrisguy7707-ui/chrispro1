@@ -1,4 +1,4 @@
-/* 옷만들기 도면 메이커 — 광고 자리 채우기
+/* 마름 — 광고 자리 채우기
    window.SITE 는 scripts/configure.mjs 가 각 페이지 <head>에 넣습니다 (site.config.json 기준).
    애드센스 게시자 ID와 광고 단위 ID가 둘 다 있을 때만 광고 자리가 보입니다. */
 (function () {

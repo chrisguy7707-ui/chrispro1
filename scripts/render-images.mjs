@@ -24,6 +24,7 @@ await page.evaluate(() => {
 const sheet = await page.$("#sheet");
 const box = await sheet.boundingBox();
 await sheet.screenshot({ path: path.join(root, "assets/preview.png") });
+await sheet.screenshot({ path: path.join(root, "assets/preview.webp"), type: "webp", quality: 82 });   // 대문용 (가벼움), png는 대체용
 const preview = { w: Math.round(box.width * 1.4), h: Math.round(box.height * 1.4) };
 
 /* 2. 공유 이미지 */
@@ -31,21 +32,27 @@ const img = fs.readFileSync(path.join(root, "assets/preview.png")).toString("bas
 const og = await browser.newPage();
 await og.setViewport({ width: 1200, height: 630 });
 await og.setContent(`<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-  body { margin: 0; width: 1200px; height: 630px; overflow: hidden; font-family: "IBM Plex Sans KR", "Apple SD Gothic Neo", sans-serif; color: #eaf3ee;
-    background-color: #2f5d46; background-image: linear-gradient(rgba(255,255,255,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.09) 1px, transparent 1px); background-size: 24px 24px; }
-  .t { position: absolute; left: 70px; top: 120px; width: 520px; }
-  h1 { font-size: 76px; line-height: 1.12; margin: 0; letter-spacing: -0.04em; font-weight: 700; }
-  .tape { height: 14px; width: 380px; margin-top: 20px; border-bottom: 3px solid #f2c230; background-image: linear-gradient(90deg, #f2c230 2px, transparent 2px); background-size: 11px 9px; background-repeat: repeat-x; background-position: bottom; }
-  p { font-size: 28px; line-height: 1.5; margin: 28px 0 0; font-weight: 500; }
-  .tag { display: inline-block; margin-top: 26px; background: #f2c230; color: #244a37; font-weight: 700; font-size: 24px; padding: 8px 18px; border-radius: 10px; }
-  .doc { position: absolute; left: 640px; top: 70px; width: 640px; background: #fff; padding: 10px; border-radius: 6px; transform: rotate(-3deg); box-shadow: 0 20px 50px rgba(0,0,0,.4); }
-  .doc img { width: 100%; display: block; }
+  body { margin: 0; width: 1200px; height: 630px; overflow: hidden; position: relative; font-family: "Pretendard Variable", "Apple SD Gothic Neo", sans-serif; color: #17171c; background: #fbf8f2; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); }
+  .b1 { width: 520px; height: 520px; right: -120px; top: -180px; background: #ffe14d; opacity: .7; }
+  .b2 { width: 420px; height: 420px; left: -160px; bottom: -220px; background: #b8a6ff; opacity: .55; }
+  .t { position: absolute; left: 70px; top: 96px; width: 560px; }
+  .eye { display: inline-block; background: #fff; border: 1px solid #ebe5d9; border-radius: 999px; padding: 6px 18px; font-weight: 700; font-size: 22px; }
+  .sub { font-size: 40px; font-weight: 800; letter-spacing: -0.04em; margin-top: 4px; }
+  h1 { font-size: 150px; line-height: 1.05; margin: 22px 0 0; letter-spacing: -0.05em; font-weight: 800; }
+  .tape { height: 20px; width: 340px; margin-top: 22px; border-radius: 999px; transform: rotate(-2deg); background: #ffe14d repeating-linear-gradient(90deg, rgba(23,23,28,.55) 0 2px, transparent 2px 12px) bottom / 100% 8px no-repeat; }
+  p { font-size: 28px; line-height: 1.5; margin: 26px 0 0; font-weight: 600; }
+  .tag { display: inline-block; margin-top: 24px; background: #17171c; color: #fff; font-weight: 700; font-size: 24px; padding: 12px 26px; border-radius: 999px; }
+  .doc { position: absolute; left: 650px; top: 80px; width: 620px; background: #fff; padding: 12px; border-radius: 22px; transform: rotate(3deg); box-shadow: 0 30px 60px -20px rgba(23,23,28,.45); }
+  .doc img { width: 100%; display: block; border-radius: 12px; }
+  .stk { position: absolute; left: 618px; top: 52px; z-index: 2; width: 110px; height: 110px; border-radius: 50%; background: #ff6b4a; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 22px; transform: rotate(-12deg); }
 </style></head><body>
-<div class="t"><h1>옷만들기<br>도면 메이커</h1><div class="tape"></div>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="t"><span class="eye">✂ 1인 브랜드 · 패션 전공 학생</span><h1>마름</h1><div class="sub">옷 작업지시서 메이커</div><div class="tape"></div>
 <p>사진 한 장으로 도식화·치수표·봉제 사양까지</p><span class="tag">무료 작업지시서 만들기</span></div>
-<div class="doc"><img src="data:image/png;base64,${img}"></div>
+<div class="stk">A4 한 장</div><div class="doc"><img src="data:image/png;base64,${img}"></div>
 </body></html>`, { waitUntil: "networkidle0" });
 await og.screenshot({ path: path.join(root, "assets/og.png") });
 
@@ -53,5 +60,5 @@ await browser.close();
 
 /* 대문 <img>의 width/height를 실제 크기로 맞춤 (레이아웃 밀림 방지) */
 const idx = path.join(root, "index.html");
-fs.writeFileSync(idx, fs.readFileSync(idx, "utf8").replace(/(<img src="assets\/preview\.png" )width="\d+" height="\d+"/, `$1width="${preview.w}" height="${preview.h}"`));
+fs.writeFileSync(idx, fs.readFileSync(idx, "utf8").replace(/(<img fetchpriority="high" src="assets\/preview\.png" )width="\d+" height="\d+"/, `$1width="${preview.w}" height="${preview.h}"`));
 console.log(`preview.png ${preview.w}×${preview.h}, og.png 1200×630`);

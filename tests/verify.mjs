@@ -620,6 +620,7 @@ await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
 /* 9. 모바일 화면 */
 await page.setViewport({ width: 375, height: 812, isMobile: true });
 ok("모바일 375px 가로 스크롤 없음", await page.evaluate(() => document.documentElement.scrollWidth <= 376), String(await page.evaluate(() => document.documentElement.scrollWidth)));
+ok("휴대폰: 결과 보기 버튼이 보이고 누르면 결과(탭)로 이동", await page.evaluate(async () => { const jb = document.getElementById("jumpBtn"); if (getComputedStyle(jb).display === "none") return false; jb.click(); await new Promise((r) => setTimeout(r, 1200)); return document.querySelector(".stage").getBoundingClientRect().top < innerHeight; }));
 await page.evaluate(() => fitScreen());
 const mob = await page.evaluate(() => { const r = document.getElementById("sheet").getBoundingClientRect(); return { w: Math.round(r.width), zoom: getComputedStyle(document.getElementById("sheet")).zoom }; });
 ok("휴대폰: 작업지시서가 화면 폭에 맞게 축소되어 다 보임", mob.w <= 375 && +mob.zoom < 0.5, JSON.stringify(mob));
