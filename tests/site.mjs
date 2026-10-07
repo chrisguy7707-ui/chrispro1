@@ -67,6 +67,15 @@ for (const f of PAGES) {
 }
 ok("페이지마다 제목·설명이 서로 다름", titles.size === PAGES.length && descs.size === PAGES.length);
 
+/* 1-2. 애드센스 필수 안내: 모든 페이지에서 개인정보처리방침·이용약관·문의 링크가 보임 */
+const needLinks = [];
+for (const f of PAGES) {
+  await page.goto(BASE + f, { waitUntil: "networkidle0" });
+  const hrefs = await page.evaluate(() => [...document.querySelectorAll("a[href]")].filter((a) => a.offsetParent).map((a) => a.getAttribute("href").split("#")[0]));
+  for (const need of ["privacy.html", "terms.html", "contact.html"]) if (!hrefs.includes(need)) needLinks.push(`${f}:${need}`);
+}
+ok("모든 페이지에 개인정보처리방침·이용약관·문의 링크가 보임", needLinks.length === 0, needLinks.join(", "));
+
 /* 2. 내부 링크 전부 열림 */
 const broken = [];
 // 브라우저로 확인 (Node fetch는 python http.server와 연결 종료 처리가 맞지 않아 가끔 멈춤)
@@ -105,7 +114,7 @@ await page.setViewport({ width: 1400, height: 900 });
 /* 5. 애드센스 설정 스크립트: 임시 복사본에 가짜 ID를 넣어 확인 (실제 저장소는 건드리지 않음) */
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "site-"));
 for (const f of fs.readdirSync(root)) if (!["node_modules", ".git", "tests"].includes(f)) fs.cpSync(path.join(root, f), path.join(tmp, f), { recursive: true });
-const fake = { ...cfg, adsenseClient: "ca-pub-1234567890123456", adSlots: { ...cfg.adSlots, "home-mid": "1111111111", "app-top": "2222222222" }, contactEmail: "test@example.com" };
+const fake = { ...cfg, adsenseClient: "ca-pub-1234567890123456", adSlots: { ...cfg.adSlots, "home-mid": "1111111111" }, contactEmail: "test@example.com" };
 fs.writeFileSync(path.join(tmp, "site.config.json"), JSON.stringify(fake));
 execFileSync("node", [path.join(tmp, "scripts/configure.mjs")]);
 const idx = fs.readFileSync(path.join(tmp, "index.html"), "utf8");
@@ -122,10 +131,10 @@ await p2.goto("file://" + path.join(tmp, "index.html"), { waitUntil: "networkidl
 const slots = await p2.evaluate(() => [...document.querySelectorAll(".ad-slot")].map((n) => `${n.dataset.adKey}:${getComputedStyle(n).display !== "none" ? "on" : "off"}:${n.querySelector("ins")?.dataset.adSlot || ""}`));
 ok("설정 후: 광고 단위 ID가 있는 자리만 보임", slots.join(",") === "home-mid:on:1111111111,home-bottom:off:", slots.join(","));
 await p2.goto("file://" + path.join(tmp, "app.html"), { waitUntil: "networkidle0" });
-const appSlot = await p2.$eval('.ad-slot[data-ad-key="app-top"]', (n) => getComputedStyle(n).display !== "none");
+const appSlot = (await p2.$$(".ad-slot")).length === 0;   // 도구 화면에는 광고 칸 자체가 없음(작업 화면 옆 광고·실수 클릭 방지)
 const pdf = await p2.pdf({ preferCSSPageSize: true, printBackground: true });
 const pdfText = Buffer.from(pdf).toString("latin1");
-ok("도구 화면 광고 자리 보이고, 인쇄에는 안 나오며 1장 유지", appSlot && pdfPages(pdf) === 1, `${pdfPages(pdf)}장`);
+ok("도구 화면에는 광고 칸이 없고, 인쇄는 1장 유지", appSlot && pdfPages(pdf) === 1, `${pdfPages(pdf)}장`);
 fs.rmSync(tmp, { recursive: true, force: true });
 
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));

@@ -12,6 +12,7 @@
 - `site.config.json` → `npm run configure`(scripts/configure.mjs)가 각 페이지의 `<!-- SITE:HEAD -->` 블록(canonical, og, 검색 인증, 애드센스 코드),
   `<!-- SITE:CONTACT -->`, `sitemap.xml`, `robots.txt`, `ads.txt`를 다시 만듦. 이 블록과 생성 파일은 손으로 고치지 말 것.
 - 광고 자리: `<aside class="ad-slot" data-ad-key="...">`. `adSlots`에 ID가 있을 때만 보이고, 인쇄에서는 항상 숨김.
+- **광고는 도구 화면(app.html)에 두지 않음**(상호작용 화면 옆 광고·게시자 콘텐츠 부족으로 보일 위험). 모든 페이지(도구 포함)에서 개인정보처리방침·이용약관·문의 링크가 보여야 하며 tests/site.mjs가 검사. 도구 화면 하단은 `.app-foot`(인쇄 숨김).
 - 새 페이지를 추가하면 configure.mjs의 `PAGES`, tests/site.mjs의 `PAGES`, 바닥 링크에 함께 추가.
 - `assets/preview.png`·`preview.webp`(대문용)·`og.png`는 `npm run images`로 생성 (도구 화면이 바뀌면 다시 생성).
 - 디자인(2026-10 개편): 크림 바탕 `#fbf8f2` + 먹색 `#17171c` + 레몬 `#ffe14d`·코랄 `#ff6b4a`·민트 `#3dd6ae`·라일락 `#b8a6ff`, 글꼴 Pretendard(jsDelivr), 둥근 카드·알약 버튼.

@@ -270,6 +270,10 @@
   .flash { outline: 3px solid var(--tape) !important; outline-offset: 1px; }
   @media print { #olz, #edit, #prod { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
+  .app-foot { max-width: 1123px; margin: 22px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+  .app-foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 6px; }
+  .app-foot a { color: inherit; } .app-foot p { margin: 0; }
+  @media print { .app-foot { display: none !important; } }
   /* 내 스타일 목록 · 공유 링크 (대화 상자) */
   dialog.dlg { width: min(720px, calc(100vw - 24px)); max-height: calc(100vh - 40px); border: 0; border-radius: 24px; padding: 0; background: #fff; color: var(--ink); box-shadow: 0 30px 80px rgba(23,23,28,.35); }
   dialog.dlg::backdrop { background: rgba(23,23,28,.45); }
@@ -477,8 +481,6 @@
       <span class="note" data-tab="sheet">치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요.</span>
       <span class="note" data-tab="pat" hidden>인쇄하면 1장은 축소도, 나머지는 실물 크기 A4 분할입니다. 배율 100%로 인쇄하세요.</span>
     </div>
-
-    <aside class="ad-slot" data-ad-key="app-top" aria-label="광고"></aside>
 
     <article class="sheet" id="sheet">
       <div class="head">
@@ -729,6 +731,10 @@
         </div>
       </div>
     </section>
+    <footer class="app-foot">
+      <nav aria-label="사이트 안내"><a href="./">홈</a><a href="guide.html">작업지시서 작성법</a><a href="factory.html">공장 찾기 안내</a><a href="about.html">사이트 소개</a><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="contact.html">문의</a><a href="contact.html#feedback">🔒 의견 보내기</a></nav>
+      <p>치수는 레귤러핏 참고 표준값이며 샘플 실측을 대체하지 않습니다. © 2026 작지</p>
+    </footer>
     <div id="patPrint" aria-hidden="true"></div>
     <button class="jump" id="jumpBtn" type="button">결과 보기 ↓</button>
     <dialog class="dlg" id="jobsDlg" aria-labelledby="jobsTitle">
