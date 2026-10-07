@@ -134,25 +134,30 @@ await page.setViewport({ width: 1280, height: 900 });
 await page.goto(BASE + "contact.html#feedback", { waitUntil: "networkidle0" });
 const fb = await page.evaluate(async () => {
   window.JAKJI_NO_MAILTO = true;   // 테스트 중 메일 앱이 열리지 않게
-  const r = {};
+  // 어떤 경우에도 진짜 폼 서비스로 전송되지 않게: 모든 전송을 가로채 기록 (진짜 접수가 생기면 안 됨)
+  const sent = []; const realFetch = window.fetch;
+  window.fetch = async (u, o) => { if (o && o.method === "POST") { sent.push([String(u), [...(o.body?.entries?.() || [])]]); return { ok: true }; } return realFetch(u, o); };
+  const r = {}, real = window.SITE.feedbackEndpoint || "";
   const f = document.querySelector("[data-feedback] form");
   r.form = !!f && /운영자만/.test(f.textContent) && !!f.querySelector("textarea") && !!f.querySelector("input[type=email]");
   r.footer = [...document.querySelectorAll(".foot .links a")].some((a) => a.getAttribute("href") === "contact.html#feedback");
-  // 짧은 내용은 막음
-  f.querySelector("textarea").value = "짧"; f.querySelector(".fb-send").click();
-  r.short = /5자 이상/.test(f.querySelector(".fb-msg").textContent);
-  // 메일 방식: 내용이 채워진 대체 상자
-  f.querySelector("select").value = "오류 제보"; f.querySelector("textarea").value = "스커트 도식화가 휴대폰에서 작게 보여요";
-  f.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 300));
-  const body = f.querySelector(".fb-fallback textarea").value;
-  r.mail = !f.querySelector(".fb-fallback").hidden && body.includes("[종류] 오류 제보") && body.includes("휴대폰에서 작게") && body.includes("[기기 정보]") && f.querySelector(".fb-mail").textContent === window.SITE.contactEmail;
-  // 폼 서비스 방식: 가짜 fetch 로 보내는 내용 확인
-  const sent = []; const of = window.fetch; window.fetch = async (u, o) => { sent.push([u, [...o.body.entries()]]); return { ok: true }; };
+  // 짧은 내용은 막음 (설정된 진짜 양식으로 눌러 봐도 전송되지 않음)
+  f.querySelector("textarea").value = "짧"; f.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 100));
+  r.short = /5자 이상/.test(f.querySelector(".fb-msg").textContent) && sent.length === 0;
+  r.label = f.querySelector(".fb-send").textContent === (real ? "비밀 의견 보내기" : "메일로 비밀 의견 보내기");
+  // 메일 방식: 주소가 없는 설정으로 새 양식을 만들어 확인
+  window.SITE.feedbackEndpoint = ""; const mbox = document.createElement("div"); document.querySelector("main").append(mbox); window.JakjiFeedback.mount(mbox);
+  const m = mbox.querySelector("form"); m.querySelector("select").value = "오류 제보"; m.querySelector("textarea").value = "스커트 도식화가 휴대폰에서 작게 보여요";
+  m.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 300));
+  const body = m.querySelector(".fb-fallback textarea").value;
+  r.mail = !m.querySelector(".fb-fallback").hidden && body.includes("[종류] 오류 제보") && body.includes("휴대폰에서 작게") && body.includes("[기기 정보]") && m.querySelector(".fb-mail").textContent === window.SITE.contactEmail && sent.length === 0;
+  // 폼 서비스 방식: 가짜 주소로 보내는 내용 확인
   window.SITE.feedbackEndpoint = "https://forms.example.test/abc"; const box = document.createElement("div"); document.querySelector("main").append(box); window.JakjiFeedback.mount(box);
   const g = box.querySelector("form"); g.querySelector("textarea").value = "공유 링크 기능 좋아요!"; g.querySelector("input[type=email]").value = "me@example.com"; g.querySelector("input[type=checkbox]").checked = false;
-  g.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 300)); window.fetch = of;
+  g.querySelector(".fb-send").click(); await new Promise((x) => setTimeout(x, 300)); window.fetch = realFetch;
   const e = Object.fromEntries(sent[0]?.[1] || []);
   r.endpoint = sent.length === 1 && sent[0][0] === "https://forms.example.test/abc" && e["내용"] === "공유 링크 기능 좋아요!" && e.email === "me@example.com" && !("기기 정보" in e) && /전달했습니다/.test(g.querySelector(".fb-msg").textContent);
+  r.noReal = !real || !sent.some(([u]) => u === real);
   return r;
 });
 ok("비밀 의견 보내기: 문의 페이지 양식·바닥 링크·짧은 글 막기·메일 방식·폼 서비스 방식", Object.values(fb).every(Boolean), JSON.stringify(fb));

@@ -111,7 +111,8 @@
 - `[data-feedback]` 자리(문의 페이지 #feedback)와 도구의 '🔒 의견 보내기' 대화 상자에 양식을 그림. 운영자만 읽음(공개 게시판 아님).
 - `site.config.json`의 `feedbackEndpoint`(https, Formspree 같은 폼 서비스)가 있으면 POST로 바로 접수, 없으면 `contactEmail`로 내용이 채워진 mailto + 복사 대체 상자.
 - configure가 모든 페이지 head에 `window.SITE = {contactEmail, feedbackEndpoint, (adClient, adSlots)}`를 넣음. 도구는 `window.JAKJI_CONTEXT()`로 품목·사이즈·탭만 붙임(사진·작업 내용 X).
-- 폼 서비스로 바꾸면 privacy.html '의견 보내기'에 서비스 이름·보관 기간을 먼저 적을 것.
+- **지금은 Formspree 연결됨**(`feedbackEndpoint`=https://formspree.io/f/mqpeeyew, 받는 메일은 Formspree 가입 계정 chrisguy7707@gmail.com). 테스트는 `fetch`를 가로채 진짜 접수가 생기지 않게 하고(`noReal`), `JAKJI_NO_MAILTO`로 메일 앱도 안 열음.
+- (참고) 폼 서비스로 바꾸면 privacy.html '의견 보내기'에 서비스 이름·보관 기간을 먼저 적을 것.
 
 ## 생산 준비 탭 (`#prod`, 1인 브랜드·학생용)
 - 상태 `state.prod` = { cost, colors, qty{"컬러|사이즈"}, care, careOpts, sample{name, meas, memo}, samples[] }. `snapshot().prod` ↔ `cleanProd()`(숫자·글자만, 길이 제한).
