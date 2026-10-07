@@ -59,6 +59,8 @@ function headBlock(html, page) {
     site.adClient = client;
     site.adSlots = Object.fromEntries(Object.entries(cfg.adSlots || {}).filter(([, v]) => String(v).trim()));
   }
+  // 방문 통계: Cloudflare Web Analytics (쿠키 없음, 개인 식별 안 함). site.config.json analyticsToken 이 있을 때만
+  if (/^[a-f0-9]{32}$/i.test(cfg.analyticsToken || "")) lines.push(`<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${cfg.analyticsToken}"}'></script>`);
   // 광고·문의 메일·비밀 의견 주소 (assets/site.js, assets/feedback.js 가 읽음)
   lines.push(`<script>window.SITE = ${JSON.stringify(site).replace(/</g, "\\u003c")};</script>`);
   return lines.join("\n");
@@ -88,6 +90,10 @@ for (const f of [...PAGES.map((p) => p.file), ...OTHER]) {
   if (out !== html) { fs.writeFileSync(fp, out); changed++; }
 }
 
+// 내 도메인(예: jakji.com)을 쓰면 GitHub Pages용 CNAME 파일을 만듦. url 도 https://도메인/ 으로 바꿀 것
+const domain = (cfg.customDomain || "").trim().toLowerCase();
+if (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) fs.writeFileSync(path.join(root, "CNAME"), domain + "\n");
+else if (fs.existsSync(path.join(root, "CNAME"))) fs.unlinkSync(path.join(root, "CNAME"));
 const today = new Date().toISOString().slice(0, 10);
 fs.writeFileSync(path.join(root, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

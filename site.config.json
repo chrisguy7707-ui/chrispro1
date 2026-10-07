@@ -11,5 +11,7 @@
   "googleSiteVerification": "",
   "naverSiteVerification": "",
   "contactEmail": "chris7707@naver.com",
-  "feedbackEndpoint": ""
+  "feedbackEndpoint": "",
+  "analyticsToken": "",
+  "customDomain": ""
 }
