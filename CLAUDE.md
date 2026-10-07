@@ -48,8 +48,14 @@
 - 그대로 둔 것: 후드(차이 1cm 안), 반바지(일치), 자켓·원피스(레귤러 표본 부족). 한 브랜드 비중이 커서 다음 보정 때 유니클로·탑텐·에잇세컨즈 등으로 넓힐 것.
 - 후드 총장을 70으로 바꾸면 기기 안 인식 검사(도식화→후드)가 자켓으로 흔들림, 바지 밑단 21이면 외곽선 합성 검사 4.1% → 지금 값 유지.
 
+## 도메인 (2026-10-07 적용)
+- **jakji.app** (Cloudflare Registrar). DNS: A 185.199.108~111.153 4개 + www CNAME chrisguy7707-ui.github.io, 모두 **DNS only(회색 구름)** — 주황 프록시로 바꾸면 GitHub 인증서 갱신이 막힐 수 있음. HTTPS 강제 켜짐(.app은 HSTS 필수).
+- `site.config.json` url=`https://jakji.app/`, customDomain=`jakji.app` → CNAME 파일. 옛 주소 github.io/chrispro1은 자동으로 넘어옴.
+- 공개 사이트 검사: `APP_URL=https://jakji.app/app.html node tests/verify.mjs`, `SITE_URL=https://jakji.app/ node tests/site.mjs`. GitHub이 자동화 브라우저에만 넣는 봇 탐지 요청(긴 무작위 경로)은 `isGhBot()`으로 걸러냄.
+- 도메인 자동 갱신·WHOIS 개인정보 보호는 Cloudflare Manage domain에서 켜 둘 것. 이메일(chris7707@naver.com)은 도메인과 별개.
+
 ## 0단계 준비 (설정만 넣으면 됨)
-- `customDomain`(예: jakji.com) → configure가 `CNAME` 생성. 이때 `url`도 `https://jakji.com/`으로 바꾸고, 도메인 업체 DNS에 GitHub Pages 주소(A 185.199.108~111.153 또는 CNAME chrisguy7707-ui.github.io)를 넣어야 함.
+- `customDomain` → configure가 `CNAME` 생성. 이때 `url`도 `https://jakji.com/`으로 바꾸고, 도메인 업체 DNS에 GitHub Pages 주소(A 185.199.108~111.153 또는 CNAME chrisguy7707-ui.github.io)를 넣어야 함.
 - `analyticsToken`(Cloudflare Web Analytics 32자리) → 모든 페이지에 쿠키 없는 방문 통계 스크립트. 켜기 전에 privacy.html에 방문 통계 항목 추가할 것.
 - `googleSiteVerification`·`naverSiteVerification` → 검색 등록 인증 메타 태그.
 
