@@ -81,6 +81,11 @@
 ## 영어판 · 언어 선택 (2026-10-07)
 - **정적 페이지**: `en/` 아래 index·guide·about·contact·privacy·terms 6쪽(영어 직접 작성, 생성 스크립트는 저장소에 없음 → 고칠 때 파일 직접 수정). 배우기 9편·factory는 한국어만(영어 페이지에서 "(Korean)"으로 안내).
   configure.mjs `PAGES`에 `lang:"en", ko:"짝 한국어 파일"` → 양쪽 head에 `hreflang` ko·en·x-default(=영어판), og:locale·`og-en.png`, 문의 블록 영어. 한국어 페이지 메뉴 `EN`·바닥 `🌐 English`(`data-lang="en"`).
+- **작업지시서 언어(한·영 병기, 2026-10-09)**: 화면 언어(`LANG`)와 따로 `window.SHEET_LANG`/`sheetLang` = ko | en | both. 도구 상단 `#sheetLang` 선택 → `setSheetLang()`(처음 고를 때 `assets/i18n-en.js`·`i18n.js`를 동적으로 받음, `localStorage.jakji_sheetlang`에 기억, 받은 파일·공유 링크의 `snapshot().sheetLang`은 열 때만 적용하고 기억은 안 바꿈).
+  엔진은 `#sheet` 안 글자만 작업지시서 언어로, 밖은 화면 언어로 처리. both = 한국어 원문 + 줄바꿈 + 영어(`.i18n-nl` pre-line). 번역한 글자 노드마다 **원문을 기억**(WeakMap) → `srcOf(el)`/`I18N.srcText`로 읽음.
+  - **저장·검사는 반드시 원문**: `txt()`·`lines()`·`snapshot()`(fields·trims·sew·notes)는 `srcOf`. 화면에 보이는 글을 읽으려면 `shown()`(CSV). 새로 시트 글을 읽는 코드를 쓸 때 `textContent` 대신 `srcOf` 사용.
+  - 파일: 작업지시서 HTML·CSV·케어라벨(`careText()` 한·영은 한국어 블록 + 영어 블록)은 작업지시서 언어, 패턴·외곽선은 화면 언어. 사이즈 알파벳 병기(`sizeLabel(s, html, forSheet)`)는 작업지시서가 ko가 아닐 때.
+  - 병기하면 표가 길어져 인쇄 배율이 약 0.70(A4 가로 1장은 유지). 사용자가 직접 쓴 글은 번역하지 않음.
 - **도구(app.html)**: 한 파일 그대로, `?lang=en|ko` → `localStorage.jakji_lang`에 기억(없으면 한국어). 영어면 head에서 `assets/i18n-en.js`(사전 `I18N_DICT` + 정규식 `I18N_RULES`) → `assets/i18n.js`(번역 엔진)를 먼저 불러옴.
   엔진은 MutationObserver로 화면에 들어오는 글자(텍스트·placeholder·title·aria-label·SVG 글자·<title>)를 **한국어 원문 키**로 바꿈 → 코드·데이터는 한국어 그대로. `I18N.t()`·`tt()`(앱), 파일 저장은 `I18N.markup()`, 인쇄 전 `I18N.flush()`.
   - **화면 글자를 다시 읽어 비교하는 코드 금지**: 치수표 측정 부위는 `data-part` 원문(`partOf()`·`specRow()`), 요소는 id로 찾기(한국어 aria-label 선택자 X). 입력칸 value 기본값은 `tt()`로.
@@ -165,7 +170,7 @@
 - 기준 치수 데이터(`T`)를 바꾸면 반드시 10개 품목 × 남/여 모두 렌더링 확인.
 - 잡화(`kind: "bag"`, 지금은 `pouch`)는 성별 호칭 대신 `BAG_SIZES` S·M·L(기준 M), 치수는 완성 치수. `sizeList()`·`ensureSizeSystem()`·`renderKindControls()` 참고.
 - 인쇄 시 A4 가로 **1장**을 넘기지 않을 것. `fitPrint()`가 내용 높이에 맞춰 `--print-zoom`(기본 .93, `PRINT_H` 705px 기준)을 자동으로 줄임.
-- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 82개, 영어 화면 포함, 소분류 34종 패턴 모양 포함, 방문 통계 조건부 로딩 포함, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 46개, 영어판 6쪽·hreflang·언어 안내 띠 포함, factory·배우기 10페이지·비밀 의견·필수 링크 포함: SEO 태그·링크·모바일·광고 설정).
+- 변경 후 `npm run serve` + `npm test` 통과 확인: tests/verify.mjs(도구 91개, 영어 화면·작업지시서 언어(한·영 병기) 포함, 소분류 34종 패턴 모양 포함, 방문 통계 조건부 로딩 포함, 의견 보내기 포함, 내 스타일·공유 링크 포함, 휴대폰 결과 보기 버튼 포함, 화면 순서·생산 준비(빠진 항목·원가·발주표·CSV·케어라벨·샘플 비교·저장 정리) 포함, 소분류 34종·도식화 편집(끌기·디테일 이동·표시·되돌리기·저장) 포함, 도식화-치수표 비율·새 디테일 전 조합·AI 비율 제안 포함, 외곽선 합성 사진 정확도·기준선·치수표 반영 포함, 저장·열기·자동 저장·휴대폰·베타 포함, 10품목×남녀×3핏 패턴 60개, 인식·외부 전송 0건·SVG 전 조합·패턴 제도·실물 크기 인쇄 포함), tests/site.mjs(사이트 46개, 영어판 6쪽·hreflang·언어 안내 띠 포함, factory·배우기 10페이지·비밀 의견·필수 링크 포함: SEO 태그·링크·모바일·광고 설정).
 - 안내 글은 사실과 앱 동작이 맞아야 함 (치수표·인치 대응표·품목 수를 바꾸면 guide·about·index 문구도 수정).
 - 사용자 사진은 서버로 보내지 않음(분석 API 호출 제외). 저장 기능 추가 시 동의 문구 필수.
 - 타인 디자인 복제 용도 금지 문구 유지 (부정경쟁방지법상 형태 모방 위험).

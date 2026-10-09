@@ -4,6 +4,9 @@
    용어: 작업지시서=tech pack, 도식화=flat sketch, 치수표=size spec, 단면=½ (flat) width, 시보리=rib, 요척=fabric consumption */
 var D = (window.I18N_DICT = {});
 Object.assign(D, {
+  "작업지시서 언어": "Tech pack language", "한국어": "Korean", "한·영 병기": "Korean + English",
+  "작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기": "Language written on the tech pack. For overseas factories choose English or Korean + English",
+  "번역 파일을 받지 못했습니다. 인터넷 연결을 확인해 주세요.": "Couldn't download the translation file. Check your internet connection.",
   /* ---------- 공통 · 패널 ---------- */
   "작업지시서 입력": "Tech pack input", "무료 작업지시서 만들기 – 도식화·치수표 자동 작성 | 작지": "Free tech pack maker – flat sketches & size specs | Jakji", "작지 홈": "Jakji home", "작지": "Jakji", "작업지시서 메이커": "tech pack maker",
   "이전 작업이 있습니다.": "You have unsaved work from before.", "이어서 하기": "Continue", "새로 시작": "Start new",

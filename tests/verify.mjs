@@ -802,9 +802,89 @@ ok("영어 화면: 알파벳 사이즈 병기, 치수표 영어, 측정 부위 �
 ok("영어 화면: CSV·HTML·패턴 SVG 저장 파일과 케어라벨이 영어", en.csv === true && en.html === true && en.svg === true && en.care, JSON.stringify({ csv: en.csv, html: en.html, svg: en.svg, care: en.care }));
 ok("영어 화면: 인쇄 A4 가로 1장, 공유 링크는 ?lang=en, 한국어로 돌아가는 링크", enPdf.length === 1 && !isPortrait(enPdf[0]) && en.share && en.sw, JSON.stringify({ pdf: enPdf.length, share: en.share, sw: en.sw }));
 await pe.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+ok("영어 화면에서도 작업지시서 언어를 한국어로 고르면 작업지시서만 한국어, 화면은 영어", await (async () => { await pe.evaluate(() => localStorage.removeItem("jakji_sheetlang")); await pe.goto(URL + "?lang=en", { waitUntil: "networkidle0" });
+  return pe.evaluate(async () => { await setSheetLang("ko"); await new Promise((x) => setTimeout(x, 150)); const sh = document.getElementById("sheet");
+    const r = sh.querySelector(".head th").textContent === "브랜드" && /^[^가-힣]*$/.test(document.getElementById("tabSheetBtn").textContent) && sheetLang === "ko" && !/data-part/.test(sheetHTML());
+    await setSheetLang("both"); await new Promise((x) => setTimeout(x, 150));
+    return r && /Brand/.test(sh.querySelector(".head").innerText) && document.getElementById("sheetLang").value === "both"; }); })());
+await pe.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
+await pe.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
 ok("?lang=ko로 돌아오면 한국어(사전 안 불러옴), 선택 기억", await pe.evaluate(() => document.documentElement.lang === "ko" && !window.I18N && localStorage.getItem("jakji_lang") === "ko" && document.getElementById("tabSheetBtn").textContent === "작업지시서"));
 await pe.evaluate(() => localStorage.removeItem("jakji_lang"));
 await pe.close();
+
+/* 11. 작업지시서 언어(한국어 화면에서 한·영 병기·English): 화면은 한국어 그대로, 작업지시서만 바뀜 · 저장·검사는 원문 · 되돌리면 원래대로 */
+const pb = await browser.newPage();
+pb.on("pageerror", (e) => errors.push("sheetlang pageerror: " + e.message));
+pb.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push("sheetlang console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pb.setRequestInterception(true); pb.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pb.setViewport({ width: 1500, height: 1000 });
+await pb.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { if (!sessionStorage.getItem("slInit")) { sessionStorage.setItem("slInit", "1"); localStorage.removeItem("jakji_sheetlang"); } localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });   // 처음 한 번만 비움 (새로고침 뒤 기억 확인용)
+await pb.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const base0 = await pb.evaluate(() => ({ idle: !window.I18N && sheetLang === "ko" && document.getElementById("sheetLang").value === "ko", text: document.getElementById("sheet").textContent, snap: JSON.stringify([snapshot(false).sew, snapshot(false).notes, snapshot(false).fields.fYield]) }));
+ok("작업지시서 언어 기본은 한국어: 번역 파일을 받지 않고 화면 그대로", base0.idle);
+const bl = await pb.evaluate(async () => {
+  const r = {}, HAN = /[가-힣]/, EN = /[A-Za-z]{3,}/, tick = () => new Promise((x) => setTimeout(x, 150));
+  await setSheetLang("both"); await tick();
+  const sheet = document.getElementById("sheet");
+  r.loaded = !!window.I18N && sheetLang === "both" && localStorage.getItem("jakji_sheetlang") === "both";
+  const th = [...sheet.querySelectorAll(".head th")].find((n) => n.textContent.startsWith("브랜드"));
+  r.head = !!th && /브랜드\s*\n?\s*Brand/.test(th.innerText);
+  const row = document.querySelector('#specTable td[data-part="총장"]');
+  r.spec = !!row && row.textContent.includes("총장") && row.textContent.includes("Total length") && row.dataset.part === "총장";
+  const sew = document.querySelector("#sewList li");
+  r.sew = HAN.test(sew.textContent) && EN.test(sew.textContent) && sew.parentElement.classList.contains("i18n-nl") || sew.classList.contains("i18n-nl");
+  r.alpha = [...document.querySelectorAll("#specTable tr:first-child th")].some((x) => /L\s*\(100\)/.test(x.textContent));
+  r.ui = document.getElementById("tabSheetBtn").textContent === "작업지시서" && document.querySelector('label[for], #gM') !== null && document.getElementById("gM").textContent === "남성 80~110" && !/[A-Za-z]{4,}/.test(document.querySelector(".panel .step h2").textContent);
+  r.miss = I18N.miss.size === 0;
+  // 저장·검사는 번역 전 원문: 영어가 파일에 섞이지 않음
+  const sn = snapshot(false);
+  r.snap = JSON.stringify([sn.sew, sn.notes, sn.fields.fYield]) === JSON.stringify([lines(document.getElementById("sewList")), lines(document.getElementById("noteList")), "실측 후 기입"]) && !sn.sew.some((x) => EN.test(x)) && !sn.trims.flat().some((x) => /[A-Za-z]{4,}/.test(x)) && sn.sheetLang === "both";
+  r.check = checks().find((c) => c[0] === "요척")[2] === false;
+  // 사용자가 직접 쓴 글은 그대로
+  document.getElementById("fBrand").textContent = "마이브랜드"; await tick();
+  r.user = document.getElementById("fBrand").textContent === "마이브랜드";
+  document.getElementById("fBrand").textContent = "";
+  // 한·영 케어라벨·CSV
+  r.care = (() => { const c = careText(); return c.includes("[입력 필요]") && c.includes("[required]") && c.includes("제조자명") && c.includes("Manufacturer"); })();
+  r.csv = (() => { const c = buildCSV(); return /브랜드/.test(c) && /Brand/.test(c) && /Size spec/.test(c); })();
+  r.html = (() => { const h = sheetHTML(); return /<html lang="ko">/.test(h) && /브랜드/.test(h) && /Brand/.test(h) && !/data-part/.test(h) && /i18n-nl/.test(h); })();
+  // 복원: 원문으로 저장된 파일을 열어도 병기가 겹치지 않음
+  const before = sheet.textContent; await restore(JSON.parse(JSON.stringify(sn))); await tick();
+  r.roundtrip = sheet.textContent === before;
+  r.sheetEdit = (() => { const li = document.querySelector("#sewList li"); const t0 = srcOf(li); return !/\n/.test(t0); })();
+  return r;
+});
+ok("한·영 병기: 작업지시서만 '한국어 + 영어', 화면은 한국어 그대로, 번역 누락 0건", bl.loaded && bl.head && bl.spec && bl.sew && bl.alpha && bl.ui && bl.miss, JSON.stringify({ loaded: bl.loaded, head: bl.head, spec: bl.spec, sew: bl.sew, alpha: bl.alpha, ui: bl.ui, miss: bl.miss }));
+ok("한·영 병기: 저장·검사는 원문(영어가 섞이지 않음), 직접 쓴 글 유지, 복원해도 겹치지 않음", bl.snap && bl.check && bl.user && bl.roundtrip && bl.sheetEdit, JSON.stringify({ snap: bl.snap, check: bl.check, user: bl.user, roundtrip: bl.roundtrip, sheetEdit: bl.sheetEdit }));
+ok("한·영 병기: 케어라벨 문구(한국어+영어)·CSV·HTML 내보내기", bl.care && bl.csv && bl.html, JSON.stringify({ care: bl.care, csv: bl.csv, html: bl.html }));
+await pb.evaluate(() => preparePrint());
+const blPdf = mediaBoxes(await pb.pdf({ preferCSSPageSize: true }));
+ok("한·영 병기로 인쇄해도 A4 가로 1장", blPdf.length === 1 && !isPortrait(blPdf[0]), String(blPdf.length));
+const en2 = await pb.evaluate(async () => {
+  const HAN = /[가-힣]/, tick = () => new Promise((x) => setTimeout(x, 150)), r = {};
+  const sheet = document.getElementById("sheet");
+  await setSheetLang("en"); await tick();
+  r.noKo = !HAN.test(sheet.textContent.replace(/마이브랜드/g, "")) && document.getElementById("tabSheetBtn").textContent === "작업지시서";
+  r.csv = !/[가-힣]/.test(buildCSV()); r.care = !HAN.test(careText());
+  r.html = (() => { const h = sheetHTML(); return /<html lang="en">/.test(h) && !HAN.test(h.replace(/<style>[\s\S]*?<\/style>/g, "").replace(/<script>[\s\S]*?<\/script>/g, "")); })();
+  r.snap = snapshot(false).sew[0] === DEFAULT_SEW.top[0] && snapshot(false).sheetLang === "en";
+  // 되돌리면 처음과 똑같이
+  await setSheetLang("ko"); await tick();
+  r.back = sheet.textContent;
+  return r;
+});
+ok("English 작업지시서: 한국어 화면에서도 작업지시서·CSV·케어라벨·HTML이 모두 영어, 저장은 원문", en2.noKo && en2.csv && en2.care && en2.html && en2.snap, JSON.stringify({ noKo: en2.noKo, csv: en2.csv, care: en2.care, html: en2.html, snap: en2.snap }));
+ok("작업지시서 언어를 한국어로 되돌리면 글자가 처음과 똑같음", en2.back.replace(/\s+/g, "") === base0.text.replace(/\s+/g, "") , `${en2.back.length} vs ${base0.text.length}`);
+// 고른 언어 기억 + 공유·파일에서 열 때는 기억을 바꾸지 않음
+await pb.evaluate(() => setSheetLang("both"));
+await pb.reload({ waitUntil: "networkidle0" });
+const kept = await pb.evaluate(async () => ({ v: document.getElementById("sheetLang").value, loaded: !!window.I18N, bi: /Brand/.test(document.querySelector(".head").innerText) }));
+await pb.evaluate(async () => { const j = snapshot(false); j.sheetLang = "en"; await restore(j); });
+const keep2 = await pb.evaluate(() => ({ shown: sheetLang, saved: localStorage.getItem("jakji_sheetlang") }));
+ok("고른 작업지시서 언어는 다음 방문에도 유지, 받은 파일·공유 링크는 열 때만 그 언어(기억은 그대로)", kept.v === "both" && kept.loaded && kept.bi && keep2.shown === "en" && keep2.saved === "both", JSON.stringify({ kept, keep2 }));
+await pb.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
+await pb.close();
 
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));
 await browser.close();
