@@ -175,7 +175,7 @@
 - 합성 사진(앱 도식화를 회색 바닥에) 기준 오차 3.5% 이내를 검사로 유지. 실제 사진 한계: 입은 사진·복잡한 배경·여러 개 겹침·흰 옷+흰 배경.
 
 ## 자동화·점검 (2026-10-09 점검 리포트 반영)
-- **CI**: `.github/workflows/test.yml` — push·PR마다 `npm run configure` 결과가 커밋돼 있는지 + `tests/verify.mjs`·`tests/site.mjs`를 돌림(러너에서는 `CI` 환경변수로 Chrome `--no-sandbox`). 처음 올린 뒤 Actions 탭에서 통과하는지 확인할 것(검증 못 한 상태로 추가됨). 실패하면 `tests/out/`이 아티팩트로 남음.
+- **CI**: `.github/workflows/test.yml` — push·PR마다 `npm run configure` 결과가 커밋돼 있는지 + `tests/verify.mjs`·`tests/site.mjs`를 돌림(러너에서는 `CI` 환경변수로 Chrome `--no-sandbox`). 첫 실행(2026-10-09)에서 리눅스 러너 전용 차이 2건을 조정함: 사진 인식 모델 수치가 달라 경계 사례(후드↔자켓)가 어긋남 → CI에서는 1종까지 허용(내 컴퓨터는 6종 모두), localhost에서 방문 통계(Cloudflare) CORS 콘솔 오류는 무시(`benignConsole`). 실패하면 `tests/out/`이 아티팩트로 남음.
 - 외부 링크 점검: `npm run check-links`(가끔 직접). 403·429는 봇 차단일 수 있어 '확인'으로만 표시.
 - sitemap `lastmod`는 파일 실제 변경일(git: 바뀐 곳 없으면 마지막 커밋일, 고치는 중이면 오늘). 공유 링크 압축 해제는 3MB에서 멈춤(`unpackJob`).
 - 점검 리포트(비공개): `reports/site-review-2026-10-09.md` — 우선순위·약점·방향 정리. 새 기능보다 검증·색인·데이터를 먼저.

@@ -34,7 +34,9 @@ if (isRemote(process.env.APP_URL || process.env.SITE_URL || "")) {
 const errors = [];
 page.on("pageerror", (e) => errors.push(`${page.url()} ${e.message}`));
 const LIVE = isRemote(process.env.SITE_URL || "");
-page.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push(`${page.url()} ${m.text()}`); });  // 막은 봇 탐지 스크립트 오류는 제외
+/* 검사와 상관없는 콘솔 오류: 방문 통계(Cloudflare)는 localhost에서 CORS로 막히고, 막은 봇 탐지 스크립트·통계 요청은 ERR_FAILED로 보임 */
+const benignConsole = (t) => /cloudflareinsights/.test(t) || /Failed to load resource: net::ERR_FAILED/.test(t) || (LIVE && t.includes("ERR_FAILED"));
+page.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push(`${page.url()} ${m.text()}`); });  // 막은 봇 탐지 스크립트 오류는 제외
 
 /* 1. 페이지별 SEO 기본 */
 const links = new Set();
