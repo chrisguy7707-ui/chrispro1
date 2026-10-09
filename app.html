@@ -108,6 +108,61 @@
   .card-bar { position: sticky; bottom: 0; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); margin: 0 -12px; background: rgba(251,248,242,.94); backdrop-filter: blur(8px); border-top: 1px solid var(--line); }
   .card-bar button { flex: 1; } .card-bar button.pri { background: var(--mat); color: #fff; }
   @media print { #cards { display: none !important; } }
+
+  /* ★ 즐겨찾기: 탭은 늘 레몬색으로 눈에 띄게, 안은 큰 카드·알약 */
+  .tabs button.fav-tab:not([aria-selected="true"]) { background: var(--tape); color: #17171c !important; box-shadow: 0 0 0 2px #17171c inset; }
+  .tabs button.fav-tab:not([aria-selected="true"]):hover { background: #ffd21f; }
+  .tabs button.fav-tab[aria-selected="true"] { background: var(--mat); color: var(--tape); box-shadow: 0 4px 12px rgba(23,23,28,.18), 0 0 0 2px var(--tape) inset; }
+  .fav-tab .fav-star-ico { color: var(--coral); margin-right: 3px; }
+  .fav-tab .fav-n { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 5px; border-radius: 999px; background: #17171c; color: var(--tape); font-size: 12px; line-height: 20px; text-align: center; }
+  .fav-tab[aria-selected="true"] .fav-n { background: var(--tape); color: #17171c; }
+  .fav-tab .fav-n:empty { display: none; }
+  .favs { padding: 0; overflow: hidden; }
+  .fv-hero { background: var(--tape); color: #17171c; padding: 18px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .fv-hero h2 { margin: 0; font-size: 22px; }
+  .fv-hero p { margin: 0; font-size: 13.5px; line-height: 1.55; flex: 1 1 280px; }
+  .fv-body { padding: 18px 22px 22px; display: grid; gap: 16px; }
+  .fv-sec { border: 1.5px solid var(--line); border-radius: 20px; padding: 14px 16px 16px; background: #fff; }
+  .fv-sec h3 { margin: 0 0 4px; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .fv-sec h3 .ico { color: var(--coral); }
+  .fv-sec h3 small { font-weight: 500; color: var(--ink-soft); font-size: 12.5px; }
+  .fv-sec > p.fv-hint { margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+  .fv-empty { margin: 8px 0; padding: 16px; border: 1.5px dashed var(--rule); border-radius: 16px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; text-align: center; }
+  .fv-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; }
+  .fv-pill { display: inline-flex; align-items: stretch; border: 1.5px solid #17171c; border-radius: 999px; overflow: hidden; background: var(--lemon-soft); }
+  .fv-pill button { border: 0; background: transparent; font: inherit; color: #17171c; cursor: pointer; }
+  .fv-pill .go { padding: 9px 14px; font-size: 15px; font-weight: 700; }
+  .fv-pill .go small { font-weight: 500; color: var(--ink-soft); margin-left: 5px; }
+  .fv-pill .go:hover { background: var(--tape); }
+  .fv-pill .rm { padding: 0 11px; border-left: 1.5px solid #17171c; font-size: 15px; }
+  .fv-pill .rm:hover { background: var(--coral); color: #fff; }
+  .fv-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .fv-add select { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border: 1.5px solid var(--rule); border-radius: 12px; font: inherit; font-size: 14.5px; background: #fff; color: var(--ink); }
+  .fv-btn { border: 1.5px solid #17171c; background: #17171c; color: var(--tape); border-radius: 999px; padding: 10px 16px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .fv-btn.ghost { background: #fff; color: #17171c; }
+  .fv-btn:hover { filter: brightness(1.15); }
+  .fv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin: 8px 0 10px; }
+  .fv-card { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; padding: 10px; border: 1.5px solid #17171c; border-radius: 16px; background: var(--lemon-soft); }
+  .fv-card .thumb { width: 56px; height: 56px; border-radius: 12px; background: #f4f1ea center / cover no-repeat; display: grid; place-items: center; font-size: 11px; color: var(--ink-soft); }
+  .fv-card .meta { min-width: 0; } .fv-card .meta b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .fv-card .meta small { color: var(--ink-soft); font-size: 12px; }
+  .fv-card .acts { grid-column: 1 / -1; display: flex; gap: 6px; }
+  .fv-card .acts button { flex: 1; border: 1.5px solid #17171c; background: #fff; border-radius: 999px; padding: 7px 10px; font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .fv-card .acts button.go { background: #17171c; color: var(--tape); }
+  .fv-card.cur { box-shadow: 0 0 0 3px var(--coral); }
+  .fv-note { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; }
+  /* 왼쪽 패널의 ☆ 버튼·즐겨찾기 소분류 줄 */
+  .fav-top { width: 100%; margin: 0 0 10px; padding: 11px 16px; border: 2px solid #17171c; border-radius: 999px; background: var(--tape); color: #17171c; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; justify-content: center; align-items: center; gap: 4px; }
+  .fav-top .fav-star-ico { color: var(--coral); }
+  .fav-top .fav-n { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 5px; border-radius: 999px; background: #17171c; color: var(--tape); font-size: 12px; line-height: 20px; text-align: center; }
+  .fav-top .fav-n:empty { display: none; }
+  .fav-row { margin: 2px 0 10px; }
+  .fav-star { border: 1.5px solid var(--tape); background: transparent; color: var(--tape); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .fav-star[aria-pressed="true"] { background: var(--tape); color: #17171c; }
+  .fav-star:disabled { opacity: .4; cursor: default; }
+  .fav-chips-cap { font-size: 12px; color: var(--mat-ink); opacity: .75; margin: 8px 0 0; }
+  .job-list .acts button.star { color: #c99600; font-weight: 800; } .job-list .acts button.star[aria-pressed="true"] { background: var(--tape); border-color: #17171c; color: #17171c; }
+  @media (max-width: 600px) { .fv-hero { padding: 14px 16px; } .fv-body { padding: 12px; } .fv-sec { padding: 12px; } }
+  @media print { #favs { display: none !important; } }
   .mob-only { display: none; }
   @media (max-width: 960px) { .mob-only { display: inline-flex; } .stage { min-width: 0; } body.sheet-big .stage { overflow-x: auto; } }
   .i18n-nl { white-space: pre-line; }   /* 한·영 병기: 한국어 줄 아래 영어 줄 */
@@ -348,7 +403,7 @@
   .care-label { white-space: pre-wrap; font: 12px/1.65 ui-monospace, Menlo, monospace; border: 1px dashed var(--ink); border-radius: 6px; padding: 12px; background: #fcfcfa; margin: 0; }
   .care-label .bad { font-family: inherit; }
   .flash { outline: 3px solid var(--tape) !important; outline-offset: 1px; }
-  @media print { #olz, #edit, #prod, #cards { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
+  @media print { #olz, #edit, #prod, #cards, #favs { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
   .app-foot { max-width: 1123px; margin: 22px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
   .app-foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 6px; }
@@ -434,6 +489,7 @@
   <!-- ================= 입력 패널 ================= -->
   <aside class="panel" aria-label="작업지시서 입력">
     <div class="brand"><h1><a href="./" title="작지 홈">작지<small>작업지시서 메이커</small></a></h1><div class="ruler" aria-hidden="true"></div></div>
+    <button type="button" class="fav-top mob-only" id="favTop"><span class="fav-star-ico" aria-hidden="true">★</span>즐겨찾기<span class="fav-n" id="favTopCount"></span></button>
     <div class="restore" id="restoreBar" role="status" hidden>
       <span id="restoreTxt">이전 작업이 있습니다.</span>
       <button id="restoreBtn">이어서 하기</button><button id="restoreNo">새로 시작</button>
@@ -461,6 +517,11 @@
 
     <section class="step">
       <h2><span class="n">2</span>디테일 확인·수정</h2>
+      <div class="fav-row" id="favRow">
+        <button type="button" class="fav-star" id="favStyleBtn" aria-pressed="false" title="지금 고른 소분류를 즐겨찾기 탭에 담거나 뺍니다">☆ 이 소분류 즐겨찾기</button>
+        <p class="fav-chips-cap" id="favChipsCap" hidden>★ 즐겨찾기 소분류 (눌러서 바로 적용)</p>
+        <div class="chips" id="favChips" aria-label="즐겨찾기 소분류"></div>
+      </div>
       <div class="grid2">
         <label class="f">대분류
           <select id="oCat"></select>
@@ -526,6 +587,7 @@
       <label class="f">원단
         <select id="oFabric"></select>
       </label>
+      <div class="fav-row"><button type="button" class="fav-star" id="favFabBtn" aria-pressed="false" title="지금 고른 원단을 즐겨찾기 탭에 담거나 뺍니다">☆ 이 원단 즐겨찾기</button></div>
       <div class="grid2">
         <label class="f">컬러<input type="text" id="oColor" placeholder="예: 블랙, 멜란지 그레이" /></label>
         <label class="f">품명<input type="text" id="oItem" placeholder="예: 오버핏 크루넥 반팔티" /></label>
@@ -538,6 +600,7 @@
   <!-- ================= 작업지시서 ================= -->
   <main class="stage">
     <div class="tabs" role="tablist" aria-label="화면">
+      <button role="tab" id="tabFavBtn" class="fav-tab" aria-selected="false" aria-controls="favs"><span class="fav-star-ico" aria-hidden="true">★</span>즐겨찾기<span class="fav-n" id="favCount"></span></button>
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
       <button role="tab" id="tabCardsBtn" class="mob-tab" aria-selected="false" aria-controls="cards">✎ 카드 입력</button>
       <button role="tab" id="tabEditBtn" aria-selected="false" aria-controls="edit">도식화 편집</button>
@@ -660,6 +723,7 @@
     </article>
 
     <section class="pat cards" id="cards" role="tabpanel" aria-label="카드 입력" hidden></section>
+    <section class="pat favs" id="favs" role="tabpanel" aria-label="즐겨찾기" hidden></section>
     <section class="pat" id="pat" role="tabpanel" aria-label="패턴 제도" hidden>
       <div class="pat-form">
         <label class="wide">품목<select id="patType"></select></label>
@@ -1108,6 +1172,13 @@ const state = {
   prod: { cost: { loss: 5, fee: 0 }, colors: "", qty: {}, care: {}, careOpts: null, sample: { name: "", meas: {}, memo: "" }, samples: [] },   // 생산 준비 탭
 };
 const $ = (id) => document.getElementById(id);
+/* ★ 즐겨찾기 데이터 (이 브라우저 안에만): styles = 내 스타일 id, cats = STYLES 키(소분류), fabrics = 원단 프리셋 이름 */
+const FAV_KEY = "jakji_favs", FAV_MAX = 30;
+function cleanFavList(a) { return Array.isArray(a) ? [...new Set(a.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 80))].slice(0, FAV_MAX) : []; }
+let favs = (() => {
+  try { const j = JSON.parse(localStorage.getItem(FAV_KEY) || "{}") || {}; return { styles: cleanFavList(j.styles), cats: cleanFavList(j.cats), fabrics: cleanFavList(j.fabrics) }; }
+  catch (e) { return { styles: [], cats: [], fabrics: [] }; }
+})();
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const r05 = (v) => Math.round(v * 2) / 2;
 /* 영어 화면(assets/i18n.js): 화면 글자는 번역되므로 측정 부위는 원문(data-part)으로 찾음. tt()는 화면 밖으로 나가는 글자(파일·CSV) 번역 */
@@ -1667,6 +1738,7 @@ function renderStylePicker() {
   $("oCat").value = cat;
   $("oStyle").innerHTML = Object.entries(STYLES).filter(([, x]) => x.cat === cat).map(([k, x]) => `<option value="${k}">${esc(x.name)}</option>`).join("");
   $("oStyle").value = Object.keys(STYLES).find((k) => STYLES[k] === st);
+  updateFavUI();
 }
 /* 소분류 고르기: 엔진 품목 → 품목 기본 디테일 → 스타일 디테일 순서로 적용 */
 function chooseStyle(id) {
@@ -1940,7 +2012,7 @@ function syncSwatches() {
 }
 let swSyncT = null;
 new MutationObserver(() => { clearTimeout(swSyncT); swSyncT = setTimeout(syncSwatches, 250); }).observe($("fColor"), { childList: true, characterData: true, subtree: true });
-$("oFabric").addEventListener("change", () => syncSwatches());
+$("oFabric").addEventListener("change", () => { syncSwatches(); updateFavUI(); });
 $("swLink").addEventListener("change", (e) => {
   if (viewOnly) { e.target.checked = state.swLink; return; }
   state.swLink = e.target.checked;
@@ -2234,8 +2306,9 @@ function fillFromWorksheet() {
 }
 function setTab(t) {
   activeTab = t;
-  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit"); $("tabProdBtn").setAttribute("aria-selected", t === "prod"); $("tabCardsBtn").setAttribute("aria-selected", t === "cards");
-  $("cards").hidden = t !== "cards";
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit"); $("tabProdBtn").setAttribute("aria-selected", t === "prod"); $("tabCardsBtn").setAttribute("aria-selected", t === "cards"); $("tabFavBtn").setAttribute("aria-selected", t === "favs");
+  $("cards").hidden = t !== "cards"; $("favs").hidden = t !== "favs";
+  if (t === "favs") renderFavs();
   if (t === "cards") renderCards();
   $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("edit").hidden = t !== "edit"; $("prod").hidden = t !== "prod";
   if (t === "edit") renderEditor();
@@ -2249,6 +2322,8 @@ $("tabPatBtn").addEventListener("click", () => setTab("pat"));
 $("tabOlzBtn").addEventListener("click", () => setTab("olz"));
 $("tabEditBtn").addEventListener("click", () => setTab("edit"));
 $("tabCardsBtn").addEventListener("click", () => setTab("cards"));
+$("tabFavBtn").addEventListener("click", () => setTab("favs"));
+$("favTop").addEventListener("click", () => { setTab("favs"); document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" }); });
 $("tabProdBtn").addEventListener("click", () => setTab("prod"));
 
 /* ====================================================================== 도식화 편집 (캔버스)
@@ -2614,7 +2689,7 @@ function buildPatPrint() {
 function preparePrint() {
   if (window.I18N) I18N.flush();
   document.body.classList.toggle("print-pattern", activeTab === "pat");
-  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit" || activeTab === "prod" || activeTab === "cards");   // 사진 분석·편집·생산 준비 탭에서 인쇄하면 작업지시서를 인쇄
+  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit" || activeTab === "prod" || activeTab === "cards" || activeTab === "favs");   // 사진 분석·편집·생산 준비 탭에서 인쇄하면 작업지시서를 인쇄
   if (activeTab === "pat") buildPatPrint();
   else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
@@ -3122,7 +3197,7 @@ const defaultName = (snap) => [snap?.fields?.fStyle, snap?.fields?.fItem].filter
 function jobRecord(id, name, snap) {
   return { id, name: name || defaultName(snap), item: str(snap?.fields?.fItem, 40), updatedAt: Date.now(), thumb: snap?.photo || null, data: snap };
 }
-async function refreshJobsCount() { try { const n = (await Jobs.all()).length; $("jobsCount").textContent = n ? `(${n})` : ""; } catch (e) { $("jobsCount").textContent = ""; } }
+async function refreshJobsCount() { try { const all = await Jobs.all(), n = all.length; $("jobsCount").textContent = n ? `(${n})` : ""; const ids = new Set(all.map((r) => r.id)), keep = favs.styles.filter((id) => ids.has(id)); if (keep.length !== favs.styles.length) { favs.styles = keep; saveFavs(); } } catch (e) { $("jobsCount").textContent = ""; } }
 const fmtDate = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 async function renderJobs() {
   let list = [];
@@ -3133,7 +3208,7 @@ async function renderJobs() {
     : list.map((r) => `<li class="${r.id === cur.id ? "cur" : ""}" data-id="${esc(r.id)}">
         <span class="thumb" ${typeof r.thumb === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(r.thumb) ? `style="background-image:url('${r.thumb}')"` : ""}>${r.thumb ? "" : "사진 없음"}</span>
         <span class="meta"><b>${esc(r.name)}</b><small>${esc(T[r.data?.state?.opt?.template]?.name || "")} · ${fmtDate(r.updatedAt)}${r.id === cur.id ? " · 지금 작업" : ""}</small></span>
-        <span class="acts"><button class="b" data-act="open">열기</button><button class="b" data-act="copy">복제</button><button class="b" data-act="share">공유</button><button class="b del" data-act="del">삭제</button></span></li>`).join("");
+        <span class="acts"><button class="b star" data-act="fav" aria-pressed="${favs.styles.includes(r.id)}" aria-label="즐겨찾기 탭에 담기·빼기" title="즐겨찾기 탭에 담기·빼기">★</button><button class="b" data-act="open">열기</button><button class="b" data-act="copy">복제</button><button class="b" data-act="share">공유</button><button class="b del" data-act="del">삭제</button></span></li>`).join("");
   refreshJobsCount();
 }
 async function saveCurrent(name) {
@@ -3169,6 +3244,7 @@ $("jobList").addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-act]"); if (!btn) return;
   const id = btn.closest("li").dataset.id, rec = await Jobs.get(id); if (!rec) return renderJobs();
   const act = btn.dataset.act;
+  if (act === "fav") { toggleFav("styles", id); renderJobs(); return; }
   if (act === "open") { if (id !== cur.id) { await keepCurrentFirst(); await openJob(rec); } $("jobsDlg").close(); }
   if (act === "copy") { const c = { ...rec, id: newId(), name: (rec.name + " 복사본").slice(0, 60), updatedAt: Date.now(), data: { ...rec.data } }; c.data.jobId = c.id; c.data.jobName = c.name; await Jobs.put(c); $("jobMsg").textContent = `‘${c.name}’을(를) 만들었습니다.`; renderJobs(); }
   if (act === "share") { $("jobsDlg").close(); openShareDlg(rec.data); }
@@ -3177,6 +3253,89 @@ $("jobList").addEventListener("click", async (e) => {
     await Jobs.del(id); if (id === cur.id) setCur(null, ""); $("jobMsg").textContent = "지웠습니다."; renderJobs();
   }
 });
+
+/* ====================================================================== ★ 즐겨찾기 탭
+   소분류·원단은 눌러서 바로 적용, 내 스타일은 저장해 둔 작업을 열기. 왼쪽 패널의 ☆ 버튼과 '내 스타일' 창의 ★로도 담음 */
+function saveFavs() {
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {}
+  updateFavUI();
+  if (typeof activeTab !== "undefined" && activeTab === "favs") renderFavs();
+}
+function toggleFav(kind, key) {
+  const a = favs[kind], i = a.indexOf(key);
+  if (i >= 0) a.splice(i, 1);
+  else if (a.length < FAV_MAX) a.unshift(key);
+  else { setStatus("즐겨찾기가 가득 찼습니다. 안 쓰는 것을 빼 주세요."); return false; }
+  saveFavs(); return i < 0;
+}
+const curStyleId = () => Object.keys(STYLES).find((k) => STYLES[k] === styleOf());
+const favCats = () => favs.cats.filter((k) => STYLES[k]);
+const favFabs = () => favs.fabrics.filter((n) => FABRICS.some((f) => f[0] === n));
+function updateFavUI() {
+  const sid = curStyleId(), on = favs.cats.includes(sid), fab = $("oFabric").value, fon = !!fab && favs.fabrics.includes(fab);
+  const total = favCats().length + favFabs().length + favs.styles.length;
+  $("favCount").textContent = $("favTopCount").textContent = total ? String(total) : "";
+  const b = $("favStyleBtn"); b.setAttribute("aria-pressed", on); b.textContent = on ? "★ 즐겨찾기에 담음 (누르면 뺌)" : "☆ 이 소분류 즐겨찾기";
+  const fb = $("favFabBtn"); fb.disabled = !fab; fb.setAttribute("aria-pressed", fon); fb.textContent = fon ? "★ 즐겨찾기에 담음 (누르면 뺌)" : "☆ 이 원단 즐겨찾기";
+  const cats = favCats();
+  $("favChipsCap").hidden = !cats.length;
+  $("favChips").innerHTML = cats.map((k) => `<button type="button" class="chip" data-fav-style="${esc(k)}" aria-pressed="${k === sid}">${esc(STYLES[k].name)}</button>`).join("");
+}
+async function renderFavs() {
+  let jobs = null; try { jobs = await Jobs.all(); } catch (e) {}
+  if (jobs) { const ids = new Set(jobs.map((r) => r.id)), keep = favs.styles.filter((id) => ids.has(id)); if (keep.length !== favs.styles.length) { favs.styles = keep; try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {} updateFavUI(); } }
+  const byId = new Map((jobs || []).map((r) => [r.id, r])), mine = favs.styles.map((id) => byId.get(id)).filter(Boolean);
+  const sid = curStyleId(), fab = $("oFabric").value, curOn = !!cur.id && favs.styles.includes(cur.id);
+  const pill = (kind, key, label, sub) => `<span class="fv-pill"><button type="button" class="go" data-go="${kind}" data-k="${esc(key)}">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</button><button type="button" class="rm" data-rm="${kind}" data-k="${esc(key)}" aria-label="즐겨찾기에서 빼기" title="즐겨찾기에서 빼기">×</button></span>`;
+  const styleOpts = Object.entries(CATS).map(([c, n]) => `<optgroup label="${esc(n)}">${Object.entries(STYLES).filter(([, x]) => x.cat === c).map(([k, x]) => `<option value="${esc(k)}"${k === sid ? " selected" : ""}>${esc(x.name)}</option>`).join("")}</optgroup>`).join("");
+  const fabOpts = `<option value="">원단을 고르세요</option>` + FABRICS.map((f) => `<option value="${esc(f[0])}"${f[0] === fab ? " selected" : ""}>${esc(f[0])}</option>`).join("");
+  const cards = mine.map((r) => `<div class="fv-card${r.id === cur.id ? " cur" : ""}" data-id="${esc(r.id)}">
+      <span class="thumb" ${typeof r.thumb === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(r.thumb) ? `style="background-image:url('${r.thumb}')"` : ""}>${r.thumb ? "" : "사진 없음"}</span>
+      <span class="meta"><b data-i18n-skip>${esc(r.name)}</b><small>${esc(T[r.data?.state?.opt?.template]?.name || "")} · ${fmtDate(r.updatedAt)}${r.id === cur.id ? " · 지금 작업" : ""}</small></span>
+      <span class="acts"><button type="button" class="go" data-open-job="${esc(r.id)}">열기</button><button type="button" data-rm="styles" data-k="${esc(r.id)}">★ 빼기</button></span></div>`).join("");
+  $("favs").innerHTML = `
+    <div class="fv-hero"><h2>★ 즐겨찾기</h2><p>자주 쓰는 스타일·소분류·원단을 담아 두고, 눌러서 한 번에 불러오세요. 이 브라우저 안에만 저장되며 서버로 보내지 않습니다.</p></div>
+    <div class="fv-body">
+      <section class="fv-sec" aria-label="내 스타일"><h3><span class="ico">★</span>내 스타일 <small>저장해 둔 작업 (사진·치수·디테일 전부)</small></h3>
+        <p class="fv-hint">‘내 스타일’ 창의 ★ 버튼으로도 담을 수 있습니다.</p>
+        ${mine.length ? `<div class="fv-cards">${cards}</div>` : `<p class="fv-empty">아직 담은 스타일이 없습니다. 지금 작업을 담거나, ‘내 스타일’ 창에서 ★를 눌러 보세요.</p>`}
+        <div class="fv-add"><button type="button" class="fv-btn" id="favCurJob">${curOn ? "☆ 지금 작업 빼기" : "★ 지금 작업 담기"}</button><button type="button" class="fv-btn ghost" id="favOpenJobs">내 스타일 목록 열기</button></div></section>
+      <section class="fv-sec" aria-label="소분류"><h3><span class="ico">★</span>소분류 <small>핏·넥라인 같은 세부 디테일은 그 소분류의 기본값으로 시작합니다</small></h3>
+        <p class="fv-hint">눌러서 소분류를 바로 바꿉니다.</p>
+        ${favCats().length ? `<div class="fv-pills">${favCats().map((k) => pill("cats", k, STYLES[k].name, CATS[STYLES[k].cat])).join("")}</div>` : `<p class="fv-empty">아직 담은 소분류가 없습니다. 아래에서 고르거나, 왼쪽 ‘디테일 확인·수정’의 ☆ 버튼을 눌러 보세요.</p>`}
+        <div class="fv-add"><select id="favAddStyle" aria-label="담을 소분류">${styleOpts}</select><button type="button" class="fv-btn" id="favAddStyleBtn">★ 담기</button></div></section>
+      <section class="fv-sec" aria-label="원단"><h3><span class="ico">★</span>원단 <small>원단·혼용률·중량 칸이 한 번에 채워집니다</small></h3>
+        <p class="fv-hint">눌러서 원단을 바로 적용합니다.</p>
+        ${favFabs().length ? `<div class="fv-pills">${favFabs().map((n) => pill("fabrics", n, n, "")).join("")}</div>` : `<p class="fv-empty">아직 담은 원단이 없습니다. 아래에서 고르거나, 왼쪽 원단 아래의 ☆ 버튼을 눌러 보세요.</p>`}
+        <div class="fv-add"><select id="favAddFab" aria-label="담을 원단">${fabOpts}</select><button type="button" class="fv-btn" id="favAddFabBtn">★ 담기</button></div></section>
+      <p class="fv-note">핏·주머니 같은 세부 디테일까지 그대로 저장해 두려면 ‘내 스타일’을 즐겨찾기하세요. 브라우저 기록을 지우면 즐겨찾기도 사라집니다.</p>
+    </div>`;
+}
+function applyFavFabric(name) {
+  if (!FABRICS.some((f) => f[0] === name)) return;
+  $("oFabric").value = name; $("oFabric").dispatchEvent(new Event("change"));
+}
+$("favs").addEventListener("click", async (e) => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.dataset.go === "cats") { chooseStyle(t.dataset.k); setTab("sheet"); setStatus("즐겨찾기 소분류를 적용했습니다."); return; }
+  if (t.dataset.go === "fabrics") { applyFavFabric(t.dataset.k); setTab("sheet"); setStatus("즐겨찾기 원단을 적용했습니다."); return; }
+  if (t.dataset.rm) { toggleFav(t.dataset.rm, t.dataset.k); return; }
+  if (t.dataset.openJob) {
+    const rec = await Jobs.get(t.dataset.openJob).catch(() => null); if (!rec) return renderFavs();
+    if (rec.id !== cur.id) { await keepCurrentFirst(); await openJob(rec); }
+    setTab("sheet"); return;
+  }
+  if (t.id === "favCurJob") {
+    try { if (!cur.id) await saveCurrent(); } catch (err) { setStatus("지금 작업을 저장하지 못해 즐겨찾기에 담지 못했습니다."); return; }
+    toggleFav("styles", cur.id); refreshJobsCount(); return;
+  }
+  if (t.id === "favOpenJobs") { $("jobsBtn").click(); return; }
+  if (t.id === "favAddStyleBtn") { const k = $("favAddStyle").value; if (STYLES[k] && !favs.cats.includes(k)) toggleFav("cats", k); return; }
+  if (t.id === "favAddFabBtn") { const n = $("favAddFab").value; if (n && !favs.fabrics.includes(n)) toggleFav("fabrics", n); return; }
+});
+$("favStyleBtn").addEventListener("click", () => { const k = curStyleId(); if (k) toggleFav("cats", k); });
+$("favFabBtn").addEventListener("click", () => { const n = $("oFabric").value; if (n) toggleFav("fabrics", n); });
+$("favChips").addEventListener("click", (e) => { const b = e.target.closest("[data-fav-style]"); if (b) chooseStyle(b.dataset.favStyle); });
 
 /* 공유 링크: JSON → deflate-raw 압축 → base64url → #v1=…  (압축을 못 쓰는 브라우저는 #v0=, 압축 없이) */
 const b64u = (u8) => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };

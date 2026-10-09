@@ -425,6 +425,32 @@ Object.assign(D, {
   "읽기 전용": "read-only", "사진 제외": "photo not included",
 });
 
+/* ---------- 즐겨찾기 탭 ---------- */
+Object.assign(D, {
+  "즐겨찾기": "Favorites", "★ 즐겨찾기": "★ Favorites",
+  "지금 고른 소분류를 즐겨찾기 탭에 담거나 뺍니다": "Add or remove the selected sub-category from the Favorites tab",
+  "☆ 이 소분류 즐겨찾기": "☆ Favorite this sub-category", "★ 즐겨찾기에 담음 (누르면 뺌)": "★ In favorites (tap to remove)",
+  "★ 즐겨찾기 소분류 (눌러서 바로 적용)": "★ Favorite sub-categories (tap to apply)", "즐겨찾기 소분류": "Favorite sub-categories",
+  "지금 고른 원단을 즐겨찾기 탭에 담거나 뺍니다": "Add or remove the selected fabric from the Favorites tab", "☆ 이 원단 즐겨찾기": "☆ Favorite this fabric",
+  "자주 쓰는 스타일·소분류·원단을 담아 두고, 눌러서 한 번에 불러오세요. 이 브라우저 안에만 저장되며 서버로 보내지 않습니다.": "Keep the styles, sub-categories and fabrics you use often and load them with one tap. Saved only in this browser — never sent to a server.",
+  "저장해 둔 작업 (사진·치수·디테일 전부)": "Saved work (photo, measurements, all details)",
+  "‘내 스타일’ 창의 ★ 버튼으로도 담을 수 있습니다.": "You can also add them with the ★ button in the “My styles” window.",
+  "아직 담은 스타일이 없습니다. 지금 작업을 담거나, ‘내 스타일’ 창에서 ★를 눌러 보세요.": "No styles yet. Add the current work, or tap ★ in the “My styles” window.",
+  "★ 지금 작업 담기": "★ Add current work", "☆ 지금 작업 빼기": "☆ Remove current work", "내 스타일 목록 열기": "Open My styles",
+  "핏·넥라인 같은 세부 디테일은 그 소분류의 기본값으로 시작합니다": "Details such as fit and neckline start from that sub-category's defaults",
+  "눌러서 소분류를 바로 바꿉니다.": "Tap to switch sub-category right away.",
+  "아직 담은 소분류가 없습니다. 아래에서 고르거나, 왼쪽 ‘디테일 확인·수정’의 ☆ 버튼을 눌러 보세요.": "No sub-categories yet. Pick one below, or tap ☆ under “Check & edit details” on the left.",
+  "담을 소분류": "Sub-category to add", "★ 담기": "★ Add",
+  "원단·혼용률·중량 칸이 한 번에 채워집니다": "Fills the fabric, composition and weight fields at once", "눌러서 원단을 바로 적용합니다.": "Tap to apply the fabric right away.",
+  "아직 담은 원단이 없습니다. 아래에서 고르거나, 왼쪽 원단 아래의 ☆ 버튼을 눌러 보세요.": "No fabrics yet. Pick one below, or tap ☆ under Fabric on the left.",
+  "담을 원단": "Fabric to add", "원단을 고르세요": "Choose a fabric",
+  "핏·주머니 같은 세부 디테일까지 그대로 저장해 두려면 ‘내 스타일’을 즐겨찾기하세요. 브라우저 기록을 지우면 즐겨찾기도 사라집니다.": "To keep details such as fit and pockets exactly, favorite the style in “My styles”. Clearing browser data also clears your favorites.",
+  "즐겨찾기에서 빼기": "Remove from favorites", "★ 빼기": "★ Remove", "즐겨찾기 탭에 담기·빼기": "Add to / remove from Favorites",
+  "즐겨찾기 소분류를 적용했습니다.": "Favorite sub-category applied.", "즐겨찾기 원단을 적용했습니다.": "Favorite fabric applied.",
+  "즐겨찾기가 가득 찼습니다. 안 쓰는 것을 빼 주세요.": "Favorites are full. Remove ones you don't use.",
+  "지금 작업을 저장하지 못해 즐겨찾기에 담지 못했습니다.": "Couldn't save the current work, so it wasn't added to favorites.",
+});
+
 /* ---------- 숫자·이름이 들어간 문장 ---------- */
 Object.assign(D, { "밑위": "Rise", "벨트고리": "Belt loops", "부자재": "Trims", "케어라벨": "Care label", "배율": "Scale", "(실제 크기)": "(actual size)", "실제 크기": "actual size",
   "치수: Chest": "Size: Chest" });

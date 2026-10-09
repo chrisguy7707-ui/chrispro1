@@ -20,6 +20,7 @@ const exercise = async (page) => page.evaluate(async () => {
     if (isBottom()) for (const l of ["num", "inch", "both"]) { document.querySelector(`[data-label="${l}"]`)?.click(); await tick(); }
     click("tabEditBtn"); await tick();
     click("tabCardsBtn"); await tick();
+    click("tabFavBtn"); await tick(); await sleep(60); await tick();
         click("tabProdBtn"); for (const p of ["check", "cost", "order", "care", "sample"]) { document.querySelector(`.prod-nav [data-p="${p}"]`).click(); await tick(); }
     click("tabPatBtn"); await tick();
     preparePrint(); await tick();
@@ -49,6 +50,10 @@ const exercise = async (page) => page.evaluate(async () => {
   document.querySelectorAll("#smpTable input").forEach((n, i) => { n.value = 51 + i * 3; n.dispatchEvent(new Event("input", { bubbles: true })); }); await tick();
   click("smpSave"); await tick();
   document.querySelector('.prod-nav [data-p="check"]').click(); await tick();
+  // 즐겨찾기: 소분류·원단·내 스타일 담고 탭 그리기
+  click("favStyleBtn"); const fo = document.getElementById("oFabric"); fo.value = fo.options[3].value; fo.dispatchEvent(new Event("change")); click("favFabBtn");
+  click("tabFavBtn"); await sleep(200); await tick(); click("favCurJob"); await sleep(400); await tick();
+  click("tabSheetBtn"); await tick();
   // 대화 상자
   click("jobsBtn"); await sleep(300); await tick();
   click("jobSaveCur"); await sleep(400); await tick();

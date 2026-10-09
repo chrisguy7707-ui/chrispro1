@@ -1344,6 +1344,92 @@ ok("카드 입력 탭에서 인쇄해도 작업지시서(A4 가로)가 나옴", 
 await pc.close();
 await pf.evaluate(() => localStorage.removeItem("jakji_sheetlang")); await pf.close();
 
+/* 14-b. ★ 즐겨찾기 탭: 눈에 띄는 탭 · 소분류·원단·내 스타일 담기/적용/빼기 · 저장(새로 열어도 유지) · 영어 화면 */
+const pfv = await browser.newPage();
+pfv.on("pageerror", (e) => errors.push("favs pageerror: " + e.message));
+pfv.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("favs console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pfv.setRequestInterception(true); pfv.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pfv.setViewport({ width: 1400, height: 1000 });
+await pfv.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { if (!sessionStorage.getItem("fv_seeded")) { sessionStorage.setItem("fv_seeded", "1"); localStorage.removeItem("jakji_favs"); localStorage.removeItem("wo_autosave"); } localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pfv.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const fv = await pfv.evaluate(async () => {
+  const r = {}, tick = (ms = 150) => new Promise((x) => setTimeout(x, ms)), $ = (id) => document.getElementById(id), tab = $("tabFavBtn");
+  const tabs = [...document.querySelectorAll(".tabs [role=tab]")];
+  r.first = tabs[0] === tab && getComputedStyle(tab).display !== "none";
+  r.lemon = getComputedStyle(tab).backgroundColor === "rgb(255, 225, 77)";   // 선택 안 해도 레몬색으로 눈에 띔
+  r.empty0 = $("favCount").textContent === "" && $("favs").hidden;
+  // 소분류 담기(왼쪽 ☆) → 줄에 나타남 → 다른 소분류로 바꿨다가 줄에서 눌러 돌아오기
+  const id0 = curStyleId(); $("favStyleBtn").click(); await tick();
+  r.starOn = $("favStyleBtn").getAttribute("aria-pressed") === "true" && favs.cats.includes(id0) && $("favCount").textContent === "1" && $("favChips").querySelectorAll(".chip").length === 1;
+  chooseStyle("polo"); await tick();
+  r.starOff = $("favStyleBtn").getAttribute("aria-pressed") === "false";
+  $("favChips").querySelector(`[data-fav-style="${id0}"]`).click(); await tick();
+  r.chipApply = curStyleId() === id0 && $("oStyle").value === id0;
+  // 탭에서 담기(고르기) · 눌러서 적용 · 빼기
+  tab.click(); await tick();
+  r.open = !$("favs").hidden && $("sheet").hidden && tab.getAttribute("aria-selected") === "true" && activeTab === "favs" && $("favs").querySelectorAll(".fv-sec").length === 3;
+  $("favAddStyle").value = "hoodie_zip" in STYLES ? "hoodie_zip" : Object.keys(STYLES)[5]; const addId = $("favAddStyle").value; $("favAddStyleBtn").click(); await tick();
+  r.added = favs.cats[0] === addId && $("favs").querySelectorAll('.fv-pill [data-go="cats"]').length === 2 && $("favCount").textContent === "2";
+  $("favs").querySelector(`.fv-pill [data-go="cats"][data-k="${addId}"]`).click(); await tick();
+  r.apply = curStyleId() === addId && activeTab === "sheet" && !$("sheet").hidden;
+  tab.click(); await tick();
+  $("favs").querySelector(`[data-rm="cats"][data-k="${addId}"]`).click(); await tick();
+  r.removed = !favs.cats.includes(addId) && $("favs").querySelectorAll('.fv-pill [data-go="cats"]').length === 1;
+  // 원단: 왼쪽 ☆ → 탭 줄 → 다른 원단 뒤 눌러서 적용(원단·혼용률·중량 칸)
+  const fo = $("oFabric"), fabA = [...fo.options].find((o) => o.value && o.value !== "").value; fo.value = fabA; fo.dispatchEvent(new Event("change")); await tick();
+  const fA = FABRICS.find((f) => f[0] === fabA); const fabB = FABRICS.find((f) => f[0] !== fabA && f[1] !== fA[1])[0];
+  $("favFabBtn").click(); await tick();
+  r.fabStar = favs.fabrics.includes(fabA) && $("favFabBtn").getAttribute("aria-pressed") === "true";
+  fo.value = fabB; fo.dispatchEvent(new Event("change")); await tick();
+  tab.click(); await tick();
+  $("favs").querySelector(`[data-go="fabrics"][data-k="${fabA}"]`).click(); await tick();
+  r.fabApply = activeTab === "sheet" && $("oFabric").value === fabA && srcOf($("fFabric")) === fA[1] && srcOf($("fMix")) === fA[2];
+  // 내 스타일: 지금 작업 담기 → 카드 → 열기·빼기, 지우면 정리됨
+  tab.click(); await tick();
+  $("favCurJob").click(); await tick(500);
+  r.jobAdd = !!cur.id && favs.styles[0] === cur.id && $("favs").querySelectorAll(".fv-card").length === 1 && /지금 작업 빼기/.test($("favCurJob").textContent);
+  $("jobsBtn").click(); await tick(400); const star = document.querySelector(`#jobList li[data-id="${cur.id}"] [data-act="fav"]`); r.dlgStar = star?.getAttribute("aria-pressed") === "true";
+  star.click(); await tick(400); r.dlgOff = !favs.styles.includes(cur.id) && document.querySelector(`#jobList li[data-id="${cur.id}"] [data-act="fav"]`).getAttribute("aria-pressed") === "false";
+  document.querySelector(`#jobList li[data-id="${cur.id}"] [data-act="fav"]`).click(); await tick(400); r.reOn = favs.styles.includes(cur.id);
+  document.getElementById("jobsDlg").close();
+  const keepId = cur.id; await Jobs.del(keepId); await refreshJobsCount(); await tick(200);
+  r.pruned = r.reOn && !favs.styles.includes(keepId);
+  // 저장·가득 참
+  r.stored = JSON.parse(localStorage.getItem("jakji_favs")).cats.includes(id0) && JSON.parse(localStorage.getItem("jakji_favs")).fabrics.includes(fabA);
+  r.ids = { id0, fabA };
+  return r;
+});
+ok("즐겨찾기 탭: 맨 앞·선택 안 해도 레몬색으로 눈에 띔, 처음엔 비어 있음", fv.first && fv.lemon && fv.empty0, JSON.stringify(fv));
+ok("즐겨찾기: 왼쪽 ☆로 소분류 담기 → 줄(칩)에 나타나고 개수 표시, 눌러서 돌아오기", fv.starOn && fv.starOff && fv.chipApply, JSON.stringify(fv));
+ok("즐겨찾기 탭: 소분류 고르기·담기·눌러서 적용(작업지시서 탭으로 이동)·빼기", fv.open && fv.added && fv.apply && fv.removed, JSON.stringify(fv));
+ok("즐겨찾기 탭: 원단 담기·눌러서 적용(원단·혼용률 칸이 채워짐)", fv.fabStar && fv.fabApply, JSON.stringify(fv));
+ok("즐겨찾기 탭: 내 스타일 담기·‘내 스타일’ 창 ★·지운 스타일은 목록에서 정리", fv.jobAdd && fv.dlgStar && fv.dlgOff && fv.pruned, JSON.stringify(fv));
+await pfv.reload({ waitUntil: "networkidle0" });
+const fv2 = await pfv.evaluate(async () => {
+  const $ = (id) => document.getElementById(id), tick = (ms = 200) => new Promise((x) => setTimeout(x, ms));
+  const r = { count: $("favCount").textContent, chips: $("favChips").querySelectorAll(".chip").length };
+  $("tabFavBtn").click(); await tick();
+  r.pills = $("favs").querySelectorAll(".fv-pill").length; r.empty = !!$("favs").querySelector(".fv-empty");
+  // 안 쓰는 값·깨진 값은 걸러냄
+  localStorage.setItem("jakji_favs", JSON.stringify({ cats: ["nope", "tee_short", 5, "tee_short"], fabrics: ["없는 원단"], styles: "x" })); return r;
+});
+ok("즐겨찾기: 새로 열어도 유지(소분류·원단)", fv2.count === "2" && fv2.chips === 1 && fv2.pills === 2, JSON.stringify(fv2));
+await pfv.reload({ waitUntil: "networkidle0" });
+const fv3 = await pfv.evaluate(() => ({ cats: favs.cats.join(), fabs: favs.fabrics.length, styles: favs.styles.length, count: document.getElementById("favCount").textContent }));
+ok("즐겨찾기: 저장값이 깨졌거나 없는 소분류·원단이면 걸러냄", fv3.cats === "nope,tee_short" && fv3.styles === 0 && fv3.count === "1", JSON.stringify(fv3));
+// 영어 화면: 번역 누락 없음
+await pfv.evaluate(() => { localStorage.setItem("jakji_favs", JSON.stringify({ cats: ["tee_short", "polo"], fabrics: ["기모 쭈리"], styles: [] })); });
+await pfv.goto(URL + "?lang=en", { waitUntil: "networkidle0" });
+const fv4 = await pfv.evaluate(async () => {
+  const $ = (id) => document.getElementById(id), tick = (ms = 250) => new Promise((x) => setTimeout(x, ms));
+  I18N.flush(); $("tabFavBtn").click(); await tick(); await tick(); I18N.flush();
+  const clone = $("favs").cloneNode(true); clone.querySelectorAll("[data-i18n-skip]").forEach((n) => n.remove());
+  return { tab: $("tabFavBtn").textContent.trim(), hangul: (clone.textContent.match(/[가-힣]+/g) || []).slice(0, 5), hero: $("favs").querySelector(".fv-hero h2")?.textContent, pill: $("favs").querySelector(".fv-pill .go")?.textContent };
+});
+ok("즐겨찾기: 영어 화면에서 탭·카드·버튼이 모두 영어", /Favorites/.test(fv4.tab) && fv4.hangul.length === 0 && /Favorites/.test(fv4.hero || ""), JSON.stringify(fv4));
+await pfv.evaluate(() => { try { localStorage.removeItem("jakji_favs"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
+await pfv.close();
+
 /* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
 const pt = await browser.newPage();
 pt.on("pageerror", (e) => errors.push("track pageerror: " + e.message));
