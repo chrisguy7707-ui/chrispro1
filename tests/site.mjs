@@ -10,8 +10,8 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.SITE_URL || "http://localhost:8766/";
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
-const PAGES = ["index.html", "app.html", "guide.html", "form.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html",
-  "en/index.html", "en/guide.html", "en/about.html", "en/contact.html", "en/privacy.html", "en/terms.html"];
+const PAGES = ["index.html", "app.html", "guide.html", "form.html", "form-tshirt.html", "form-longsleeve.html", "form-shirt.html", "form-hoodie.html", "form-jacket.html", "form-pants.html", "form-shorts.html", "form-skirt.html", "form-dress.html", "form-english.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html",
+  "en/index.html", "en/guide.html", "en/form.html", "en/about.html", "en/contact.html", "en/privacy.html", "en/terms.html"];
 const EN_PAGES = PAGES.filter((f) => f.startsWith("en/"));
 const locOf = (f) => f.replace(/(^|\/)index\.html$/, "$1");
 
@@ -138,6 +138,34 @@ const tplLinks = await page.$$eval("a[data-tpl]", (as) => as.map((a) => a.getAtt
 const tplInfo = await page.evaluate(async (hrefs) => { const out = []; for (const h of hrefs) { const b = new Uint8Array(await (await fetch(h, { cache: "no-store" })).arrayBuffer()), t = new TextDecoder("latin1").decode(b); out.push({ h, kb: Math.round(b.length / 1024), zip: b[0] === 0x50 && b[1] === 0x4b, sheets: new Set(t.match(/xl\/worksheets\/sheet\d\.xml/g) || []).size >= 2, imgs: new Set(t.match(/xl\/media\/image\d\.png/g) || []).size === 2, w: /44/.test(h) }); } return out; }, tplLinks);
 const tplBad = tplInfo.filter((x) => !(x.zip && x.sheets && x.imgs && x.kb > 20));
 ok(`양식 다운로드 페이지: 엑셀 링크 18개(품목 9 × 남·여)가 모두 열리는 진짜 .xlsx(시트 2개·도식화 그림 2개)`, tplLinks.length === 18 && new Set(tplLinks).size === 18 && tplBad.length === 0, tplBad.map((x) => x.h).join(", ") || `${tplLinks.length}개`);
+
+/* 3-2c. 품목별 양식 페이지 9쪽 + 영문 양식 2쪽: 엑셀 링크가 모두 열리는 진짜 .xlsx, 영문 파일은 영어 시트, 치수표·이미지·FAQ 구조화 데이터 */
+const FORM_ITEMS = ["tshirt", "longsleeve", "shirt", "hoodie", "jacket", "pants", "shorts", "skirt", "dress"], formBad = [];
+const xlsxCheck = (hrefs) => page.evaluate(async (hrefs) => { const out = []; for (const h of hrefs) { const r = await fetch(h, { cache: "no-store" }), b = new Uint8Array(await r.arrayBuffer()), t = new TextDecoder("utf-8").decode(b); out.push({ h, st: r.status, zip: t.startsWith("PK"), en: /Point of measure/.test(t), ko: /측정 부위/.test(t), kb: Math.round(b.length / 1024) }); } return out; }, hrefs);
+for (const it of FORM_ITEMS) {
+  await page.goto(BASE + `form-${it}.html`, { waitUntil: "networkidle0" });
+  const r = await page.evaluate(() => ({ dl: [...document.querySelectorAll("a[data-tpl]")].map((a) => a.getAttribute("href")), tables: document.querySelectorAll("table").length, img: !!document.querySelector('figure img[alt*="양식"]'), imgOk: [...document.images].every((i) => i.complete && i.naturalWidth > 0),
+    faq: document.querySelectorAll(".faq details").length, ld: [...document.querySelectorAll('script[type="application/ld+json"]')].some((s) => /FAQPage/.test(s.textContent) && /BreadcrumbList/.test(s.textContent)), rows: document.querySelectorAll("tbody tr").length }));
+  const files = await xlsxCheck(r.dl);
+  const koF = files.filter((x) => !/-en\.xlsx$/.test(x.h)), enF = files.filter((x) => /-en\.xlsx$/.test(x.h));
+  const bad = [];
+  if (r.dl.length !== 4 || koF.length !== 2 || enF.length !== 2) bad.push("링크 수 " + r.dl.length);
+  if (files.some((x) => x.st !== 200 || !x.zip || x.kb < 20)) bad.push("파일 열림");
+  if (!koF.every((x) => x.ko) || !enF.every((x) => x.en && !x.ko)) bad.push("언어");
+  if (r.tables < 5 || !r.img || !r.imgOk || r.faq < 3 || !r.ld) bad.push(`본문 tables ${r.tables} img ${r.img}/${r.imgOk} faq ${r.faq} ld ${r.ld}`);
+  if (bad.length) formBad.push(`${it}: ${bad.join(", ")}`);
+}
+ok("품목별 양식 페이지 9쪽: 엑셀 4개(남·여·영문 남·여)가 열리는 진짜 .xlsx(영문은 영어 시트), 치수표·미리보기 이미지·FAQ·구조화 데이터", formBad.length === 0, formBad.join(" | "));
+await page.goto(BASE + "form.html", { waitUntil: "networkidle0" });
+const hubLinks = await page.$$eval("table.dl-table a[href^='form-']", (as) => as.map((a) => a.getAttribute("href")));
+ok("양식 다운로드 허브가 품목별 페이지 9개로 연결", FORM_ITEMS.every((it) => hubLinks.includes(`form-${it}.html`)) && new Set(hubLinks).size === 9, hubLinks.join(","));
+for (const [pg, label] of [["form-english.html", "한국어 영문 양식 페이지"], ["en/form.html", "영어 양식 페이지"]]) {
+  await page.goto(BASE + pg, { waitUntil: "networkidle0" });
+  const hrefs = await page.$$eval("a[data-tpl]", (as) => as.map((a) => a.href));
+  const files = await xlsxCheck(hrefs);
+  const gl = await page.evaluate(() => document.querySelectorAll("table").length);
+  ok(`${label}: 영문 엑셀 18개가 모두 열리는 진짜 .xlsx(영어 시트)`, hrefs.length === 18 && new Set(hrefs).size === 18 && files.every((x) => x.st === 200 && x.zip && x.en && !x.ko && x.kb > 20) && gl >= 3, files.filter((x) => !(x.st === 200 && x.zip && x.en && !x.ko)).map((x) => x.h).join(", "));
+}
 
 /* 3-3. 버튼 사용 횟수용 빈 페이지(e/*.html): 열리고, 검색 제외(noindex)·robots 차단, 통계 로더만 있고, 사이트맵·다른 페이지 링크에는 없음 */
 const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern", "template"], evBad = [];
