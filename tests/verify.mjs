@@ -1448,7 +1448,7 @@ const ui = await pui.evaluate(async () => {
   chooseStyle(Object.keys(STYLES).find((k) => T[STYLES[k].template].kind === "dress")); await tick(); r.dress = vis("oNeck", "oRib", "oShape", "oSleeve", "oClosure");
   chooseStyle("tee_short"); await tick();
   const bar = document.querySelector(".stage-bar"), mm = $("moreMenu"), outside = [...bar.querySelectorAll(":scope > button, :scope > label")].filter((n) => n.offsetParent !== null).map((n) => n.id || n.className);
-  r.bar = outside.length; r.main = ["sendBtn", "jobsBtn"].every((id) => $(id).offsetParent !== null && !mm.contains($(id))) && ["printBtn", "saveXlsxBtn", "shareBtn"].every((id) => $("sendDlg").contains($(id)) && !mm.contains($(id)));
+  r.bar = outside.length; r.main = ["printBtn", "saveXlsxBtn", "jobsBtn", "shareBtn"].every((id) => $(id).offsetParent !== null && !mm.contains($(id)));
   r.closed = !mm.open && !$("saveHtmlBtn").checkVisibility() && !$("fbBtn").checkVisibility();
   mm.querySelector("summary").click(); await tick(); r.opened = mm.open && ["saveJobBtn", "openJobBtn", "saveHtmlBtn", "saveSvgBtn", "printPages", "fbBtn"].every((id) => $(id).offsetParent !== null);
   document.body.click(); await tick(); r.outsideClose = !mm.open;
@@ -1457,63 +1457,8 @@ const ui = await pui.evaluate(async () => {
   return r;
 });
 ok("첫 화면 정리: 상의에선 스커트·원피스 모양·허리 숨김, 바지에선 넥라인·밑단·소매·모양 숨김(허리만), 스커트는 모양만, 원피스는 넥라인·소매·모양", ui.top === "oNeck,oRib,oSleeve,oClosure" && ui.pants === "oWaist" && ui.skirt === "oShape" && ui.dress === "oNeck,oRib,oShape,oSleeve,oClosure", JSON.stringify(ui));
-ok("도구 막대: ‘공장에 보내기’·내 스타일·언어 선택만 보이고 나머지는 ‘더보기’ 안(바깥 누름·항목 선택·Esc로 닫힘)", ui.main && ui.closed && ui.opened && ui.outsideClose && ui.itemClose && ui.esc && ui.bar <= 6, JSON.stringify(ui));
+ok("도구 막대: 핵심 버튼 4개+언어 선택만 보이고 나머지는 ‘더보기’ 안(바깥 누름·항목 선택·Esc로 닫힘)", ui.main && ui.closed && ui.opened && ui.outsideClose && ui.itemClose && ui.esc && ui.bar <= 6, JSON.stringify(ui));
 await pui.close();
-
-/* 14-d. 공장에 보내기(PDF·엑셀·링크 카드 + 빠진 항목) · 자동 저장 상태 표시 */
-const psd = await browser.newPage();
-psd.on("pageerror", (e) => errors.push("send pageerror: " + e.message));
-psd.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("send console: " + m.text()); });
-if (isRemote(process.env.APP_URL || "")) { await psd.setRequestInterception(true); psd.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
-await psd.setViewport({ width: 1400, height: 1000 });
-await psd.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
-await psd.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
-const sd = await psd.evaluate(async () => {
-  const r = {}, tick = (ms = 150) => new Promise((x) => setTimeout(x, ms)), $ = (id) => document.getElementById(id), dlg = $("sendDlg");
-  r.initState = $("saveState").textContent.trim();
-  // 막대: 보내기 버튼이 가장 눈에 띄는 기본 버튼, 카드는 대화 상자 안
-  r.bar = $("sendBtn").classList.contains("primary") && getComputedStyle($("sendBtn")).backgroundColor === "rgb(23, 23, 28)";
-  // 빠진 항목 안내(막지 않음)
-  document.querySelector("#fBrand").textContent = ""; $("sendBtn").click(); await tick();
-  r.open = dlg.open && dlg.querySelectorAll(".send-card").length === 3 && $("printBtn").closest(".send-cards") && getComputedStyle($("saveXlsxBtn")).display !== "none";
-  const missN = $("sendCheck").querySelectorAll(".miss button").length, hasBrand = [...$("sendCheck").querySelectorAll(".miss button")].some((b) => b.textContent === "브랜드");
-  r.miss = missN >= 3 && hasBrand && $("sendCheck").classList.contains("warn");
-  // 빠진 항목을 누르면 닫히고 그 칸으로 이동
-  $("sendCheck").querySelector('.miss button[data-go="fBrand"]').click(); await tick(300);
-  r.goFill = !dlg.open && document.activeElement === $("fBrand") || document.getElementById("fBrand").classList.contains("flash");
-  // 다 채우면 초록
-  for (const [id, v] of Object.entries({ fBrand: "마이", fStyle: "A-1", fItem: "티", fQty: "100", fDue: "11/30", fColor: "블랙", fFabric: "면", fMix: "면 100%", fFactory: "공장" })) $(id).textContent = v;
-  state.photo = state.photo; $("specTable").querySelectorAll("td[contenteditable]").forEach((td) => { if (!td.textContent.trim()) td.textContent = "50"; });
-  r.checkBefore = checks().filter((c) => c[4] && !c[2]).map((c) => c[0]);
-  // 카드: PDF = 인쇄 창 전에 대화 상자가 닫힘, 링크 = 공유 창, 엑셀 = 내려받기 호출
-  let printedOpen = null; const origPrint = window.print; window.print = () => { printedOpen = dlg.open; };
-  $("sendBtn").click(); await tick(); $("printBtn").click(); await tick(200); window.print = origPrint;
-  r.print = printedOpen === false && !dlg.open;
-  $("sendBtn").click(); await tick(); $("shareBtn").click(); await tick(500); r.share = !dlg.open && $("shareDlg").open && /#v[01]=/.test($("shareUrl").value); $("shareDlg").close();
-  let saved = null; const origSave = window.saveFile; 
-  $("sendBtn").click(); await tick(); r.xlsxVisible = getComputedStyle($("saveXlsxBtn")).display !== "none";
-  dlg.close();
-  // 패턴 탭: 엑셀 카드는 숨기고 인쇄 버튼은 패턴 인쇄 안내, 막대에 바로 인쇄 버튼
-  $("tabPatBtn").click(); await tick(300); r.patBar = !$("patPrintBtn").hidden && $("sendBtn").offsetParent !== null;
-  $("sendBtn").click(); await tick(); r.patDlg = $("saveXlsxBtn").hidden && /패턴/.test($("printBtn").querySelector("b").textContent); dlg.close();
-  let pp = 0; const op2 = window.print; window.print = () => { pp++; }; $("patPrintBtn").click(); await tick(); window.print = op2; r.patPrint = pp === 1;
-  $("tabSheetBtn").click(); await tick(); $("sendBtn").click(); await tick(); r.xlsxBack = !$("saveXlsxBtn").hidden; dlg.close();
-  return r;
-});
-ok("공장에 보내기: 막대의 눈에 띄는 기본 버튼, 누르면 PDF·엑셀·링크 큰 카드 3개와 빠진 항목(막지 않음)", sd.bar && sd.open && sd.miss, JSON.stringify(sd));
-ok("공장에 보내기: 빠진 항목을 누르면 대화 상자가 닫히고 그 칸으로 이동", sd.goFill, JSON.stringify(sd));
-ok("공장에 보내기: PDF 카드는 인쇄 창보다 먼저 닫고 인쇄, 링크 카드는 공유 창, 엑셀 카드 보임", sd.print && sd.share && sd.xlsxVisible, JSON.stringify(sd));
-ok("공장에 보내기(패턴 탭): 엑셀 카드 숨김·인쇄 카드는 패턴 인쇄, 막대에 바로 인쇄 버튼, 시트로 돌아오면 복귀", sd.patBar && sd.patDlg && sd.patPrint && sd.xlsxBack, JSON.stringify(sd));
-// 자동 저장 상태: 시작은 중립, 고치면 ‘자동 저장됨’, 저장 불가면 경고
-await psd.evaluate(() => { document.getElementById("fBrand").textContent = "상태 확인"; document.getElementById("fBrand").dispatchEvent(new Event("input", { bubbles: true })); });
-await new Promise((x) => setTimeout(x, 1100));
-const ss1 = await psd.evaluate(() => ({ t: document.getElementById("saveState").textContent.trim(), ok: document.getElementById("saveState").classList.contains("ok"), stored: !!localStorage.getItem("wo_autosave") }));
-await psd.evaluate(() => { Storage.prototype.setItem = function () { throw new Error("quota"); }; document.getElementById("fBrand").textContent = "저장 실패"; document.getElementById("fBrand").dispatchEvent(new Event("input", { bubbles: true })); });
-await new Promise((x) => setTimeout(x, 1100));
-const ss2 = await psd.evaluate(() => ({ t: document.getElementById("saveState").textContent.trim(), bad: document.getElementById("saveState").classList.contains("bad") }));
-const ss3 = await psd.evaluate(async () => { document.getElementById("saveState").click(); await new Promise((x) => setTimeout(x, 400)); const o = document.getElementById("jobsDlg").open; document.getElementById("jobsDlg").close(); return o; });
-ok("자동 저장 표시: 처음엔 중립, 고치면 ‘✓ 자동 저장됨’, 저장이 막히면 ‘⚠ … 백업 파일로 저장하세요’, 누르면 내 스타일 창", sd.initState === "● 자동 저장" && ss1.ok && /자동 저장됨/.test(ss1.t) && ss1.stored && ss2.bad && /백업 파일/.test(ss2.t) && ss3, JSON.stringify({ init: sd.initState, ss1, ss2, ss3 }));
-await psd.close();
 
 /* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
 const pt = await browser.newPage();

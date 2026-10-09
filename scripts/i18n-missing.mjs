@@ -58,9 +58,6 @@ const exercise = async (page) => page.evaluate(async () => {
   click("jobsBtn"); await sleep(300); await tick();
   click("jobSaveCur"); await sleep(400); await tick();
   document.getElementById("jobsDlg").close();
-  click("sendBtn"); await sleep(200); await tick(); document.getElementById("sendDlg").close();
-  document.getElementById("fBrand").textContent = ""; click("sendBtn"); await sleep(200); await tick(); document.getElementById("sendDlg").close();
-  click("tabPatBtn"); click("sendBtn"); await sleep(200); await tick(); document.getElementById("sendDlg").close(); click("tabSheetBtn"); await tick();
   click("shareBtn"); await sleep(400); await tick(); document.getElementById("shareDlg").close();
   click("fbBtn"); await sleep(100); await tick(); document.getElementById("fbDlg").close();
   // 편집 탭 도구
