@@ -11,6 +11,8 @@ fs.mkdirSync(OUT, { recursive: true });
 
 const results = [];
 const ok = (name, pass, detail = "") => { results.push({ name, pass, detail }); console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`); };
+const mediaBoxes = (buf) => Buffer.from(buf).toString("latin1").match(/\/MediaBox \[[^\]]+\]/g) || [];
+const isPortrait = (mb) => { const n = mb.match(/[\d.]+/g).map(Number); return n[3] > n[2]; };
 const pages = (buf) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
 
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, args: process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : [] });
@@ -137,7 +139,15 @@ ok("AI 결과 최대치(봉제 10줄·부자재 8줄·7사이즈) 인쇄 1장", 
 /* 직접 입력으로 더 길어진 경우: 봉제사양에 줄 추가 */
 await page.evaluate(() => { const ol = document.getElementById("sewList"); for (let i = 0; i < 4; i++) ol.insertAdjacentHTML("beforeend", "<li>직접 추가한 봉제 사양 줄 테스트</li>"); ol.dispatchEvent(new Event("input", { bubbles: true })); });
 const typed = Buffer.from(await page.pdf({ preferCSSPageSize: true, printBackground: true }));
-ok("작업지시서에서 직접 줄을 더 추가해도 인쇄 1장", pages(typed) === 1, `${pages(typed)}장`);
+const setPages = (v) => page.evaluate((v) => { const sel = document.getElementById("printPages"); sel.value = v; sel.dispatchEvent(new Event("change", { bubbles: true })); preparePrint(); }, v);
+const zoomNow = () => page.$eval("#sheet", (n) => ({ z: +n.style.getPropertyValue("--print-zoom"), two: n.classList.contains("two-page") }));
+const autoZ = await zoomNow();
+ok("직접 줄을 더 추가해 한 장에 담으면 글자가 너무 작아질 때(0.72 미만): 자동으로 2쪽, 쪽마다 A4 가로·배율 0.8 이상", pages(typed) === 2 && autoZ.two && autoZ.z >= 0.8 && mediaBoxes(typed).every((m) => !isPortrait(m)), `${pages(typed)}장 ${JSON.stringify(autoZ)}`);
+await setPages("one");
+const oneP = Buffer.from(await page.pdf({ preferCSSPageSize: true, printBackground: true }));
+ok("인쇄 쪽수 '1장에 맞춤'이면 항상 1장 (예전 방식)", pages(oneP) === 1 && !(await zoomNow()).two, `${pages(oneP)}장 ${JSON.stringify(await zoomNow())}`);
+await setPages("auto");
+ok("2쪽 인쇄 상태에서 내보낸 HTML에도 2쪽 설정(두 쪽 머리줄·쪽 나눔)이 들어 있음", await page.evaluate(() => { const h = sheetHTML(); return /two-page/.test(h) && /class="p2-head"/.test(h) && /break-before: page/.test(h) && !/class="pg-note"/.test(h); }));
 ok("기본 내용일 때 인쇄 배율 .93 유지", await page.evaluate(() => { const o = state.ai; state.ai = null; renderContent(); const z = document.getElementById("sheet").style.getPropertyValue("--print-zoom"); state.ai = o; renderContent(); return z === "0.930"; }));
 ok("AI 결과 → 4단계 품명·컬러 입력칸 동기화", await page.evaluate(() => document.getElementById("oItem").value.startsWith("오버핏") && document.getElementById("oColor").value === "멜란지 그레이"));
 
@@ -279,8 +289,6 @@ const p2 = Buffer.from(await page2.pdf({ preferCSSPageSize: true, printBackgroun
 ok("저장한 HTML 파일 인쇄도 1장", pages(p2) === 1, `${pages(p2)}장`);
 
 /* 8-1. 패턴 제도 탭 */
-const mediaBoxes = (buf) => Buffer.from(buf).toString("latin1").match(/\/MediaBox \[[^\]]+\]/g) || [];
-const isPortrait = (mb) => { const n = mb.match(/[\d.]+/g).map(Number); return n[3] > n[2]; };
 /* 작업지시서 품목과 패턴 탭 연결: 바지 → 준비 중 안내, 스커트 → H라인 스커트 자동 (탭을 이미 열었어도) */
 await page.evaluate(() => { const s = document.getElementById("oTemplate"); s.value = "pants"; s.dispatchEvent(new Event("change")); });
 await page.click("#tabPatBtn");
@@ -837,7 +845,7 @@ if (isRemote(process.env.APP_URL || "")) { await pb.setRequestInterception(true)
 await pb.setViewport({ width: 1500, height: 1000 });
 await pb.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { if (!sessionStorage.getItem("slInit")) { sessionStorage.setItem("slInit", "1"); localStorage.removeItem("jakji_sheetlang"); } localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });   // 처음 한 번만 비움 (새로고침 뒤 기억 확인용)
 await pb.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
-const base0 = await pb.evaluate(() => ({ idle: !window.I18N && sheetLang === "ko" && document.getElementById("sheetLang").value === "ko", text: document.getElementById("sheet").textContent, snap: JSON.stringify([snapshot(false).sew, snapshot(false).notes, snapshot(false).fields.fYield]) }));
+const base0 = await pb.evaluate(() => ({ idle: !window.I18N && sheetLang === "ko" && document.getElementById("sheetLang").value === "ko", text: (() => { const c = document.getElementById("sheet").cloneNode(true); c.querySelectorAll(".p2-head").forEach((n) => n.remove()); return c.textContent; })(), snap: JSON.stringify([snapshot(false).sew, snapshot(false).notes, snapshot(false).fields.fYield]) }));
 ok("작업지시서 언어 기본은 한국어: 번역 파일을 받지 않고 화면 그대로", base0.idle);
 const bl = await pb.evaluate(async () => {
   const r = {}, HAN = /[가-힣]/, EN = /[A-Za-z]{3,}/, tick = () => new Promise((x) => setTimeout(x, 150));
@@ -866,8 +874,9 @@ const bl = await pb.evaluate(async () => {
   r.csv = (() => { const c = buildCSV(); return /브랜드/.test(c) && /Brand/.test(c) && /Size spec/.test(c); })();
   r.html = (() => { const h = sheetHTML(); return /<html lang="ko">/.test(h) && /브랜드/.test(h) && /Brand/.test(h) && !/data-part/.test(h) && /i18n-nl/.test(h); })();
   // 복원: 원문으로 저장된 파일을 열어도 병기가 겹치지 않음
-  const before = sheet.textContent; await restore(JSON.parse(JSON.stringify(sn))); await tick();
-  r.roundtrip = sheet.textContent === before;
+  const plain = () => { const c = sheet.cloneNode(true); c.querySelectorAll(".p2-head").forEach((n) => n.remove()); return c.textContent; };   // 2쪽 머리줄은 인쇄용이라 제외
+  const before = plain(); await restore(JSON.parse(JSON.stringify(sn))); await tick();
+  r.roundtrip = plain() === before;
   r.sheetEdit = (() => { const li = document.querySelector("#sewList li"); const t0 = srcOf(li); return !/\n/.test(t0); })();
   return r;
 });
@@ -876,7 +885,8 @@ ok("한·영 병기: 저장·검사는 원문(영어가 섞이지 않음), 직�
 ok("한·영 병기: 케어라벨 문구(한국어+영어)·CSV·HTML 내보내기", bl.care && bl.csv && bl.html, JSON.stringify({ care: bl.care, csv: bl.csv, html: bl.html }));
 await pb.evaluate(() => preparePrint());
 const blPdf = mediaBoxes(await pb.pdf({ preferCSSPageSize: true }));
-ok("한·영 병기로 인쇄해도 A4 가로 1장", blPdf.length === 1 && !isPortrait(blPdf[0]), String(blPdf.length));
+const blZ = await pb.evaluate(() => ({ z: +document.getElementById("sheet").style.getPropertyValue("--print-zoom"), two: document.getElementById("sheet").classList.contains("two-page") }));
+ok("한·영 병기는 글자가 작아지므로 자동 2쪽(A4 가로, 배율 0.8 이상), 쪽마다 같은 쪽 크기", blPdf.length === 2 && blPdf.every((m) => !isPortrait(m)) && blZ.two && blZ.z >= 0.8, JSON.stringify({ pages: blPdf.length, ...blZ }));
 const en2 = await pb.evaluate(async () => {
   const HAN = /[가-힣]/, tick = () => new Promise((x) => setTimeout(x, 150)), r = {};
   const sheet = document.getElementById("sheet");
@@ -887,7 +897,7 @@ const en2 = await pb.evaluate(async () => {
   r.snap = snapshot(false).sew[0] === DEFAULT_SEW.top[0] && snapshot(false).sheetLang === "en";
   // 되돌리면 처음과 똑같이
   await setSheetLang("ko"); await tick();
-  r.back = sheet.textContent;
+  r.back = (() => { const c = sheet.cloneNode(true); c.querySelectorAll(".p2-head").forEach((n) => n.remove()); return c.textContent; })();
   return r;
 });
 ok("English 작업지시서: 한국어 화면에서도 작업지시서·CSV·케어라벨·HTML이 모두 영어, 저장은 원문", en2.noKo && en2.csv && en2.care && en2.html && en2.snap, JSON.stringify({ noKo: en2.noKo, csv: en2.csv, care: en2.care, html: en2.html, snap: en2.snap }));
@@ -1137,6 +1147,40 @@ const fb2 = await pq.evaluate(async () => {
 ok("스와치 연결: 컬러 칸이 비면 고른 원단 프리셋의 대표 색(데님 12oz → 인디고), 색 이름을 쓰면 그걸로 바뀜, 영어 작업지시서에선 'Black'", Object.values(fb2).every(Boolean), JSON.stringify(fb2));
 await pq.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
 await pq.close();
+
+/* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
+const pt = await browser.newPage();
+pt.on("pageerror", (e) => errors.push("track pageerror: " + e.message));
+pt.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("track console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pt.setRequestInterception(true); pt.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pt.setViewport({ width: 1400, height: 900 });
+await pt.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
+await pt.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const tr = await pt.evaluate(async () => {
+  const r = {}, frames = () => [...document.querySelectorAll('iframe[src^="e/"]')].map((f) => f.getAttribute("src")), tick = (ms = 60) => new Promise((x) => setTimeout(x, ms)), reset = () => { for (const k of Object.keys(trackedAt)) delete trackedAt[k]; document.querySelectorAll('iframe[src^="e/"]').forEach((f) => f.remove()); };
+  const url0 = location.href, hist0 = history.length;
+  r.enabled = window.SITE?.analytics === true;
+  window.dispatchEvent(new Event("beforeprint")); await tick(); window.dispatchEvent(new Event("beforeprint")); await tick();
+  r.print = frames().join() === "e/print.html";   // 두 번 눌러도 1개
+  await saveFile("작업_x.json", "{}", "application/json"); await saveFile("작업지시서_x.csv", "a", "text/csv"); await saveFile("도식화_x.svg", "<svg xmlns='http://www.w3.org/2000/svg'/>", "image/svg+xml"); await saveFile("패턴_x.svg", "<svg xmlns='http://www.w3.org/2000/svg'/>", "image/svg+xml");
+  r.kinds = ["e/save.html", "e/export.html", "e/pattern.html"].every((x) => frames().includes(x)) && frames().filter((x) => x === "e/export.html").length === 1;
+  document.getElementById("shareDlg").showModal(); document.getElementById("shareCopy").click(); await tick(200); document.getElementById("shareDlg").close();
+  r.share = frames().includes("e/share.html");
+  document.getElementById("jobSaveCur").click(); await tick(200); r.mystyle = frames().includes("e/mystyle.html");
+  r.clean = location.href === url0 && history.length === hist0 && frames().every((f) => /^e\/(print|save|export|share|mystyle|pattern)\.html$/.test(f));
+  // 끄는 조건들
+  reset(); viewOnly = true; track("print"); r.viewOnly = frames().length === 0; viewOnly = false;
+  reset(); Object.defineProperty(navigator, "doNotTrack", { value: "1", configurable: true }); track("print"); r.dnt = frames().length === 0; Object.defineProperty(navigator, "doNotTrack", { value: null, configurable: true });
+  reset(); const was = window.SITE.analytics; window.SITE.analytics = false; track("print"); r.off = frames().length === 0; window.SITE.analytics = was;
+  reset(); track("not-a-name"); r.unknown = frames().length === 0;
+  reset(); track("print"); r.again = frames().length === 1;
+  return r;
+});
+await new Promise((x) => setTimeout(x, 6300));
+const trGone = await pt.evaluate(() => document.querySelectorAll('iframe[src^="e/"]').length === 0);
+ok("버튼 사용 횟수: 인쇄·저장·내보내기·공유·내 스타일·패턴이 각자 빈 페이지 하나로 잡힘(같은 버튼 중복 제거), 주소·기록 변화 없음", tr.enabled && tr.print && tr.kinds && tr.share && tr.mystyle && tr.clean, JSON.stringify(tr));
+ok("버튼 사용 횟수: 공유받은 화면·추적 거부(DNT)·통계 꺼짐·모르는 이름이면 안 셈, 잠시 뒤 숨긴 창은 사라짐", tr.viewOnly && tr.dnt && tr.off && tr.unknown && tr.again && trGone, JSON.stringify({ viewOnly: tr.viewOnly, dnt: tr.dnt, off: tr.off, unknown: tr.unknown, again: tr.again, gone: trGone }));
+await pt.close();
 
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));
 await browser.close();

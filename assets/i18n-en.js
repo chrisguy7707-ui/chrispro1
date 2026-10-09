@@ -4,6 +4,9 @@
    용어: 작업지시서=tech pack, 도식화=flat sketch, 치수표=size spec, 단면=½ (flat) width, 시보리=rib, 요척=fabric consumption */
 var D = (window.I18N_DICT = {});
 Object.assign(D, {
+  "인쇄 쪽수": "Print pages", "자동 (넘치면 2쪽)": "Auto (2 pages if too long)", "1장에 맞춤": "Fit on 1 page", "2장으로 나눔": "Split into 2 pages",
+  "자동: 한 장에 담았을 때 글자가 너무 작아지면(배율 0.72 미만) 2쪽으로 나눕니다. 1쪽 = 도식화·원단·부자재·스와치, 2쪽 = 치수표·봉제 사양·주의사항": "Auto: if fitting everything on one page would make the text too small (scale below 0.72), it is split into 2 pages. Page 1 = flats, fabric, trims, swatches; page 2 = size spec, sewing spec, notes",
+  "▼ 인쇄하면 여기부터 2쪽입니다 (인쇄 쪽수 ‘자동’: 한 장에 담으면 글자가 너무 작아질 때)": "▼ Page 2 starts here when printed (Print pages ‘Auto’: when one page would make the text too small)",
   "컬러 칸과 연결": "Link to Color field", "켜면 컬러 칸의 색 이름(블랙, 네이비…)으로 스와치를 자동으로 채웁니다. 컬러 칸이 비어 있으면 고른 원단 프리셋의 대표 색을 넣습니다": "When on, swatches are filled automatically from the color names in the Color field (black, navy…). If the Color field is empty, the typical color of the chosen fabric preset is used",
   "원단 색상·사진을 넣어 공장에 보여 주세요 (최대 6개). ‘컬러 칸과 연결’을 켜면 컬러 칸의 색 이름으로 자동으로 채워집니다": "Add fabric colors or photos to show the factory (up to 6). Turn on ‘Link to Color field’ to fill them automatically from the color names in the Color field",
   "순서": "Order", "맨 앞으로 (Shift + ] )": "Bring to front (Shift + ] )", "한 칸 앞으로 ( ] )": "Forward one step ( ] )", "한 칸 뒤로 ( [ )": "Back one step ( [ )", "맨 뒤로 (Shift + [ )": "Send to back (Shift + [ )",

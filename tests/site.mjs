@@ -132,6 +132,15 @@ const bar5 = await kb.evaluate(() => !!document.querySelector(".lang-bar"));
 await lb.evaluate(() => localStorage.removeItem("jakji_lang")); await lb.close(); await kb.close();
 ok("영어 브라우저: 한국어 페이지에 영어판 안내 띠(이동은 하지 않음), 닫으면 다시 안 뜸, 도구는 #공유 내용 유지, 한국어 브라우저·영어 페이지엔 없음",
   bar1.url === "/guide.html" && bar1.go === "en/guide.html" && !bar2 && bar3 === "?lang=en#v1=abc" && !bar4 && !bar5, JSON.stringify({ bar1, bar2, bar3, bar4, bar5 }));
+/* 3-3. 버튼 사용 횟수용 빈 페이지(e/*.html): 열리고, 검색 제외(noindex)·robots 차단, 통계 로더만 있고, 사이트맵·다른 페이지 링크에는 없음 */
+const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern"], evBad = [];
+for (const n of EVENTS) {
+  const res = await page.goto(BASE + `e/${n}.html`, { waitUntil: "networkidle0" });
+  const h = await page.evaluate(() => ({ robots: document.querySelector('meta[name="robots"]')?.content, beacon: /cloudflareinsights/.test(document.head.innerHTML), analytics: window.SITE?.analytics === true, text: document.body.innerText.trim() }));
+  if (res.status() !== 200 || h.robots !== "noindex" || !h.beacon || !h.analytics || h.text) evBad.push(`${n} ${res.status()} ${JSON.stringify(h)}`);
+}
+const smAll = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
+ok(`버튼 사용 횟수용 빈 페이지 ${EVENTS.length}개: noindex·통계 로더·내용 없음, 사이트맵·robots 제외, 다른 페이지가 링크하지 않음`, evBad.length === 0 && !/\/e\//.test(smAll) && /Disallow: \/e\//.test(fs.readFileSync(path.join(root, "robots.txt"), "utf8")) && ![...links].some((l) => /\/e\//.test(l)), evBad.join(" | "));
 ok("robots.txt가 sitemap을 가리킴", fs.readFileSync(path.join(root, "robots.txt"), "utf8").includes(`Sitemap: ${cfg.url}sitemap.xml`));
 ok("404 페이지는 검색 제외(noindex)", fs.readFileSync(path.join(root, "404.html"), "utf8").includes('content="noindex"'));
 ok("애드센스 미설정 시 ads.txt 없음", !fs.existsSync(path.join(root, "ads.txt")) || !!cfg.adsenseClient);

@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /e/
 
 Sitemap: https://jakji.app/sitemap.xml

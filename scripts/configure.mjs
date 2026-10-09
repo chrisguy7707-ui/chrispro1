@@ -43,7 +43,9 @@ const PAGES = [
   { file: "en/terms.html", loc: "en/terms.html", priority: "0.2", lang: "en", ko: "terms.html" },
 ];
 const enOf = (koFile) => PAGES.find((p) => p.ko === koFile);
-const OTHER = ["404.html"];
+/* 사이트맵에 넣지 않는 페이지: 404와, 도구 버튼 클릭을 방문 통계로 세는 빈 페이지(e/*.html, 검색 제외·robots 차단) */
+const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern"];
+const OTHER = ["404.html", ...EVENTS.map((n) => `e/${n}.html`)];
 
 const attr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 const pick = (html, re) => (html.match(re) || [])[1] || "";
@@ -76,6 +78,7 @@ function headBlock(html, page) {
   if (cfg.googleSiteVerification) lines.push(`<meta name="google-site-verification" content="${attr(cfg.googleSiteVerification)}" />`);
   if (cfg.naverSiteVerification) lines.push(`<meta name="naver-site-verification" content="${attr(cfg.naverSiteVerification)}" />`);
   const site = { contactEmail: (cfg.contactEmail || "").trim(), feedbackEndpoint: /^https:\/\//.test(cfg.feedbackEndpoint || "") ? cfg.feedbackEndpoint.trim() : "" };
+  if (/^[a-f0-9]{32}$/i.test(cfg.analyticsToken || "")) site.analytics = true;   // 도구가 버튼 클릭을 세도 되는지 (e/*.html 이 통계를 불러올 때만 의미 있음)
   if (client) {
     lines.push(`<meta name="google-adsense-account" content="${client}" />`,
       `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}" crossorigin="anonymous"></script>`);
@@ -135,6 +138,7 @@ ${PAGES.map((p) => `  <url><loc>${base}${p.loc}</loc><lastmod>${lastmod(p.file)}
 `);
 fs.writeFileSync(path.join(root, "robots.txt"), `User-agent: *
 Allow: /
+Disallow: /e/
 
 Sitemap: ${base}sitemap.xml
 `);

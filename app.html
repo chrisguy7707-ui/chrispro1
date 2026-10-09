@@ -28,7 +28,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="naver-site-verification" content="35c561e73c51511616b97a4546f0d702f3566f71" />
 <script>if(!/^#v[01]=/.test(location.hash)){var s=document.createElement("script");s.type="module";s.src="https://static.cloudflareinsights.com/beacon.min.js";s.setAttribute("data-cf-beacon",'{"token": "110a9ed372f544749fd3c59a10b1c7f5"}');document.head.appendChild(s)}</script>
-<script>window.SITE = {"contactEmail":"sirchris7707@gmail.com","feedbackEndpoint":"https://formspree.io/f/mqpeeyew"};</script>
+<script>window.SITE = {"contactEmail":"sirchris7707@gmail.com","feedbackEndpoint":"https://formspree.io/f/mqpeeyew","analytics":true};</script>
 <!-- SITE:HEAD-END -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
@@ -81,6 +81,9 @@
   .restore button:first-of-type { background: var(--mat-deep); color: #fff; }
   .mini-nav { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -8px 0 6px; font-size: 13px; }
   .mini-nav a { white-space: nowrap; }
+  .pg-note { display: none; margin: 10px 0 0; padding: 3px 8px; border: 1px dashed var(--mark); border-radius: 6px; font-size: 11px; color: var(--mark); text-align: center; }
+  .sheet.two-page .pg-note { display: block; }
+  .p2-head { display: none; }
   .i18n-nl { white-space: pre-line; }   /* 한·영 병기: 한국어 줄 아래 영어 줄 */
   .sheet-lang { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
   .sheet-lang select { border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
@@ -353,6 +356,10 @@
   }
   @media print { .jump { display: none !important; } }
   @media print {
+    .pg-note { display: none !important; }
+    .sheet.two-page .lower { break-before: page; page-break-before: always; margin-top: 0; }
+    .sheet.two-page .p2-head { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; border-bottom: 1px solid var(--ink); padding: 0 2px 4px; margin-bottom: 8px; break-before: page; page-break-before: always; }
+    .sheet.two-page .p2-head + .lower { break-before: auto; page-break-before: auto; }
     body { background: #fff; }
     .panel, .stage-bar, .ad-slot { display: none !important; }
     .app { display: block; }
@@ -514,6 +521,8 @@
       <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
       <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
       <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
+      <label class="sheet-lang" data-tab="sheet" title="자동: 한 장에 담았을 때 글자가 너무 작아지면(배율 0.72 미만) 2쪽으로 나눕니다. 1쪽 = 도식화·원단·부자재·스와치, 2쪽 = 치수표·봉제 사양·주의사항">인쇄 쪽수
+        <select id="printPages" aria-label="인쇄 쪽수"><option value="auto">자동 (넘치면 2쪽)</option><option value="one">1장에 맞춤</option><option value="two">2장으로 나눔</option></select></label>
       <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
         <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
       <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
@@ -579,6 +588,8 @@
         </section>
       </div>
 
+      <div class="pg-note" data-noexport>▼ 인쇄하면 여기부터 2쪽입니다 (인쇄 쪽수 ‘자동’: 한 장에 담으면 글자가 너무 작아질 때)</div>
+      <div class="p2-head"><span id="p2Info" data-i18n-skip></span><span>2 / 2</span></div>
       <div class="lower">
         <section class="box">
           <div class="cap"><span id="specCap">치수표 (단위 cm, 단면 기준)</span><span id="specMeta"></span></div>
@@ -1048,6 +1059,18 @@ let sheetLang = window.SHEET_LANG || "ko";
 const srcOf = (el) => (window.I18N ? I18N.srcText(el) : el.textContent);
 const ts = (s) => (typeof s === "string" && window.I18N ? I18N.sheet(s) : s);
 const sheetEn = () => sheetLang !== "ko";
+/* 주요 버튼을 눌렀다는 사실만 방문 통계로 셈: 숨긴 빈 페이지(e/이름.html)를 한 번 불러와 Cloudflare 통계에 조회로 잡힘.
+   작업 내용·사진·기기 정보는 없고, 공유받은 화면(읽기 전용)·브라우저의 추적 거부(DNT)·통계를 안 켰을 때는 세지 않음. 같은 버튼은 5초에 한 번만 */
+const TRACK_NAMES = ["print", "save", "export", "share", "mystyle", "pattern"], trackedAt = {};
+function track(name) {
+  try {
+    if (!window.SITE?.analytics || viewOnly || navigator.doNotTrack === "1" || !TRACK_NAMES.includes(name)) return;
+    const now = Date.now(); if (now - (trackedAt[name] || 0) < 5000) return; trackedAt[name] = now;
+    const f = document.createElement("iframe"); f.src = `e/${name}.html`; f.tabIndex = -1; f.setAttribute("aria-hidden", "true"); f.title = "";
+    f.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+    document.body.append(f); setTimeout(() => f.remove(), 6000);
+  } catch (e) {}
+}
 const partOf = (td) => td.dataset.part || td.textContent.trim();
 const isBottom = () => ["pants", "skirt"].includes(T[state.opt.template].kind);
 const isBag = () => T[state.opt.template].kind === "bag";
@@ -1526,13 +1549,24 @@ function renderLabelBox() {
   for (const b of $("labelBox").querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.label === state.label);
 }
 /* 인쇄 배율: 기본 .93, 내용이 길면 A4 가로 1장(인쇄 가능 높이 약 740px)에 맞게 더 줄임 */
-const PRINT_H = 705;
+const PRINT_H = 705, TWO_PAGE_BELOW = 0.72, P2_HEAD = 28;
+/* 인쇄 쪽수: auto = 한 장에 담았을 때 배율이 0.72 아래면 2쪽(1쪽 머리·도식화·원단·부자재·스와치 / 2쪽 치수표·봉제 사양·주의사항), one = 항상 한 장에 맞춤, two = 항상 2쪽 */
+let printPages = (() => { try { const v = localStorage.getItem("jakji_printpages"); return /^(auto|one|two)$/.test(v) ? v : "auto"; } catch (e) { return "auto"; } })();
 function fitPrint() {
-  const sh = $("sheet"), foot = sh.querySelector(".foot"), z = parseFloat(getComputedStyle(sh).zoom) || 1;   // 화면 축소 배율은 되돌려서 잼
-  const h = (foot.getBoundingClientRect().bottom - sh.getBoundingClientRect().top) / z - parseFloat(getComputedStyle(sh).paddingTop);
+  const sh = $("sheet"), foot = sh.querySelector(".foot"), body = sh.querySelector(".body"), lower = sh.querySelector(".lower");
+  sh.classList.remove("two-page");   // 재기 전에 2쪽 표시를 빼서 화면 높이에 영향이 없게
+  const z = parseFloat(getComputedStyle(sh).zoom) || 1, pad = parseFloat(getComputedStyle(sh).paddingTop), top = sh.getBoundingClientRect().top;   // 화면 축소 배율은 되돌려서 잼
+  const h = (foot.getBoundingClientRect().bottom - top) / z - pad;
   if (!(h > 0)) return;
-  sh.style.setProperty("--print-zoom", Math.min(0.93, PRINT_H / h).toFixed(3));
+  const z1 = PRINT_H / h;
+  const h1 = (body.getBoundingClientRect().bottom - top) / z - pad, h2 = (foot.getBoundingClientRect().bottom - lower.getBoundingClientRect().top) / z + P2_HEAD, z2 = PRINT_H / Math.max(h1, h2);
+  const two = printPages === "two" || (printPages === "auto" && z1 < TWO_PAGE_BELOW && z2 > z1 + 0.05);
+  sh.classList.toggle("two-page", two);
+  $("p2Info").textContent = !two ? "" : ["fStyle", "fItem", "fBrand"].map((id) => $(id).textContent.trim().replace(/\s*\n\s*/g, " / ")).filter(Boolean).join(" · ");   // 병기는 한 줄로
+  sh.style.setProperty("--print-zoom", Math.min(0.93, two ? z2 : z1).toFixed(3));
 }
+$("printPages").value = printPages;
+$("printPages").addEventListener("change", (e) => { printPages = e.target.value; try { localStorage.setItem("jakji_printpages", printPages); } catch (err) {} fitPrint(); });
 /* 잡화는 성별 버튼과 옷 전용 선택(핏·넥라인·밑단·스커트 모양·주머니)을 숨김 */
 function renderKindControls() {
   const bag = isBag();
@@ -1631,7 +1665,7 @@ function fitScreen() {
   document.documentElement.style.setProperty("--fit", Math.min(1, avail / 1123).toFixed(3));
 }
 window.addEventListener("resize", fitScreen);
-window.addEventListener("beforeprint", () => preparePrint());
+window.addEventListener("beforeprint", () => { preparePrint(); track(activeTab === "pat" ? "pattern" : "print"); });
 
 $("gM").addEventListener("click", () => setGender("m"));
 $("gF").addEventListener("click", () => setGender("f"));
@@ -2012,6 +2046,7 @@ function sheetHTML() {
 }
 let downloadsCap = null;
 async function saveFile(filename, data, type) {
+  track(/\.json$/.test(filename) ? "save" : /^패턴_/.test(filename) ? "pattern" : "export");
   /* 파일 글자 언어: 작업지시서(작업지시서_·도식화_·CSV)는 작업지시서 언어, 패턴·외곽선은 화면 언어. 영어면 파일 이름도 영어 */
   const sheetFile = /^(작업지시서_|도식화_|작업_)/.test(filename), en = sheetFile ? sheetLang === "en" : EN;
   if (en && window.I18N) { filename = filename.replace(/^작업지시서_/, "worksheet_").replace(/^도식화_/, "flats_").replace(/^패턴_/, "pattern_").replace(/^외곽선_/, "outline_");
@@ -2848,6 +2883,7 @@ async function keepCurrentFirst() {
 $("jobsBtn").addEventListener("click", async () => { $("jobMsg").textContent = ""; await renderJobs(); $("jobsDlg").showModal(); });
 document.querySelectorAll("dialog.dlg [data-close]").forEach((b) => b.addEventListener("click", () => b.closest("dialog").close()));
 $("jobSaveCur").addEventListener("click", async () => {
+  track("mystyle");
   try { await saveCurrent($("jobName").value.trim()); $("jobMsg").textContent = `‘${cur.name}’으로 저장했습니다. 이제 고치는 내용이 자동으로 저장됩니다.`; renderJobs(); }
   catch (e) { $("jobMsg").textContent = "저장하지 못했습니다. 브라우저 저장 공간이 부족하거나 막혀 있을 수 있습니다."; }
 });
@@ -2916,10 +2952,12 @@ async function openShareDlg(src) {
 $("shareBtn").addEventListener("click", () => openShareDlg(snapshot(false)));
 $("shareCost").addEventListener("change", makeShareUrl);
 $("shareCopy").addEventListener("click", async () => {
+  track("share");
   try { await navigator.clipboard.writeText($("shareUrl").value); $("shareMsg").textContent = "링크를 복사했습니다. 카카오톡·메일에 붙여 넣어 보내세요."; }
   catch (e) { $("shareUrl").select(); $("shareMsg").textContent = "자동 복사가 막혀 있습니다. 선택된 링크를 직접 복사(Ctrl·Cmd+C)해 주세요."; }
 });
-$("shareSend").addEventListener("click", async () => { try { await navigator.share({ title: `작업지시서 ${txt("fStyle")}`, url: $("shareUrl").value }); } catch (e) {} });
+$("shareSend").addEventListener("click", async () => {
+  track("share"); try { await navigator.share({ title: `작업지시서 ${txt("fStyle")}`, url: $("shareUrl").value }); } catch (e) {} });
 $("shareUrl").addEventListener("focus", (e) => e.target.select());
 
 /* 공유 링크로 열었을 때: 읽기 전용 보기 */
