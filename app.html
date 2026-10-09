@@ -84,6 +84,30 @@
   .pg-note { display: none; margin: 10px 0 0; padding: 3px 8px; border: 1px dashed var(--mark); border-radius: 6px; font-size: 11px; color: var(--mark); text-align: center; }
   .sheet.two-page .pg-note { display: block; }
   .p2-head { display: none; }
+  .mob-tab { display: none !important; }
+  @media (max-width: 760px) { .mob-tab { display: inline-block !important; } }
+  .cards { padding: 12px 12px 0; }
+  .cards .cd { border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px 14px; margin: 0 0 12px; background: #fff; }
+  .cards .cd h3 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .cards .cd h3 small { font-weight: 400; font-size: 12px; color: var(--ink-soft); }
+  .cards .cd-hint { margin: 0 0 8px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+  .cards label { display: block; font-size: 12.5px; color: var(--ink-soft); margin: 8px 0 0; }
+  #cards input, #cards textarea { width: 100%; margin-top: 3px; padding: 12px 12px; border: 1px solid var(--rule); border-radius: 12px; font: inherit; font-size: 16px; background: #fff; color: var(--ink); }   /* 16px: 아이폰이 입력 때 화면을 확대하지 않음 */
+  #cards textarea { min-height: 120px; line-height: 1.55; }
+  .cards .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .cards .row-card { border: 1px dashed var(--rule); border-radius: 14px; padding: 4px 10px 10px; margin-top: 10px; position: relative; }
+  .cards .row-card .rm { position: absolute; right: 8px; top: 6px; border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; width: 28px; height: 28px; font-size: 15px; cursor: pointer; padding: 0; }
+  .cards .btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .cards .btnrow button, .card-bar button { border: 1px solid var(--mat); background: #fff; color: var(--mat); border-radius: 999px; padding: 11px 16px; font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer; }
+  .cards .mrow { display: grid; grid-template-columns: 1fr 108px; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+  .cards .mrow:first-of-type { border-top: 0; }
+  .cards .mrow b { color: var(--mark); margin-right: 6px; }
+  .cards .mrow small { display: block; color: var(--ink-soft); font-size: 11.5px; margin-top: 2px; }
+  #cards .mrow input { text-align: right; margin: 0; padding: 10px; }
+  .cards .mrow .others { grid-column: 1 / -1; font-size: 11.5px; color: var(--ink-soft); }
+  .card-bar { position: sticky; bottom: 0; display: flex; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); margin: 0 -12px; background: rgba(251,248,242,.94); backdrop-filter: blur(8px); border-top: 1px solid var(--line); }
+  .card-bar button { flex: 1; } .card-bar button.pri { background: var(--mat); color: #fff; }
+  @media print { #cards { display: none !important; } }
   .mob-only { display: none; }
   @media (max-width: 960px) { .mob-only { display: inline-flex; } .stage { min-width: 0; } body.sheet-big .stage { overflow-x: auto; } }
   .i18n-nl { white-space: pre-line; }   /* 한·영 병기: 한국어 줄 아래 영어 줄 */
@@ -241,6 +265,13 @@
   .ed-chips button:hover { background: var(--lemon-soft); }
   .ed-bar .ed-order { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; } .ed-bar .ed-order button:disabled { opacity: .35; cursor: default; }
   .ed-bar .ed-size { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; } .ed-bar .ed-size input { flex: 0 0 120px; min-width: 100px; padding: 0; border: 0; }
+  .fab-extra.empty table { display: none; } .fab-extra .fab-add { margin: 0; } .fab-extra .x { width: 20px; padding: 0; border-width: 0 0 0 0 !important; background: none !important; }
+  .fab-add button, .fab-x { border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; padding: 2px 10px; font: inherit; font-size: 11.5px; cursor: pointer; }
+  .fab-x { padding: 0; width: 18px; height: 18px; line-height: 1; border-radius: 50%; }
+  @media print { .fab-extra.empty, .fab-add, .fab-extra .x { display: none !important; } }
+  body.view-only .fab-add, body.view-only .fab-extra .x { display: none !important; }
+  /* 배율을 잴 때는 인쇄될 모양으로(화면 전용 안내·버튼 제외) */
+  .sheet.fit-print .fab-extra.empty, .sheet.fit-print .fab-add, .sheet.fit-print .fab-extra .x, .sheet.fit-print .sw-add, .sheet.fit-print .sw-hint, .sheet.fit-print .swatches.empty, .sheet.fit-print .ph-hint, .sheet.fit-print .ph-tools, .sheet.fit-print .pg-note { display: none !important; }
   .qty-box { border: 1px solid var(--ink); } .qty-box .cap { font-size: 12px; font-weight: 700; padding: 3px 6px; border-bottom: 1px solid var(--ink); background: #f1f1ee; }
   .sheet table.qty { border: 0; } .sheet table.qty th, .sheet table.qty td { border-width: 0 1px 1px 0; text-align: center; padding: 3px 4px; } .sheet table.qty th:first-child { text-align: left; }
   .sheet table.qty tr:last-child th, .sheet table.qty tr:last-child td { border-bottom: 0; font-weight: 700; } .sheet table.qty td.tot, .sheet table.qty th.tot { background: #fff4c2; font-weight: 700; }
@@ -317,7 +348,7 @@
   .care-label { white-space: pre-wrap; font: 12px/1.65 ui-monospace, Menlo, monospace; border: 1px dashed var(--ink); border-radius: 6px; padding: 12px; background: #fcfcfa; margin: 0; }
   .care-label .bad { font-family: inherit; }
   .flash { outline: 3px solid var(--tape) !important; outline-offset: 1px; }
-  @media print { #olz, #edit, #prod { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
+  @media print { #olz, #edit, #prod, #cards { display: none !important; } body.print-olz #sheet[hidden] { display: block !important; } }
 
   .app-foot { max-width: 1123px; margin: 22px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
   .app-foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 6px; }
@@ -508,6 +539,7 @@
   <main class="stage">
     <div class="tabs" role="tablist" aria-label="화면">
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
+      <button role="tab" id="tabCardsBtn" class="mob-tab" aria-selected="false" aria-controls="cards">✎ 카드 입력</button>
       <button role="tab" id="tabEditBtn" aria-selected="false" aria-controls="edit">도식화 편집</button>
       <button role="tab" id="tabProdBtn" aria-selected="false" aria-controls="prod">생산 준비</button>
       <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500">베타</small></button>
@@ -587,6 +619,13 @@
               <tr><th>요척</th><td contenteditable id="fYield">실측 후 기입</td></tr>
             </table>
           </div>
+          <div class="fab-extra empty" id="fabExtra">
+            <table id="fabTable">
+              <thead><tr><th style="width:48px">용도</th><th>원단명</th><th>혼용률</th><th style="width:78px">중량·조직</th><th style="width:44px">요척</th><th class="x" data-noexport></th></tr></thead>
+              <tbody></tbody>
+            </table>
+            <div class="fab-add" data-noexport><button type="button" id="fabAdd">＋ 원단 줄 추가 (안감·시보리·배색 등)</button></div>
+          </div>
           <table id="trimTable">
             <thead><tr><th style="width:70px">구분</th><th>품목</th><th>규격·컬러</th><th style="width:70px">수량</th></tr></thead>
             <tbody></tbody>
@@ -620,6 +659,7 @@
       <div class="foot"><span>치수 허용오차 ±1cm (별도 협의 시 협의값 우선)</span><span id="footStamp"></span></div>
     </article>
 
+    <section class="pat cards" id="cards" role="tabpanel" aria-label="카드 입력" hidden></section>
     <section class="pat" id="pat" role="tabpanel" aria-label="패턴 제도" hidden>
       <div class="pat-form">
         <label class="wide">품목<select id="patType"></select></label>
@@ -1060,6 +1100,7 @@ const state = {
          sleeve: "set", hem: "straight", waist: "fixed", fpocket: "slant", bpocket: "patch",
          chest: false, kangaroo: false, patch: false, side: true, back: true, cargo: false, pleat: false },
   ai: null,
+  fabrics: [],                      // 추가 원단 줄: { use(용도), name, mix, weight, yield } 최대 6개 (주 원단은 위 원단·혼용률 칸)
   swLink: false, swHidden: [],      // 스와치 ↔ 컬러 칸 연결, 연결 상태에서 지운 색(다시 안 만듦)
   swatches: [],                     // 원단 스와치: { name, color 또는 src(사진) } 최대 6개
   notes: { front: [], back: [] },   // 도식화 편집: 메모·화살표·동그라미·이미지
@@ -1583,15 +1624,16 @@ const PRINT_H = 705, TWO_PAGE_BELOW = 0.72, P2_HEAD = 28;
 let printPages = (() => { try { const v = localStorage.getItem("jakji_printpages"); return /^(auto|one|two)$/.test(v) ? v : "auto"; } catch (e) { return "auto"; } })();
 function fitPrint() {
   const sh = $("sheet"), foot = sh.querySelector(".foot"), body = sh.querySelector(".body"), lower = sh.querySelector(".lower");
-  sh.classList.remove("two-page");   // 재기 전에 2쪽 표시를 빼서 화면 높이에 영향이 없게
+  sh.classList.remove("two-page"); sh.classList.add("fit-print");   // 재기 전에 2쪽 표시를 빼고 인쇄될 모양으로
   const z = parseFloat(getComputedStyle(sh).zoom) || 1, pad = parseFloat(getComputedStyle(sh).paddingTop), top = sh.getBoundingClientRect().top;   // 화면 축소 배율은 되돌려서 잼
   const h = (foot.getBoundingClientRect().bottom - top) / z - pad;
-  if (!(h > 0)) return;
+  if (!(h > 0)) { sh.classList.remove("fit-print"); return; }
   const z1 = PRINT_H / h;
   const h1 = (body.getBoundingClientRect().bottom - top) / z - pad, h2 = (foot.getBoundingClientRect().bottom - lower.getBoundingClientRect().top) / z + P2_HEAD, z2 = PRINT_H / Math.max(h1, h2);
   const two = printPages === "two" || (printPages === "auto" && z1 < TWO_PAGE_BELOW && z2 > z1 + 0.05);
   sh.classList.toggle("two-page", two);
   $("p2Info").textContent = !two ? "" : ["fStyle", "fItem", "fBrand"].map((id) => $(id).textContent.trim().replace(/\s*\n\s*/g, " / ")).filter(Boolean).join(" · ");   // 병기는 한 줄로
+  sh.classList.remove("fit-print");
   sh.style.setProperty("--print-zoom", Math.min(0.93, two ? z2 : z1).toFixed(3));
 }
 $("printPages").value = printPages;
@@ -1747,6 +1789,54 @@ photoBox.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key ==
 $("photoFile").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; takeFile(f, true); });
 photoBox.addEventListener("dragover", (e) => { if (!viewOnly && [...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
 photoBox.addEventListener("drop", (e) => { const f = e.dataTransfer?.files?.[0]; if (!f || viewOnly) return; e.preventDefault(); takeFile(f, true); });
+/* 카드 입력(폰용): 작업지시서의 작은 칸 대신 항목별 큰 입력칸. 열 때마다 작업지시서에서 원문을 읽어 채우고, 고치면 바로 작업지시서 칸에 씀 */
+const CARD_FIELDS = ["fBrand", "fStyle", "fSeason", "fItem", "fRound", "fDue", "fQty", "fColor", "fDesigner", "fFactory"];
+const fieldLabel = (id) => ($(id).previousElementSibling?.textContent || id).trim().replace(/\s*\n\s*/g, " / ");
+function renderCards() {
+  const q = (t) => tt(t), baseCol = [...$("specTable").querySelectorAll("tr:first-child th")].findIndex((th) => th.classList.contains("base"));
+  const specRowsHtml = [...$("specTable").querySelectorAll("tr")].slice(1).map((tr, i) => {
+    const td = [...tr.children], part = partOf(td[1]), cur = td[baseCol]?.textContent.trim(), others = td.slice(3, -1).map((c, k) => `${esc([...$("specTable").querySelectorAll("tr:first-child th")][k + 3].textContent.trim().replace(/\s*\n\s*/g, " "))} ${esc(c.textContent.trim())}`).join(" · ");
+    return `<div class="mrow"><div><b>${esc(td[0].textContent.trim())}</b>${esc(td[1].textContent.trim())}<small>${esc(td[2].textContent.trim())}</small></div><input type="number" inputmode="decimal" step="0.5" data-spec="${esc(part)}" value="${esc(cur)}" aria-label="${esc(td[1].textContent.trim())} (cm)" /><div class="others" data-others="${i}">${others}</div></div>`;
+  }).join("");
+  const trimRows = [...$("trimTable").querySelectorAll("tbody tr")].map((tr, i) => `<div class="row-card" data-trim="${i}">${[0, 1, 2, 3].map((k) => `<label>${["구분", "품목", "규격·컬러", "수량"][k]}<input type="text" data-tc="${k}" value="${esc(srcOf(tr.children[k]).trim())}" /></label>`).join("")}<button type="button" class="rm" data-rm-trim="${i}" aria-label="삭제">×</button></div>`).join("");
+  const fabRows = state.fabrics.map((f, i) => `<div class="row-card" data-fab="${i}">${[["use", "용도"], ["name", "원단명"], ["mix", "혼용률"], ["weight", "중량·조직"], ["yield", "요척"]].map(([k, l]) => `<label>${l}<input type="text" data-fk="${k}" value="${esc(f[k] || "")}" /></label>`).join("")}<button type="button" class="rm" data-rm-fab="${i}" aria-label="삭제">×</button></div>`).join("");
+  $("cards").innerHTML = `
+    <div class="cd"><h3>① 기본 정보</h3><div class="g2">${CARD_FIELDS.map((id) => `<label>${esc(fieldLabel(id))}<input type="text" data-f="${id}" value="${esc(txt(id))}" /></label>`).join("")}</div></div>
+    <div class="cd"><h3>② 원단</h3>${["fFabric", "fMix", "fWeight", "fYield"].map((id) => `<label>${esc(fieldLabel(id))}<input type="text" data-f="${id}" value="${esc(txt(id))}" /></label>`).join("")}
+      <p class="cd-hint" style="margin-top:12px">안감·시보리·배색 등 다른 원단은 아래에 줄로 더하세요.</p>${fabRows}<div class="btnrow"><button type="button" id="cdFabAdd" ${state.fabrics.length >= FAB_MAX ? "hidden" : ""}>＋ 원단 줄 추가</button></div></div>
+    <div class="cd"><h3>③ 치수 <small>기준 사이즈 ${esc(sizeLabel(state.base))} · cm</small></h3><p class="cd-hint">기준 사이즈 숫자를 고치면 다른 사이즈도 같은 차이만큼 바뀝니다. 샘플을 실측한 값을 넣으세요.</p>${specRowsHtml}</div>
+    <div class="cd"><h3>④ 부자재</h3>${trimRows}<div class="btnrow"><button type="button" id="cdTrimAdd">＋ 부자재 줄 추가</button></div></div>
+    <div class="cd"><h3>⑤ 봉제 사양 · 주의사항</h3><p class="cd-hint">한 줄에 하나씩 적어 주세요.</p><label>봉제 사양<textarea data-lines="sewList">${esc(lines($("sewList")).join("\n"))}</textarea></label><label>주의사항<textarea data-lines="noteList">${esc(lines($("noteList")).join("\n"))}</textarea></label></div>
+    <div class="cd"><h3>⑥ 사진 · 스와치 · 도식화</h3><div class="btnrow"><button type="button" id="cdPhoto">📷 참고 사진 넣기</button><button type="button" id="cdSwColor">🎨 스와치 색 추가</button><button type="button" id="cdSwPhoto">🧵 스와치 사진 추가</button><button type="button" id="cdEdit">✋ 도식화 편집</button><button type="button" id="cdProd">📦 생산 준비</button></div></div>
+    <div class="card-bar"><button type="button" class="pri" id="cdView">작업지시서 보기</button><button type="button" id="cdXlsx">엑셀로 저장</button><button type="button" id="cdPrint">인쇄 · PDF</button></div>`;
+}
+(() => {
+  const c = $("cards"), saved = () => { fitPrint(); scheduleSave(); };
+  c.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.dataset.f) { $(t.dataset.f).textContent = t.value; if (t.dataset.f === "fItem") { /* 품명만 */ } saved(); return; }
+    if (t.dataset.spec) { const cm = parseFloat(t.value); if (Number.isFinite(cm) && setBaseValue(t.dataset.spec, cm)) { renderFlats(); saved(); const tr = specRow(t.dataset.spec), i = [...$("specTable").querySelectorAll("tr")].indexOf(tr) - 1, heads = [...$("specTable").querySelectorAll("tr:first-child th")], td = [...tr.children];
+      const o = c.querySelector(`[data-others="${i}"]`); if (o) o.textContent = td.slice(3, -1).map((x, k) => `${heads[k + 3].textContent.trim().replace(/\s*\n\s*/g, " ")} ${x.textContent.trim()}`).join(" · "); } return; }
+    if (t.dataset.tc != null) { const tr = $("trimTable").querySelectorAll("tbody tr")[+t.closest("[data-trim]").dataset.trim]; if (tr) { tr.children[+t.dataset.tc].textContent = t.value; saved(); } return; }
+    if (t.dataset.fk) { const f = state.fabrics[+t.closest("[data-fab]").dataset.fab]; if (f) { f[t.dataset.fk] = t.value.slice(0, 40); saved(); } return; }
+    if (t.dataset.lines) { $(t.dataset.lines).innerHTML = t.value.split("\n").map((x) => x.trim()).filter(Boolean).map((x) => `<li>${esc(x)}</li>`).join(""); saved(); }
+  });
+  c.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "cdFabAdd") { if (state.fabrics.length < FAB_MAX) { state.fabrics.push({ use: FAB_USES[Math.min(state.fabrics.length, FAB_USES.length - 1)], name: "", mix: "", weight: "", yield: "" }); renderFabrics(); scheduleSave(); renderCards(); } return; }
+    if (b.dataset.rmFab != null) { state.fabrics.splice(+b.dataset.rmFab, 1); renderFabrics(); scheduleSave(); renderCards(); return; }
+    if (b.id === "cdTrimAdd") { const tb = $("trimTable").querySelector("tbody"), tr = document.createElement("tr"); tr.innerHTML = "<td contenteditable></td>".repeat(4); tb.append(tr); scheduleSave(); fitPrint(); renderCards(); c.querySelector(`[data-trim="${tb.rows.length - 1}"] input`)?.focus(); return; }
+    if (b.dataset.rmTrim != null) { $("trimTable").querySelectorAll("tbody tr")[+b.dataset.rmTrim]?.remove(); scheduleSave(); fitPrint(); renderCards(); return; }
+    if (b.id === "cdPhoto") return $("photoFile").click();
+    if (b.id === "cdSwColor") { $("swColorBtn").click(); return; }
+    if (b.id === "cdSwPhoto") return $("swPhotoBtn").click();
+    if (b.id === "cdEdit") return setTab("edit");
+    if (b.id === "cdProd") return setTab("prod");
+    if (b.id === "cdView") { setTab("sheet"); $("sheet").scrollIntoView({ block: "start" }); return; }
+    if (b.id === "cdXlsx") return $("saveXlsxBtn").click();
+    if (b.id === "cdPrint") return $("printBtn").click();
+  });
+})();
 /* 원단 스와치: 색상 또는 원단 조각 사진(가운데를 정사각형으로 잘라 160px). 이름은 눌러서 고침. 인쇄·내보낸 파일에는 스와치가 있을 때만 나옴 */
 const SW_MAX = 6;
 let swEdit = -1;
@@ -1761,6 +1851,23 @@ const cleanSwatches = (arr) => (Array.isArray(arr) ? arr.slice(0, 30) : []).map(
   if (typeof x?.color === "string" && /^#[0-9a-fA-F]{6}$/.test(x.color)) return { name, color: x.color.toLowerCase(), ...(x.auto === true ? { auto: true } : {}), ...(typeof x.key === "string" && x.key ? { key: str(x.key, 30) } : {}) };
   return null;
 }).filter(Boolean).slice(0, SW_MAX);
+/* 추가 원단 줄 (안감·시보리·배색…): 주 원단(원단·혼용률·중량·요척 칸)은 그대로 두고 아래에 더함 */
+const FAB_USES = ["안감", "시보리", "배색", "심지", "기타"], FAB_MAX = 6, FAB_KEYS = ["use", "name", "mix", "weight", "yield"];
+function renderFabrics() {
+  $("fabExtra").classList.toggle("empty", !state.fabrics.length);
+  $("fabTable").tBodies[0].innerHTML = state.fabrics.map((f, i) => `<tr data-i="${i}">${FAB_KEYS.map((k) => `<td contenteditable data-k="${k}">${esc(f[k] || "")}</td>`).join("")}<td class="x" data-noexport><button type="button" class="fab-x" aria-label="삭제" title="삭제">×</button></td></tr>`).join("");
+  $("fabAdd").hidden = state.fabrics.length >= FAB_MAX; fitPrint();
+}
+const cleanFabrics = (arr) => (Array.isArray(arr) ? arr : []).slice(0, FAB_MAX).map((x) => Object.fromEntries(FAB_KEYS.map((k) => [k, str(x?.[k], 40)]))).filter((f) => FAB_KEYS.some((k) => f[k]));
+$("fabAdd").addEventListener("click", () => {
+  if (viewOnly || state.fabrics.length >= FAB_MAX) return;
+  state.fabrics.push({ use: FAB_USES[Math.min(state.fabrics.length, FAB_USES.length - 1)], name: "", mix: "", weight: "", yield: "" }); renderFabrics(); scheduleSave();
+  $("fabTable").tBodies[0].lastElementChild.children[1].focus();
+});
+$("fabTable").addEventListener("input", (e) => {
+  const td = e.target.closest("td[data-k]"); if (!td) return; const f = state.fabrics[+td.parentElement.dataset.i]; if (f) { f[td.dataset.k] = srcOf(td).trim().slice(0, 40); scheduleSave(); fitPrint(); }
+});
+$("fabTable").addEventListener("click", (e) => { const x = e.target.closest(".fab-x"); if (!x || viewOnly) return; state.fabrics.splice(+x.closest("tr").dataset.i, 1); renderFabrics(); scheduleSave(); });
 async function squarePhoto(file) {
   if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error("type");
   const im = await createImageBitmap(file), m = Math.min(im.width, im.height), c = document.createElement("canvas"); c.width = c.height = 160;
@@ -2072,6 +2179,7 @@ function sheetHTML() {
   sheet.querySelectorAll("[contenteditable]").forEach((n) => n.removeAttribute("contenteditable"));
   sheet.querySelectorAll("[data-noexport]").forEach((n) => n.remove());
   if (!state.swatches.length) sheet.querySelector("#swatchBox")?.remove();
+  if (!state.fabrics.length) sheet.querySelector("#fabExtra")?.remove();
   sheet.querySelector("#sheetPhoto")?.removeAttribute("title"); sheet.querySelector("#sheetPhoto")?.removeAttribute("role"); sheet.querySelector("#sheetPhoto")?.removeAttribute("tabindex");
   sheet.querySelectorAll("[data-part]").forEach((n) => n.removeAttribute("data-part"));   // 화면용 원문 표시는 파일에 넣지 않음
   return `<!doctype html><html lang="${sheetLang === "en" ? "en" : "ko"}"><head><meta charset="utf-8"><title>${sheetLang === "ko" ? "작업지시서" : sheetLang === "en" ? "Tech pack" : "작업지시서 Tech pack"} ${esc($("fStyle").textContent)}</title><style>${css}
@@ -2126,7 +2234,9 @@ function fillFromWorksheet() {
 }
 function setTab(t) {
   activeTab = t;
-  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit"); $("tabProdBtn").setAttribute("aria-selected", t === "prod");
+  $("tabSheetBtn").setAttribute("aria-selected", t === "sheet"); $("tabPatBtn").setAttribute("aria-selected", t === "pat"); $("tabOlzBtn").setAttribute("aria-selected", t === "olz"); $("tabEditBtn").setAttribute("aria-selected", t === "edit"); $("tabProdBtn").setAttribute("aria-selected", t === "prod"); $("tabCardsBtn").setAttribute("aria-selected", t === "cards");
+  $("cards").hidden = t !== "cards";
+  if (t === "cards") renderCards();
   $("sheet").hidden = t !== "sheet"; $("pat").hidden = t !== "pat"; $("olz").hidden = t !== "olz"; $("edit").hidden = t !== "edit"; $("prod").hidden = t !== "prod";
   if (t === "edit") renderEditor();
   if (t === "prod") renderProd();
@@ -2138,6 +2248,7 @@ $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
 $("tabPatBtn").addEventListener("click", () => setTab("pat"));
 $("tabOlzBtn").addEventListener("click", () => setTab("olz"));
 $("tabEditBtn").addEventListener("click", () => setTab("edit"));
+$("tabCardsBtn").addEventListener("click", () => setTab("cards"));
 $("tabProdBtn").addEventListener("click", () => setTab("prod"));
 
 /* ====================================================================== 도식화 편집 (캔버스)
@@ -2503,7 +2614,7 @@ function buildPatPrint() {
 function preparePrint() {
   if (window.I18N) I18N.flush();
   document.body.classList.toggle("print-pattern", activeTab === "pat");
-  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit" || activeTab === "prod");   // 사진 분석·편집·생산 준비 탭에서 인쇄하면 작업지시서를 인쇄
+  document.body.classList.toggle("print-olz", activeTab === "olz" || activeTab === "edit" || activeTab === "prod" || activeTab === "cards");   // 사진 분석·편집·생산 준비 탭에서 인쇄하면 작업지시서를 인쇄
   if (activeTab === "pat") buildPatPrint();
   else { $("pageStyle").textContent = "@page { size: A4 landscape; margin: 7mm; }"; fitPrint(); }
 }
@@ -2749,6 +2860,7 @@ function buildCSV() {
     cs.forEach((c) => row(c, ...zs.map((z) => qtyOf(c, z)), zs.reduce((a, z) => a + qtyOf(c, z), 0)));
     row("합계", ...zs.map((z) => cs.reduce((a, c) => a + qtyOf(c, z), 0)), orderTotal());
   }
+  if (state.fabrics.length) { out.push(""); row("[추가 원단]"); row("용도", "원단명", "혼용률", "중량·조직", "요척"); state.fabrics.forEach((f) => row(...FAB_KEYS.map((k) => f[k]))); }
   out.push(""); row("[부자재]"); row("구분", "품목", "규격·컬러", "수량");
   $("trimTable").querySelectorAll("tbody tr").forEach((tr) => { const c = [...tr.children].map((td) => td.textContent.trim()); if (c.some(Boolean)) row(...c); });
   if (state.swatches.length) { out.push(""); row("[스와치]"); state.swatches.forEach((w, i) => row(w.name || `원단 ${i + 1}`, w.color || "(사진)")); }
@@ -2793,12 +2905,17 @@ async function buildXlsx() {
   const fabric = ["fFabric", "fMix", "fWeight", "fYield"].map((id) => [$(id).closest("tr")?.querySelector("th")?.textContent.trim() || "", shownT(id)]);
   const trims = [...$("trimTable").querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent.trim())).filter((x) => x.some(Boolean));
   put(r, 6, th(ts("구분"))); span(r, 7, 8, th(ts("품목"))); span(r, 9, 10, th(ts("규격·컬러"))); put(r, 11, th(ts("수량")));
-  const nR = Math.max(fabric.length, trims.length, 4);
+  const left = fabric.map((f) => ({ kv: f }));
+  if (state.fabrics.length) { left.push({ head: true }); state.fabrics.forEach((f) => left.push({ fab: f })); }   // 추가 원단 줄: 용도 | 원단명 | 혼용률 | 중량·조직 | 요척
+  const nR = Math.max(left.length, trims.length, 4);
   for (let i = 0; i < nR; i++) {
-    const rr = r + 1 + i, f = fabric[i], t = trims[i] || [];
-    if (f) { span(rr, 0, 1, th(f[0], { al: "left" })); span(rr, 2, 5, td(f[1])); } else { span(rr, 0, 5, td("", { bd: false })); }
+    const rr = r + 1 + i, L = left[i] || {}, t = trims[i] || [], f = L.fab;
+    if (L.kv) { span(rr, 0, 1, th(L.kv[0], { al: "left" })); span(rr, 2, 5, td(L.kv[1])); }
+    else if (L.head) { put(rr, 0, th(ts("용도"))); span(rr, 1, 2, th(ts("원단명"))); put(rr, 3, th(ts("혼용률"))); put(rr, 4, th(ts("중량·조직"))); put(rr, 5, th(ts("요척"))); }
+    else if (f) { put(rr, 0, td(ts(f.use), { al: "center" })); span(rr, 1, 2, td(ts(f.name))); put(rr, 3, td(ts(f.mix))); put(rr, 4, td(ts(f.weight))); put(rr, 5, td(ts(f.yield), { al: "center" })); }
+    else span(rr, 0, 5, td("", { bd: false }));
     put(rr, 6, td(t[0] || "")); span(rr, 7, 8, td(t[1] || "")); span(rr, 9, 10, td(t[2] || "")); put(rr, 11, td(t[3] || ""));
-    rh[rr + 1] = Math.max(20, rowH(t[1] || "", 16), rowH(t[2] || "", 16), f ? rowH(f[1], 40) : 0);
+    rh[rr + 1] = Math.max(20, rowH(t[1] || "", 16), rowH(t[2] || "", 16), L.kv ? rowH(L.kv[1], 40) : 0, f ? Math.max(rowH(ts(f.name), 22), rowH(ts(f.mix), 10), rowH(ts(f.weight), 10)) : 0);
   }
   r += 1 + nR + 1;
   // 스와치 (색 칸 + 이름, 사진 스와치는 그림)
@@ -2869,6 +2986,7 @@ function careTextFor(lang) {
 const careText = () => (sheetLang === "en" ? careTextFor("en") : sheetLang === "both" ? careTextFor("ko") + "\n\n" + careTextFor("en") : careTextFor("ko"));
 function renderCare() {
   const c = state.prod.care, d = new Date();
+  if (!c.lining) { const l = state.fabrics.find((f) => /안감|lining/i.test(f.use) && f.mix); if (l) c.lining = l.mix; }   // 추가 원단의 안감 혼용률을 케어라벨 안감에
   if (!c.mix) c.mix = tt(txt("fMix")); if (!c.maker) c.maker = txt("fBrand"); c.country ??= tt("대한민국");
   c.date ??= `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}`; c.size ??= tt(careSizeDefault());
   if (!state.prod.careOpts) state.prod.careOpts = [...CARE_DEF];
@@ -3184,7 +3302,7 @@ function snapshot(withPhoto = true) {
     sew: lines($("sewList")), notes: lines($("noteList")),
     photo: withPhoto && state.photo ? state.photo.dataUrl : null,
     pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null,
-    marks: withPhoto ? state.notes : noImages(state.notes), offsets: state.offsets, prod: state.prod, sheetLang, swatches: withPhoto ? state.swatches : state.swatches.filter((w) => !w.src), swLink: state.swLink, swHidden: state.swHidden };
+    marks: withPhoto ? state.notes : noImages(state.notes), offsets: state.offsets, prod: state.prod, sheetLang, swatches: withPhoto ? state.swatches : state.swatches.filter((w) => !w.src), swLink: state.swLink, swHidden: state.swHidden, fabrics: state.fabrics.map((f) => ({ ...f })) };
 }
 const str = (x, max = 300) => String(x ?? "").slice(0, max);
 async function restore(j) {
@@ -3231,7 +3349,7 @@ async function restore(j) {
   const marks = j.marks || (j.notes && !Array.isArray(j.notes) ? j.notes : null);   // 예전 파일은 notes 에 들어 있음
   for (const vw of ["front", "back"]) if (Array.isArray(marks?.[vw])) { let ni = 0; state.notes[vw] = marks[vw].slice(0, 60).map(cleanNote).filter((x) => x && (x.t !== "img" || ++ni <= IMG_MAX)); }
   state.prod = cleanProd(j.prod);
-  renderQtyBox(); state.swatches = cleanSwatches(j.swatches); state.swLink = j.swLink === true; state.swHidden = Array.isArray(j.swHidden) ? j.swHidden.slice(0, 12).map((x) => str(x, 30)) : []; $("swLink").checked = state.swLink; renderSwatches();
+  state.fabrics = cleanFabrics(j.fabrics); renderFabrics(); renderQtyBox(); state.swatches = cleanSwatches(j.swatches); state.swLink = j.swLink === true; state.swHidden = Array.isArray(j.swHidden) ? j.swHidden.slice(0, 12).map((x) => str(x, 30)) : []; $("swLink").checked = state.swLink; renderSwatches();
   state.offsets = {};
   for (const [key, o] of Object.entries(j.offsets || {})) if (DETAIL_NAMES[key] && o) state.offsets[key] = { dx: Math.max(-40, Math.min(40, num(o.dx))), dy: Math.max(-60, Math.min(60, num(o.dy))) };
   renderFlats(); if (activeTab === "prod") renderProd();

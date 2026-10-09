@@ -137,7 +137,7 @@ const worst = Buffer.from(await page.pdf({ preferCSSPageSize: true, printBackgro
 fs.writeFileSync(new URL_("worst_case.pdf", OUT), worst);
 ok("AI 결과 최대치(봉제 10줄·부자재 8줄·7사이즈) 인쇄 1장", pages(worst) === 1, `${pages(worst)}장, 배율 ${await page.$eval("#sheet", (n) => n.style.getPropertyValue("--print-zoom"))}`);
 /* 직접 입력으로 더 길어진 경우: 봉제사양에 줄 추가 */
-await page.evaluate(() => { const ol = document.getElementById("sewList"); for (let i = 0; i < 4; i++) ol.insertAdjacentHTML("beforeend", "<li>직접 추가한 봉제 사양 줄 테스트</li>"); ol.dispatchEvent(new Event("input", { bubbles: true })); });
+await page.evaluate(() => { const ol = document.getElementById("sewList"); for (let i = 0; i < 9; i++) ol.insertAdjacentHTML("beforeend", "<li>직접 추가한 봉제 사양 줄 테스트</li>"); ol.dispatchEvent(new Event("input", { bubbles: true })); });
 const typed = Buffer.from(await page.pdf({ preferCSSPageSize: true, printBackground: true }));
 const setPages = (v) => page.evaluate((v) => { const sel = document.getElementById("printPages"); sel.value = v; sel.dispatchEvent(new Event("change", { bubbles: true })); preparePrint(); }, v);
 const zoomNow = () => page.$eval("#sheet", (n) => ({ z: +n.style.getPropertyValue("--print-zoom"), two: n.classList.contains("two-page") }));
@@ -794,7 +794,7 @@ const en = await pe.evaluate(async () => {
   r.title = !HAN.test(document.title);
   for (const g of ["gM", "gF"]) for (const id of Object.keys(STYLES)) {
     document.getElementById("tabSheetBtn").click(); document.getElementById(g).click(); chooseStyle(id); await tick();
-    for (const t of ["tabEditBtn", "tabProdBtn", "tabPatBtn"]) { document.getElementById(t).click(); await tick(); }
+    for (const t of ["tabEditBtn", "tabProdBtn", "tabPatBtn", "tabCardsBtn"]) { document.getElementById(t).click(); await tick(); }
     preparePrint(); await tick();
   }
   document.getElementById("tabSheetBtn").click(); document.getElementById("gM").click(); chooseStyle("hoodie"); await tick();
@@ -1263,6 +1263,86 @@ const mo = await pm.evaluate(async () => {
 });
 ok("손가락 화면: 편집 손잡이·크기·돌리기 손잡이의 누르는 범위가 지름 약 30px 이상, '크게 보기'로 0.7배 + 좌우로 밀어 보기(페이지 가로 스크롤 없음)·되돌리기", mo.hd && mo.px && mo.rh && mo.btn && mo.big && mo.back, JSON.stringify(mo));
 await pm.close(); await pz.close();
+
+/* 18. 추가 원단 줄(안감·시보리·배색) + 폰용 카드 입력 */
+const pf = await browser.newPage();
+pf.on("pageerror", (e) => errors.push("fabric pageerror: " + e.message));
+pf.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("fabric console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pf.setRequestInterception(true); pf.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pf.setViewport({ width: 1400, height: 900 });
+await pf.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pf.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const fx = await pf.evaluate(async () => {
+  const r = {}, tick = (ms = 120) => new Promise((x) => setTimeout(x, ms)), box = document.getElementById("fabExtra"), tb = document.getElementById("fabTable").tBodies[0];
+  r.empty = box.classList.contains("empty") && getComputedStyle(document.getElementById("fabTable")).display === "none" && !document.getElementById("fabAdd").hidden && !/fabExtra/.test(sheetHTML().replace(/<style>[\s\S]*?<\/style>/g, ""));
+  document.getElementById("fabAdd").click(); document.getElementById("fabAdd").click();
+  r.rows = state.fabrics.length === 2 && tb.rows.length === 2 && state.fabrics[0].use === "안감" && state.fabrics[1].use === "시보리" && tb.rows[0].cells.length === 6 && !box.classList.contains("empty");
+  const set = (row, k, v) => { const td = tb.rows[row].querySelector(`[data-k="${k}"]`); td.textContent = v; td.dispatchEvent(new Event("input", { bubbles: true })); };
+  set(0, "name", "폴리 태피터"); set(0, "mix", "폴리에스터 100%"); set(0, "yield", "0.8"); set(1, "name", "면 시보리"); set(1, "mix", "면 95% / 스판 5%");
+  r.input = state.fabrics[0].name === "폴리 태피터" && state.fabrics[0].mix === "폴리에스터 100%" && state.fabrics[1].mix === "면 95% / 스판 5%";
+  for (let i = 0; i < 6; i++) document.getElementById("fabAdd").click(); r.max = state.fabrics.length === 6 && document.getElementById("fabAdd").hidden;
+  tb.rows[5].querySelector(".fab-x").click(); tb.rows[4].querySelector(".fab-x").click(); tb.rows[3].querySelector(".fab-x").click(); tb.rows[2].querySelector(".fab-x").click(); r.del = state.fabrics.length === 2 && !document.getElementById("fabAdd").hidden;
+  const sn = snapshot(true), keep = JSON.stringify(sn.fabrics);
+  state.fabrics = []; renderFabrics(); await restore(JSON.parse(JSON.stringify(sn)));
+  r.round = JSON.stringify(snapshot(true).fabrics) === keep && tb.rows.length === 2 && JSON.stringify(shareSnapshot(sn, false).fabrics) === keep;
+  const bad = JSON.parse(JSON.stringify(sn)); bad.fabrics = [...bad.fabrics, ...Array.from({ length: 9 }, (_, i) => ({ use: "x" + i, name: "n", evil: "<img onerror=1>" })), { }]; await restore(bad);
+  r.clean = state.fabrics.length === 6 && state.fabrics.every((f) => Object.keys(f).sort().join() === "mix,name,use,weight,yield"); await restore(JSON.parse(JSON.stringify(sn)));
+  const h = sheetHTML().replace(/<style>[\s\S]*?<\/style>/g, ""); r.html = /폴리 태피터/.test(h) && !/fab-x|fab-add|＋ 원단 줄/.test(h) && !/contenteditable/.test(h);
+  r.csv = /\[추가 원단\]/.test(buildCSV()) && /폴리 태피터/.test(buildCSV());
+  document.getElementById("tabProdBtn").click(); document.querySelector('.prod-nav [data-p="care"]').click(); await tick();
+  r.care = state.prod.care.lining === "폴리에스터 100%" && /안감/.test(document.getElementById("careOut").textContent);
+  document.getElementById("tabSheetBtn").click();
+  await setSheetLang("en"); await tick(250);
+  r.en = tb.rows[0].cells[0].textContent === "Lining" && state.fabrics[0].use === "안감" && snapshot(true).fabrics[0].use === "안감";
+  await setSheetLang("ko"); await tick(200);
+  r.back = tb.rows[0].cells[0].textContent === "안감";
+  return r;
+});
+ok("추가 원단 줄: 안감·시보리 줄을 더하고 고치고 지움(최대 6), 저장·복원·공유·걸러내기, 내보낸 HTML·CSV, 케어라벨 안감에 연결, 영어 작업지시서에선 'Lining'(저장은 원문)", Object.values(fx).every(Boolean), JSON.stringify(fx));
+const xf = await pf.evaluate(async () => { const b = await buildXlsx(), t = new TextDecoder("latin1").decode(b), i = t.indexOf("xl/worksheets/sheet1.xml"); return /폴리 태피터/.test(new TextDecoder().decode(b)) && /원단명/.test(new TextDecoder().decode(b)); });
+ok("엑셀 내보내기에 추가 원단 표(용도·원단명·혼용률)가 들어감", xf);
+// 카드 입력 (폰)
+const pc = await browser.newPage();
+pc.on("pageerror", (e) => errors.push("cards pageerror: " + e.message));
+pc.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("cards console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pc.setRequestInterception(true); pc.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pc.setViewport({ width: 375, height: 812, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+await pc.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pc.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const cd = await pc.evaluate(async () => {
+  const r = {}, tick = (ms = 120) => new Promise((x) => setTimeout(x, ms)), $ = (id) => document.getElementById(id), tabBtn = $("tabCardsBtn");
+  r.tabVisible = getComputedStyle(tabBtn).display !== "none";
+  tabBtn.click(); await tick();
+  const c = $("cards"); r.open = !c.hidden && $("sheet").hidden && activeTab === "cards" && c.querySelectorAll(".cd").length === 6 && tabBtn.getAttribute("aria-selected") === "true";
+  r.fs = [...c.querySelectorAll("input[type=text], input[type=number], textarea")].every((n) => parseFloat(getComputedStyle(n).fontSize) >= 16) && document.documentElement.scrollWidth <= 376;   // 16px 이상: 폰에서 입력 때 확대 안 됨
+  const type = (sel, v) => { const n = c.querySelector(sel); n.value = v; n.dispatchEvent(new Event("input", { bubbles: true })); return n; };
+  type('[data-f="fBrand"]', "마이 브랜드"); type('[data-f="fMix"]', "면 100%");
+  r.fields = $("fBrand").textContent === "마이 브랜드" && $("fMix").textContent === "면 100%" && snapshot(false).fields.fBrand === "마이 브랜드";
+  const first = c.querySelector("[data-spec]"), part = first.dataset.spec, row = specRow(part), cells = [...row.querySelectorAll("td[contenteditable]")], base0 = cells.map((x) => parseFloat(x.textContent)), bi = cells.findIndex((x) => x.classList.contains("base"));
+  type(`[data-spec="${part}"]`, String(base0[bi] + 3));
+  const now = [...row.querySelectorAll("td[contenteditable]")].map((x) => parseFloat(x.textContent));
+  r.spec = now.every((v, k) => Math.abs(v - (base0[k] + 3)) < 0.01) && /71|72/.test(c.querySelector('[data-others="0"]').textContent + "") ;
+  const trimN = $("trimTable").querySelectorAll("tbody tr").length;
+  c.querySelector("#cdTrimAdd").click(); await tick(); r.trimAdd = $("trimTable").querySelectorAll("tbody tr").length === trimN + 1;
+  const last = c.querySelectorAll("[data-trim]"), li = last[last.length - 1]; li.querySelector('[data-tc="1"]').value = "스토퍼"; li.querySelector('[data-tc="1"]').dispatchEvent(new Event("input", { bubbles: true }));
+  r.trimEdit = srcOf($("trimTable").querySelectorAll("tbody tr")[trimN].children[1]) === "스토퍼";
+  c.querySelector(`[data-rm-trim="${trimN}"]`).click(); await tick(); r.trimDel = $("trimTable").querySelectorAll("tbody tr").length === trimN;
+  c.querySelector("#cdFabAdd").click(); await tick(); type('[data-fk="name"]', "코튼 안감"); r.fab = state.fabrics.length === 1 && state.fabrics[0].name === "코튼 안감" && state.fabrics[0].use === "안감";
+  type('[data-lines="sewList"]', "첫째 줄\n둘째 줄\n\n셋째 줄"); type('[data-lines="noteList"]', "주의 하나");
+  r.lines = lines($("sewList")).join("|") === "첫째 줄|둘째 줄|셋째 줄" && lines($("noteList")).join("|") === "주의 하나" && snapshot(false).sew.length === 3;
+  preparePrint(); r.printClass = document.body.classList.contains("print-olz");
+  c.querySelector("#cdView").click(); await tick(); r.view = activeTab === "sheet" && !$("sheet").hidden && /마이 브랜드/.test($("sheet").textContent);
+  tabBtn.click(); await tick(); r.reopen = c.querySelector('[data-f="fBrand"]').value === "마이 브랜드" && c.querySelector('[data-lines="sewList"]').value.split("\n").length === 3;
+  return r;
+});
+const cdPdf = mediaBoxes(await pc.pdf({ preferCSSPageSize: true })); 
+ok("카드 입력(폰): 탭이 보이고 항목별 6개 카드, 입력칸 16px 이상·가로 스크롤 없음, 고치면 작업지시서 칸에 바로 반영(저장도 원문)", cd.tabVisible && cd.open && cd.fs && cd.fields, JSON.stringify({ tabVisible: cd.tabVisible, open: cd.open, fs: cd.fs, fields: cd.fields }));
+ok("카드 입력: 치수는 기준 사이즈를 고치면 다른 사이즈도 같은 차이, 부자재 줄 추가·고치기·지우기, 추가 원단, 봉제·주의사항 줄 입력, 다시 열면 현재 값", cd.spec && cd.trimAdd && cd.trimEdit && cd.trimDel && cd.fab && cd.lines && cd.view && cd.reopen, JSON.stringify(cd));
+await pc.evaluate(() => { document.getElementById("tabCardsBtn").click(); });
+const cdPdf2 = mediaBoxes(await pc.pdf({ preferCSSPageSize: true }));
+ok("카드 입력 탭에서 인쇄해도 작업지시서(A4 가로)가 나옴", cd.printClass && cdPdf2.length >= 1 && cdPdf2.length <= 2 && cdPdf2.every((m) => !isPortrait(m)), String(cdPdf2.length));
+await pc.close();
+await pf.evaluate(() => localStorage.removeItem("jakji_sheetlang")); await pf.close();
 
 /* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
 const pt = await browser.newPage();

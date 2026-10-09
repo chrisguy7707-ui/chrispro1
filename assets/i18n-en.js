@@ -4,6 +4,11 @@
    용어: 작업지시서=tech pack, 도식화=flat sketch, 치수표=size spec, 단면=½ (flat) width, 시보리=rib, 요척=fabric consumption */
 var D = (window.I18N_DICT = {});
 Object.assign(D, {
+  "✎ 카드 입력": "✎ Card input", "카드 입력": "Card input", "① 기본 정보": "① Basic info", "② 원단": "② Fabric", "안감·시보리·배색 등 다른 원단은 아래에 줄로 더하세요.": "Add other fabrics (lining, rib, contrast…) as rows below.", "＋ 원단 줄 추가": "+ Add fabric row",
+  "③ 치수": "③ Measurements", "기준 사이즈 숫자를 고치면 다른 사이즈도 같은 차이만큼 바뀝니다. 샘플을 실측한 값을 넣으세요.": "Change the base-size number and the other sizes move by the same amount. Enter the values measured from your sample.",
+  "④ 부자재": "④ Trims", "＋ 부자재 줄 추가": "+ Add trim row", "⑤ 봉제 사양 · 주의사항": "⑤ Sewing spec · Notes", "한 줄에 하나씩 적어 주세요.": "Write one item per line.", "⑥ 사진 · 스와치 · 도식화": "⑥ Photo · Swatches · Flats",
+  "📷 참고 사진 넣기": "📷 Add reference photo", "🎨 스와치 색 추가": "🎨 Add swatch color", "🧵 스와치 사진 추가": "🧵 Add swatch photo", "✋ 도식화 편집": "✋ Edit flats", "📦 생산 준비": "📦 Production", "작업지시서 보기": "View tech pack", "인쇄 · PDF": "Print · PDF",
+  "용도": "Use", "원단명": "Fabric name", "배색": "Contrast", "＋ 원단 줄 추가 (안감·시보리·배색 등)": "+ Add fabric row (lining, rib, contrast…)", "[추가 원단]": "[Additional fabrics]",
   "🔍 크게 보기": "🔍 Zoom in", "↩ 한눈에 보기": "↩ Fit to screen", "작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)": "View the tech pack larger so you can tap cells to edit (swipe sideways)",
   "치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요. PDF로 저장하려면 인쇄 창에서 ‘대상’을 ‘PDF로 저장’, 배율 100%, ‘머리글·바닥글’ 끄기로 하세요.": "Measurements are reference standards. Always correct them from your sample. To save as PDF, in the print window set ‘Destination’ to ‘Save as PDF’, scale 100%, and turn off ‘Headers and footers’.",
   "🔍 확대": "🔍 Magnify", "확대해서 보여 줄 곳(라벨·주머니·봉제 디테일)을 끌어 동그라미로 정하면 옆에 확대한 그림이 생깁니다. 확대 그림을 끌어 옮길 수 있습니다": "Drag a circle over the spot to show in detail (label, pocket, stitching) and a magnified picture appears next to it. You can drag the magnified picture around",
@@ -424,6 +429,7 @@ Object.assign(D, {
 Object.assign(D, { "밑위": "Rise", "벨트고리": "Belt loops", "부자재": "Trims", "케어라벨": "Care label", "배율": "Scale", "(실제 크기)": "(actual size)", "실제 크기": "actual size",
   "치수: Chest": "Size: Chest" });
 window.I18N_RULES = [
+  [/^기준 사이즈 (.+) · cm$/, "Base size $1 · cm"], [/^(.+) \(cm\)$/, function (t, _, a) { var x = t(a); return x == null ? null : x + " (cm)"; }],
   [/^‘(.+)’ 표시를 놓을 자리를 도식화에서 누르세요\. 화살표로 위치를 가리키고, 🔍 확대로 자세히 보여 줄 수도 있습니다\.$/, "Click on the flat where to put the ‘$1’ mark. You can point at the spot with an arrow, or show it in detail with 🔍 Magnify."],
   [/^원단 (\d+)$/, "Fabric $1"], [/^스와치는 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 swatches can be added."], [/^이미지 회전 (-?\d+)°$/, "Image rotation $1°"],
   [/^이미지는 한 면에 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 images can be added per side."], [/^이미지 너비 (\d+) \(모서리를 끌어 크기 조절\)$/, "Image width $1 (drag a corner to resize)"],

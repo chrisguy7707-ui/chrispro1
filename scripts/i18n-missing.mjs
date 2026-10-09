@@ -19,7 +19,8 @@ const exercise = async (page) => page.evaluate(async () => {
     click("tabSheetBtn"); click(g); chooseStyle(id); await tick();
     if (isBottom()) for (const l of ["num", "inch", "both"]) { document.querySelector(`[data-label="${l}"]`)?.click(); await tick(); }
     click("tabEditBtn"); await tick();
-    click("tabProdBtn"); for (const p of ["check", "cost", "order", "care", "sample"]) { document.querySelector(`.prod-nav [data-p="${p}"]`).click(); await tick(); }
+    click("tabCardsBtn"); await tick();
+        click("tabProdBtn"); for (const p of ["check", "cost", "order", "care", "sample"]) { document.querySelector(`.prod-nav [data-p="${p}"]`).click(); await tick(); }
     click("tabPatBtn"); await tick();
     preparePrint(); await tick();
     click("tabOlzBtn"); await tick();
