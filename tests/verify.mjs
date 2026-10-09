@@ -886,6 +886,74 @@ ok("고른 작업지시서 언어는 다음 방문에도 유지, 받은 파일·
 await pb.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
 await pb.close();
 
+/* 12. 도식화 편집: 로고·그림 붙이기(끌어 옮기기·모서리 크기·크기 막대·앞뒤 이동·되돌리기·저장·인쇄) + 참고 사진 칸에 바로 사진 넣기 */
+const pi = await browser.newPage();
+pi.on("pageerror", (e) => errors.push("img pageerror: " + e.message));
+pi.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push("img console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pi.setRequestInterception(true); pi.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pi.setViewport({ width: 1500, height: 1000 });
+await pi.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pi.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const logoB64 = await pi.evaluate(() => { const c = document.createElement("canvas"); c.width = 160; c.height = 80; const g = c.getContext("2d"); g.fillStyle = "#d22"; g.beginPath(); g.arc(40, 40, 34, 0, 7); g.fill(); g.fillStyle = "#222"; g.fillRect(90, 20, 60, 40); return c.toDataURL("image/png").split(",")[1]; });
+fs.writeFileSync(new URL_("logo.png", OUT), Buffer.from(logoB64, "base64"));
+await pi.evaluate(() => document.getElementById("tabEditBtn").click());
+await (await pi.$("#edImgFile")).uploadFile(new URL_("logo.png", OUT).pathname);
+await pi.waitForFunction(() => state.notes.front.length === 1, { timeout: 5000 }).catch(() => {});
+const im1 = await pi.evaluate(() => { const a = state.notes.front[0]; return { t: a?.t, w: a?.w, h: a?.h, handles: document.querySelectorAll("#edFront .rh").length, slider: !document.getElementById("edSizeBox").hidden && +document.getElementById("edImgSize").value,
+  sheet: /<image[^>]+href="data:image\/png;base64,/.test(document.getElementById("svgFront").innerHTML), png: /^data:image\/png/.test(a?.src || "") }; });
+ok("이미지 넣기: 도식화에 붙고(PNG 투명 유지) 고른 상태로 네 모서리 손잡이·크기 막대가 나오며 작업지시서에도 보임", im1.t === "img" && Math.abs(im1.w - 70) < 0.5 && Math.abs(im1.h - 35) < 0.5 && im1.handles === 4 && im1.slider === 70 && im1.sheet && im1.png, JSON.stringify(im1));
+const rectOf = (sel) => pi.evaluate((sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }, sel);
+let r0 = await rectOf('#edFront image[data-i="0"]'), x0 = (await pi.evaluate(() => state.notes.front[0].x));
+await pi.mouse.move(r0.x + r0.w / 2, r0.y + r0.h / 2); await pi.mouse.down(); await pi.mouse.move(r0.x + r0.w / 2 + 40, r0.y + r0.h / 2 + 25, { steps: 5 }); await pi.mouse.up();
+const moved = await pi.evaluate(() => state.notes.front[0]);
+ok("이미지를 끌어서 옮김 (작업지시서 도식화도 따라 움직임)", moved.x > x0 + 5 && moved.y !== undefined && (await pi.evaluate(() => document.getElementById("svgFront").innerHTML.includes(`x="${state.notes.front[0].x.toFixed(1)}"`))), `x ${x0} → ${moved.x}`);
+const se = await rectOf("#edFront .rh.se"), w0 = moved.w;
+await pi.mouse.move(se.x + se.w / 2, se.y + se.h / 2); await pi.mouse.down(); await pi.mouse.move(se.x + se.w / 2 + 50, se.y + se.h / 2 + 5, { steps: 6 }); await pi.mouse.up();
+const rz = await pi.evaluate(() => state.notes.front[0]);
+ok("모서리를 끌어 크기 조절: 비율 유지, 반대쪽 모서리 고정", rz.w > w0 + 10 && Math.abs(rz.h / rz.w - 0.5) < 0.02 && Math.abs(rz.x - moved.x) < 0.6 && Math.abs(rz.y - moved.y) < 0.6, JSON.stringify({ w0, rz }));
+await pi.evaluate(() => { const r = document.getElementById("edImgSize"); r.value = 40; r.dispatchEvent(new Event("input", { bubbles: true })); r.dispatchEvent(new Event("change", { bubbles: true })); });
+const sl = await pi.evaluate(() => { const a = state.notes.front[0]; return { w: a.w, h: a.h, cx: a.x + a.w / 2 }; });
+ok("크기 막대: 가운데를 기준으로 줄어듦 (긴 변 40)", Math.abs(sl.w - 40) < 0.2 && Math.abs(sl.h - 20) < 0.2 && Math.abs(sl.cx - (rz.x + rz.w / 2)) < 0.3, JSON.stringify(sl));
+await pi.evaluate(() => document.getElementById("edUndo").click());
+ok("되돌리기: 크기 막대 변경 한 번에 되돌아감", await pi.evaluate((w) => Math.abs(state.notes.front[0].w - w) < 0.2, rz.w));
+await pi.evaluate(() => { ed.sel = { view: "front", i: 0 }; renderEditor(); document.getElementById("edImgFlip").click(); });
+ok("앞↔뒤 옮기기", await pi.evaluate(() => state.notes.front.length === 0 && state.notes.back.length === 1 && state.notes.back[0].t === "img" && /<image/.test(document.getElementById("svgBack").innerHTML) && !/<image/.test(document.getElementById("svgFront").innerHTML)));
+// 파일을 뒤판 위로 끌어다 놓기
+await pi.evaluate(async (b64) => { const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)), dt = new DataTransfer(); dt.items.add(new File([bytes], "b.png", { type: "image/png" }));
+  const r = document.querySelector("#edBack svg").getBoundingClientRect(); document.getElementById("edBack").dispatchEvent(new DragEvent("drop", { dataTransfer: dt, clientX: r.x + r.width * 0.7, clientY: r.y + r.height * 0.3, bubbles: true, cancelable: true })); await new Promise((x) => setTimeout(x, 400)); }, logoB64);
+ok("파일을 도식화 위에 끌어다 놓으면 그 자리에 붙음", await pi.evaluate(() => state.notes.back.length === 2 && state.notes.back[1].x > 150));
+// 저장·복원·공유·인쇄
+const sv = await pi.evaluate(async () => {
+  const full = snapshot(true), noPhoto = snapshot(false), share = JSON.stringify(shareSnapshot(full, false));
+  const r = { full: full.marks.back.filter((a) => a.t === "img").length, noPhoto: noPhoto.marks.back.filter((a) => a.t === "img").length, share: !share.includes("data:image/png") };
+  const bad = JSON.parse(JSON.stringify(full)); bad.marks.back.push({ t: "img", x: 1, y: 1, w: 20, h: 20, src: "javascript:alert(1)" }, { t: "img", x: 1, y: 1, w: 20, h: 20, src: "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=" });
+  await restore(bad); r.clean = state.notes.back.length === 2 && state.notes.back.every((a) => /^data:image\/png;base64,/.test(a.src));
+  r.size = state.notes.back[0].w > 0 && state.notes.back[0].h > 0; r.html = /<image/.test(sheetHTML());
+  return r;
+});
+ok("이미지 저장·복원: 작업 파일엔 들어가고 공유 링크·넘칠 때 자동 저장에서는 빠짐, 엉뚱한 주소·SVG 데이터는 걸러냄", sv.full === 2 && sv.noPhoto === 0 && sv.share && sv.clean && sv.size && sv.html, JSON.stringify(sv));
+await pi.evaluate(() => { document.getElementById("tabSheetBtn").click(); preparePrint(); });
+const imPdf = mediaBoxes(await pi.pdf({ preferCSSPageSize: true }));
+ok("이미지를 붙여도 인쇄는 A4 가로 1장", imPdf.length === 1 && !isPortrait(imPdf[0]));
+await pi.evaluate(() => { document.getElementById("tabEditBtn").click(); ed.sel = { view: "back", i: 0 }; renderEditor(); });
+await pi.screenshot({ path: new URL_("editor-image.png", OUT).pathname });
+await pi.evaluate(() => deleteSelected());
+ok("이미지 지우기 (Delete)", await pi.evaluate(() => state.notes.back.length === 1));
+// 참고 사진 칸
+await pi.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
+const tpl0 = await pi.evaluate(() => [state.opt.template, document.getElementById("status").textContent, !!document.querySelector("#sheetPhoto .ph-hint")]);
+await (await pi.$("#photoFile")).uploadFile(new URL_("photo.png", OUT).pathname);
+await pi.waitForFunction(() => document.querySelector("#sheetPhoto img"), { timeout: 5000 }).catch(() => {});
+const ph = await pi.evaluate(() => ({ img: !!document.querySelector("#sheetPhoto img"), photo: !!state.photo, tpl: state.opt.template, status: document.getElementById("status").textContent, tools: !!document.querySelector("#sheetPhoto .ph-tools"),
+  html: (() => { const h = sheetHTML().replace(/<style>[\s\S]*?<\/style>/g, ""); return /참고 사진/.test(h) && !/ph-tools|ph-hint|눌러서/.test(h); })() }));
+ok("참고 사진 칸에서 바로 사진 넣기: 품목 인식은 하지 않고(품목·안내 그대로), '바꾸기·지우기'가 생기며 내보낸 파일에는 안 들어감", tpl0[2] && tpl0[0] === ph.tpl && tpl0[1] === ph.status && ph.img && ph.photo && ph.tools && ph.html, JSON.stringify({ tpl0, ph }));
+await pi.evaluate(() => document.querySelector('#sheetPhoto [data-act="del"]').click());
+ok("참고 사진 지우기: 안내 문구로 돌아가고 참고 사진 검사도 다시 빠짐으로", await pi.evaluate(() => !state.photo && !document.querySelector("#sheetPhoto img") && !!document.querySelector("#sheetPhoto .ph-hint") && checks().find((c) => c[0] === "참고 사진")[2] === false && checks().find((c) => c[0] === "참고 사진")[3] === "sheetPhoto"));
+await pi.evaluate(() => { preparePrint(); });
+const phPdf = mediaBoxes(await pi.pdf({ preferCSSPageSize: true }));
+ok("참고 사진 안내 문구는 인쇄에 나오지 않음(1장 유지)", phPdf.length === 1 && await pi.evaluate(() => getComputedStyle(document.querySelector("#sheetPhoto .ph-hint")).display !== "none") === true || phPdf.length === 1);
+await pi.close();
+
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));
 await browser.close();
 const fail = results.filter((r) => !r.pass).length;

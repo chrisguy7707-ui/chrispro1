@@ -229,6 +229,15 @@
   .ed-view svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
   .ed-view .hd { cursor: grab; } .ed-view .hd:hover circle { r: 7; }
   .ed-view [data-i] { cursor: pointer; }
+  .ed-view image[data-i] { cursor: move; } .ed-view .rh { cursor: nwse-resize; } .ed-view .rh.ne, .ed-view .rh.sw { cursor: nesw-resize; }
+  .ed-bar .ed-size { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; } .ed-bar .ed-size input { flex: 0 0 120px; min-width: 100px; padding: 0; border: 0; }
+  .ref .photo { position: relative; cursor: pointer; }
+  .ph-hint { display: block; margin-top: 4px; font-weight: 700; color: #1e5bd8; }
+  .ph-tools { position: absolute; right: 4px; top: 4px; display: none; gap: 4px; }
+  .ref .photo:hover .ph-tools, .ref .photo:focus-within .ph-tools { display: flex; }
+  .ph-tools button { border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; padding: 2px 9px; font: inherit; font-size: 11px; cursor: pointer; }
+  body.view-only .ref .photo { cursor: default; } body.view-only .ph-tools, body.view-only .ph-hint { display: none !important; }
+  @media print { .ph-tools, .ph-hint { display: none !important; } }
   .ed-view [data-d] { cursor: move; } .ed-view [data-d]:hover path { stroke: #1e5bd8; }
   .olz-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 1fr); gap: 16px; margin-top: 12px; align-items: start; }
   @media (max-width: 960px) { .olz-grid { grid-template-columns: 1fr; } }
@@ -482,6 +491,7 @@
       <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업)">작업 저장</button>
       <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
       <input type="file" id="jobFile" accept=".json,application/json" hidden />
+      <input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp" hidden />
       <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
       <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
       <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
@@ -530,7 +540,7 @@
         </section>
         <section style="display:grid; gap:10px; align-content:start">
           <div class="ref">
-            <div class="photo" id="sheetPhoto">참고 사진</div>
+            <div class="photo" id="sheetPhoto" role="button" tabindex="0" title="눌러서 참고 사진 넣기 (사진을 끌어다 놓아도 됩니다)">참고 사진<span class="ph-hint" data-noexport>＋ 눌러서 사진 넣기</span></div>
             <table>
               <tr><th style="width:62px">원단</th><td contenteditable id="fFabric"></td></tr>
               <tr><th>혼용률</th><td contenteditable id="fMix"></td></tr>
@@ -685,12 +695,17 @@
         <button data-tool="arrow" aria-pressed="false" title="끌어서 화살표">↗ 화살표</button>
         <button data-tool="circle" aria-pressed="false" title="끌어서 동그라미 강조">◯ 동그라미</button>
         <span class="ed-sep"></span>
+        <button id="edImgBtn" title="로고·그림 파일(PNG·JPG·SVG)을 도식화 위에 붙입니다. 끌어서 옮기고, 모서리를 끌어 크기를 바꿉니다. 파일을 앞판·뒤판 위로 끌어다 놓아도 됩니다">🖼 이미지 넣기</button>
+        <input type="file" id="edImgFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
+        <label class="ed-size" id="edSizeBox" hidden>크기 <input type="range" id="edImgSize" min="8" max="260" step="1" aria-label="이미지 크기" /></label>
+        <button id="edImgFlip" hidden title="고른 이미지를 앞판 ↔ 뒤판으로 옮기기">앞↔뒤 옮기기</button>
+        <span class="ed-sep"></span>
         <button id="edDel" title="고른 표시 지우기 (Delete 키)">선택 지우기</button>
         <button id="edUndo" title="되돌리기 (Ctrl·Cmd+Z)">↶ 되돌리기</button>
         <button id="edClear">표시 모두 지우기</button>
         <button id="edReset" title="끌어 옮긴 주머니 등을 처음 자리로">디테일 위치 처음으로</button>
       </div>
-      <p class="pat-note" id="edNote" role="status">빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.</p>
+      <p class="pat-note" id="edNote" role="status">빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.</p>
       <div class="ed-grid">
         <figure><div class="ed-view" id="edFront"></div><figcaption>앞판 FRONT · 손잡이로 치수 조절</figcaption></figure>
         <figure><div class="ed-view" id="edBack"></div><figcaption>뒤판 BACK · 표시만</figcaption></figure>
@@ -773,7 +788,7 @@
     <dialog class="dlg" id="shareDlg" aria-labelledby="shareTitle">
       <div class="dlg-in">
         <div class="dlg-head"><h2 id="shareTitle">공유 링크</h2><button class="dlg-x" data-close aria-label="닫기">×</button></div>
-        <p class="note2">작업지시서 내용을 <b>링크 주소 안에 압축해 담습니다.</b> 서버에 저장하지 않으며, <b>링크를 받은 사람은 누구나</b> 이 작업지시서를 읽기 전용으로 보고 인쇄할 수 있습니다. 사진은 들어가지 않습니다.</p>
+        <p class="note2">작업지시서 내용을 <b>링크 주소 안에 압축해 담습니다.</b> 서버에 저장하지 않으며, <b>링크를 받은 사람은 누구나</b> 이 작업지시서를 읽기 전용으로 보고 인쇄할 수 있습니다. 사진과 도식화에 붙인 이미지는 들어가지 않습니다.</p>
         <label class="note2" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="shareCost" /> 원가·마진 정보도 넣기 <span style="color:var(--ink-soft)">(내 다른 기기로 옮길 때만 켜세요. 공장에 보낼 때는 끄기)</span></label>
         <div class="row2">
           <input type="text" id="shareUrl" readonly aria-label="공유 링크" />
@@ -1443,7 +1458,8 @@ function annoSVG(view, selected = -1) {
   const list = (state.notes && state.notes[view]) || [];
   if (!list.length) return "";
   const n = (v) => (+v).toFixed(1);
-  return `<defs><marker id="an-${view}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0.5 L8,4 L0,7.5 z" fill="${ANNO}"/></marker></defs><g class="anno">`
+  const imgs = list.map((a, i) => (a.t === "img" ? `<image data-i="${i}" href="${esc(a.src)}" x="${n(a.x)}" y="${n(a.y)}" width="${n(a.w)}" height="${n(a.h)}" preserveAspectRatio="none"/>` : "")).join("");   // 이미지는 맨 아래
+  return `<defs><marker id="an-${view}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0.5 L8,4 L0,7.5 z" fill="${ANNO}"/></marker></defs><g class="anno">${imgs}`
     + list.map((a, i) => {
       const sel = i === selected ? ' stroke-dasharray="3 2"' : "";
       if (a.t === "text") return `<text data-i="${i}" x="${n(a.x)}" y="${n(a.y)}" font-size="9" font-family="sans-serif" font-weight="700" fill="${ANNO}" stroke="#fff" stroke-width="2.6" paint-order="stroke"${i === selected ? ' text-decoration="underline"' : ""}>${esc(a.text)}</text>`;
@@ -1601,20 +1617,39 @@ async function downscale(file, max = 1280) {
   const dataUrl = c.toDataURL("image/jpeg", 0.88);
   return { blob, dataUrl };
 }
-async function takeFile(file) {
+/* 작업지시서의 참고 사진 칸: 사진이 있으면 사진과 '바꾸기·지우기', 없으면 '눌러서 사진 넣기' (화면에서만 보이고 인쇄·파일에는 안 들어감) */
+function renderSheetPhoto() {
+  const box = $("sheetPhoto");
+  if (state.photo) {
+    box.innerHTML = `<img src="${state.photo.dataUrl}" alt="참고 사진" /><span class="ph-tools" data-noexport><button type="button" data-act="swap">바꾸기</button><button type="button" data-act="del">지우기</button></span>`;
+    box.querySelector("img").addEventListener("load", fitPrint);
+  } else box.innerHTML = `참고 사진<span class="ph-hint" data-noexport>＋ 눌러서 사진 넣기</span>`;
+}
+async function takeFile(file, quiet = false) {   // quiet: 작업지시서 참고 사진 칸에서 넣을 때는 품목 인식을 하지 않고 사진만 넣음
   if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) return setStatus("JPG, PNG, WEBP 사진만 올릴 수 있습니다.", true);
   try {
     state.photo = await downscale(file);
     $("dropImg").src = state.photo.dataUrl; $("dropImg").hidden = false; $("dropTxt").textContent = "다른 사진으로 바꾸려면 누르세요";
-    $("sheetPhoto").innerHTML = `<img src="${state.photo.dataUrl}" alt="참고 사진" />`;
-    $("sheetPhoto").querySelector("img").addEventListener("load", fitPrint);
+    renderSheetPhoto();
     $("guess").hidden = true;
+    if (quiet) { fitPrint(); scheduleSave(); return; }
     if (activeTab === "olz") runOutline();
     if (localMode() && modelReady()) analyze();   // 모델을 이미 받은 브라우저면 바로 기기 안 인식
     else if (localMode()) setStatus(`사진을 불러왔습니다. 자동 인식을 쓰려면 노란 버튼을 누르세요. 처음 한 번 인식 모델 약 ${LOCAL.sizeMB}MB를 받습니다 (Wi-Fi 권장). 인식 없이 왼쪽 2단계(디테일)에서 직접 골라도 됩니다.`);
     else setStatus("사진을 불러왔습니다. '사진으로 도식화·작업지시서 만들기'를 누르세요.");
   } catch (e) { setStatus("사진을 읽지 못했습니다. 다른 파일로 시도해 주세요.", true); }
 }
+const photoBox = $("sheetPhoto");
+photoBox.addEventListener("click", (e) => {
+  if (viewOnly) return;
+  const act = e.target.closest("[data-act]")?.dataset.act;
+  if (act === "del") { state.photo = null; $("dropImg").hidden = true; $("dropImg").removeAttribute("src"); $("dropTxt").textContent = "사진을 끌어다 놓거나 눌러서 선택"; renderSheetPhoto(); fitPrint(); scheduleSave(); return; }
+  $("photoFile").click();
+});
+photoBox.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === photoBox && !viewOnly) { e.preventDefault(); $("photoFile").click(); } });
+$("photoFile").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; takeFile(f, true); });
+photoBox.addEventListener("dragover", (e) => { if (!viewOnly && [...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
+photoBox.addEventListener("drop", (e) => { const f = e.dataTransfer?.files?.[0]; if (!f || viewOnly) return; e.preventDefault(); takeFile(f, true); });
 const drop = $("drop");
 drop.addEventListener("click", () => $("file").click());
 drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } });
@@ -1844,6 +1879,8 @@ function sheetHTML() {
   const css = [...document.styleSheets].map((s) => { try { return [...s.cssRules].map((r) => r.cssText).join("\n"); } catch (e) { return ""; } }).join("\n");
   const sheet = $("sheet").cloneNode(true);
   sheet.querySelectorAll("[contenteditable]").forEach((n) => n.removeAttribute("contenteditable"));
+  sheet.querySelectorAll("[data-noexport]").forEach((n) => n.remove());
+  sheet.querySelector("#sheetPhoto")?.removeAttribute("title"); sheet.querySelector("#sheetPhoto")?.removeAttribute("role"); sheet.querySelector("#sheetPhoto")?.removeAttribute("tabindex");
   sheet.querySelectorAll("[data-part]").forEach((n) => n.removeAttribute("data-part"));   // 화면용 원문 표시는 파일에 넣지 않음
   return `<!doctype html><html lang="${sheetLang === "en" ? "en" : "ko"}"><head><meta charset="utf-8"><title>${sheetLang === "ko" ? "작업지시서" : sheetLang === "en" ? "Tech pack" : "작업지시서 Tech pack"} ${esc($("fStyle").textContent)}</title><style>${css}
   body{background:#fff} .sheet{margin:0 auto;box-shadow:none}</style></head><body>${sheet.outerHTML}<script>/* ${sheetLang === "en" ? "Open this file and press Ctrl/Cmd+P to save as PDF" : sheetLang === "both" ? "이 파일을 열고 Ctrl/Cmd+P로 PDF 저장 / Press Ctrl/Cmd+P to save as PDF" : "이 파일을 열고 Ctrl/Cmd+P로 PDF 저장"} */<\/script></body></html>`;
@@ -1971,9 +2008,19 @@ function renderEditor() {
       });
       el.append(g);
     }
+    const sa = ed.sel.view === view && ed.sel.i >= 0 ? state.notes[view][ed.sel.i] : null;
+    if (sa && sa.t === "img") {      // 고른 이미지: 점선 테두리 + 네 모서리 크기 손잡이
+      const NS = "http://www.w3.org/2000/svg", g = document.createElementNS(NS, "g");
+      g.innerHTML = `<rect x="${sa.x}" y="${sa.y}" width="${sa.w}" height="${sa.h}" fill="none" stroke="${ANNO}" stroke-width="1" stroke-dasharray="4 3" pointer-events="none"/>`
+        + [["nw", sa.x, sa.y], ["ne", sa.x + sa.w, sa.y], ["sw", sa.x, sa.y + sa.h], ["se", sa.x + sa.w, sa.y + sa.h]].map(([c, x, y]) => `<circle class="rh ${c}" data-c="${c}" cx="${x}" cy="${y}" r="4.5" fill="#fff" stroke="${ANNO}" stroke-width="1.6"/>`).join("");
+      el.append(g);
+    }
   }
+  const si = ed.sel.view && ed.sel.i >= 0 ? state.notes[ed.sel.view][ed.sel.i] : null, isImg = !!si && si.t === "img";
+  $("edSizeBox").hidden = !isImg; $("edImgFlip").hidden = !isImg;
+  if (isImg && document.activeElement !== $("edImgSize")) $("edImgSize").value = Math.round(Math.max(si.w, si.h));
   if (!ed.drag) $("edNote").textContent = isBag() ? "파우치는 손잡이 편집을 아직 지원하지 않습니다. 메모·화살표·동그라미는 넣을 수 있습니다."
-    : "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.";
+    : "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.";
 }
 function pushUndo() {
   ed.undo.push({ spec: [...$("specTable").querySelectorAll("td[contenteditable]")].map((td) => td.textContent), key: $("specTable").dataset.key, notes: JSON.stringify(state.notes), offsets: JSON.stringify(state.offsets) });
@@ -1991,7 +2038,12 @@ for (const box of [$("edFront"), $("edBack")]) {
   box.addEventListener("pointerdown", (e) => {
     const svg = box.querySelector("svg"); if (!svg) return;
     const view = svg.dataset.view, p = svgPt(svg, e), list = state.notes[view];
-    const hd = e.target.closest(".hd"), an = e.target.closest("[data-i]");
+    const hd = e.target.closest(".hd"), an = e.target.closest("[data-i]"), rh = e.target.closest(".rh");
+    if (ed.tool === "move" && rh && ed.sel.view === view) {          // 이미지 크기: 반대쪽 모서리를 고정하고 비율 유지
+      const a = list[ed.sel.i], c = rh.dataset.c; if (!a || a.t !== "img") return;
+      pushUndo(); ed.drag = { kind: "resize", view, i: ed.sel.i, sx: c.includes("e") ? 1 : -1, sy: c.includes("s") ? 1 : -1, ax: c.includes("e") ? a.x : a.x + a.w, ay: c.includes("s") ? a.y : a.y + a.h, ar: a.w / a.h };
+      box.setPointerCapture(e.pointerId); e.preventDefault(); return;
+    }
     if (ed.tool === "move" && hd) {
       const h = editHandles()[+hd.dataset.h]; if (!h) return;
       pushUndo(); ed.drag = { kind: "handle", h, view }; box.setPointerCapture(e.pointerId); e.preventDefault(); return;
@@ -2030,6 +2082,10 @@ for (const box of [$("edFront"), $("edBack")]) {
       return;
     }
     const a = state.notes[d.view][d.i]; if (!a) return;
+    if (d.kind === "resize") {
+      const w = Math.max(8, Math.min(400, (p.x - d.ax) * d.sx)); a.w = w; a.h = w / d.ar; a.x = d.sx > 0 ? d.ax : d.ax - w; a.y = d.sy > 0 ? d.ay : d.ay - a.h;
+      renderEditor(); $("edNote").textContent = `이미지 너비 ${Math.round(w)} (모서리를 끌어 크기 조절)`; return;
+    }
     if (d.kind === "anno") { const dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
       if (a.t === "arrow") { a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; } else { a.x += dx; a.y += dy; } renderEditor(); return; }
     if (a.t === "arrow") { a.x2 = p.x; a.y2 = p.y; } else a.r = Math.max(3, Math.hypot(p.x - a.x, p.y - a.y));
@@ -2039,11 +2095,60 @@ for (const box of [$("edFront"), $("edBack")]) {
     const d = ed.drag; if (!d) return; ed.drag = null;
     if (d.kind === "new") { const a = state.notes[d.view][d.i]; if (a && ((a.t === "arrow" && Math.hypot(a.x2 - a.x1, a.y2 - a.y1) < 6) || (a.t === "circle" && a.r < 4))) { state.notes[d.view].splice(d.i, 1); ed.undo.pop(); } else ed.sel = { view: d.view, i: d.i }; }
     if (d.kind === "handle" && d.cm == null) ed.undo.pop();
+    if (d.kind === "resize") { const a = state.notes[d.view][d.i]; if (a) for (const k of ["x", "y", "w", "h"]) a[k] = Math.round(a[k] * 10) / 10; }
     if (d.kind === "detail") { if (!d.moved) ed.undo.pop(); else { const o = state.offsets[d.key]; o.dx = Math.round(o.dx * 2) / 2; o.dy = Math.round(o.dy * 2) / 2; } }   // 0.5cm 단위
     renderFlats(); fitPrint(); scheduleSave(); renderEditor();
   };
   box.addEventListener("pointerup", end); box.addEventListener("pointercancel", end);
 }
+/* 로고·그림 붙이기: 작은 그림으로 줄여(최대 640px, 투명 배경 유지) 도식화 표시(t:"img")로 저장 → 작업지시서·인쇄·파일에 함께 들어감 */
+async function prepImage(file) {
+  if (!file || !/^image\/(png|jpeg|webp|svg\+xml)$/.test(file.type)) throw new Error("type");
+  const url = URL.createObjectURL(file);
+  try {
+    const im = new Image(); im.src = url; await im.decode();
+    const nw = im.naturalWidth || 300, nh = im.naturalHeight || 300;
+    for (const max of [640, 420, 260]) {
+      const k = Math.min(1, max / Math.max(nw, nh)), c = document.createElement("canvas"); c.width = Math.max(1, Math.round(nw * k)); c.height = Math.max(1, Math.round(nh * k));
+      const g = c.getContext("2d"), jpg = file.type === "image/jpeg"; if (jpg) { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+      g.drawImage(im, 0, 0, c.width, c.height);
+      const src = c.toDataURL(jpg ? "image/jpeg" : "image/png", 0.88);
+      if (src.length < 500000 || max === 260) return { src, ar: c.width / c.height };
+    }
+  } finally { URL.revokeObjectURL(url); }
+}
+const IMG_MAX = 8;
+async function addEditorImage(file, view = "front", at = null) {
+  const list = state.notes[view];
+  if (list.filter((a) => a.t === "img").length >= IMG_MAX) { $("edNote").textContent = `이미지는 한 면에 ${IMG_MAX}개까지 넣을 수 있습니다.`; return; }
+  let im; try { im = await prepImage(file); } catch (e) { $("edNote").textContent = "PNG·JPG·WEBP·SVG 이미지만 넣을 수 있습니다."; return; }
+  const [vx, vy, vw, vh] = (buildSVG(view).match(/viewBox="([^"]+)"/)?.[1] || "0 -20 340 270").split(" ").map(Number);
+  const w = im.ar >= 1 ? 70 : 70 * im.ar, h = w / im.ar, cx = at ? at.x : vx + vw / 2, cy = at ? at.y : vy + vh / 2;
+  pushUndo(); list.push({ t: "img", x: Math.round((cx - w / 2) * 10) / 10, y: Math.round((cy - h / 2) * 10) / 10, w: Math.round(w * 10) / 10, h: Math.round(h * 10) / 10, src: im.src });
+  ed.sel = { view, i: list.length - 1 }; setTool("move"); renderFlats(); fitPrint(); scheduleSave(); renderEditor();
+  $("edNote").textContent = "이미지를 끌어 옮기고, 모서리를 끌거나 '크기' 막대로 바꾸세요. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.";
+}
+$("edImgBtn").addEventListener("click", () => $("edImgFile").click());
+$("edImgFile").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; addEditorImage(f, ed.sel.view || "front"); });
+for (const [box, view] of [[$("edFront"), "front"], [$("edBack"), "back"]]) {   // 파일을 도식화 위로 끌어다 놓기
+  box.addEventListener("dragover", (e) => { if ([...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
+  box.addEventListener("drop", (e) => { const f = e.dataTransfer?.files?.[0]; if (!f) return; e.preventDefault(); const svg = box.querySelector("svg"); addEditorImage(f, view, svg ? svgPt(svg, e) : null); });
+}
+let sizeUndo = false;
+$("edImgSize").addEventListener("input", (e) => {
+  const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || a.t !== "img") return;
+  if (!sizeUndo) { pushUndo(); sizeUndo = true; }
+  const m = Math.max(a.w, a.h), k = +e.target.value / m, cx = a.x + a.w / 2, cy = a.y + a.h / 2;
+  a.w = Math.round(a.w * k * 10) / 10; a.h = Math.round(a.h * k * 10) / 10; a.x = Math.round((cx - a.w / 2) * 10) / 10; a.y = Math.round((cy - a.h / 2) * 10) / 10;
+  renderFlats(); renderEditor();
+});
+$("edImgSize").addEventListener("change", () => { sizeUndo = false; fitPrint(); scheduleSave(); });
+$("edImgFlip").addEventListener("click", () => {
+  const { view, i } = ed.sel, a = view && state.notes[view][i]; if (!a || a.t !== "img") return;
+  const to = view === "front" ? "back" : "front"; if (state.notes[to].filter((x) => x.t === "img").length >= IMG_MAX) return;
+  pushUndo(); state.notes[view].splice(i, 1); state.notes[to].push(a); ed.sel = { view: to, i: state.notes[to].length - 1 };
+  renderFlats(); fitPrint(); scheduleSave(); renderEditor();
+});
 function deleteSelected() { const { view, i } = ed.sel; if (!view || i < 0) return; pushUndo(); state.notes[view].splice(i, 1); ed.sel = { view: null, i: -1 }; renderFlats(); scheduleSave(); renderEditor(); }
 $("edDel").addEventListener("click", deleteSelected);
 $("edUndo").addEventListener("click", undoEdit);
@@ -2268,7 +2373,7 @@ function checks() {
     ["치수표", "치수표에 빈 칸이 있어요. 모든 사이즈 값을 주세요.", specFilled(), "specTable", true],
     ["부자재", "단추·지퍼·라벨은 어떤 규격으로 몇 개인가요?", trims.length > 0, "trimTable", true],
     ["봉제 사양", "어떤 미싱으로 박나요? (오버록·2본침·커버스티치 등)", lines($("sewList")).length >= 3, "sewList", true],
-    ["참고 사진", "실물·샘플 사진이나 참고 이미지가 있나요?", !!state.photo, "olz", false],
+    ["참고 사진", "실물·샘플 사진이나 참고 이미지가 있나요?", !!state.photo, "sheetPhoto", false],
     ["케어라벨", "케어라벨 문구(혼용률·제조자·세탁 방법)는 누가 정하나요?", careDone(), "care", true],
     ["샘플 실측", "샘플 치수는 확인했나요? 몇 차 샘플인가요?", state.prod.samples.length > 0, "sample", false],
     ["공장", "어느 공장에 맡기나요? (학생 과제는 비워도 됨)", !!txt("fFactory"), "fFactory", false],
@@ -2599,6 +2704,7 @@ const unb64u = (t) => { const s = atob(t.replace(/-/g, "+").replace(/_/g, "/"));
 function shareSnapshot(src, withCost) {
   const j = JSON.parse(JSON.stringify(src));
   delete j.photo; delete j.jobId; delete j.jobName;
+  if (j.marks) j.marks = noImages({ front: j.marks.front || [], back: j.marks.back || [] });
   if (!withCost && j.prod) j.prod.cost = {};
   return j;
 }
@@ -2699,6 +2805,7 @@ $("viewSave").addEventListener("click", async () => {
 const JOB = { app: "작지", v: 1 };
 const JOB_OLD = ["옷만들기 도면 메이커", "마름"];   // 이름을 바꾸기 전에 저장한 작업 파일도 열기
 const lines = (n) => (n.querySelector("li") ? [...n.querySelectorAll("li")].map((li) => srcOf(li).trim()) : n.innerText.split("\n").map((x) => x.trim())).filter(Boolean);   // 번역 전 원문 줄
+const noImages = (m) => ({ front: m.front.filter((a) => a.t !== "img"), back: m.back.filter((a) => a.t !== "img") });   // 사진처럼 크기가 커서 공유 링크·넘칠 때의 자동 저장에서는 뺌
 function snapshot(withPhoto = true) {
   return { ...JOB, savedAt: new Date().toISOString(), jobId: cur.id, jobName: cur.name,
     state: { gender: state.gender, sizes: [...state.sizes], base: state.base, label: state.label, opt: { ...state.opt }, ai: state.ai },
@@ -2709,7 +2816,7 @@ function snapshot(withPhoto = true) {
     sew: lines($("sewList")), notes: lines($("noteList")),
     photo: withPhoto && state.photo ? state.photo.dataUrl : null,
     pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null,
-    marks: state.notes, offsets: state.offsets, prod: state.prod, sheetLang };
+    marks: withPhoto ? state.notes : noImages(state.notes), offsets: state.offsets, prod: state.prod, sheetLang };
 }
 const str = (x, max = 300) => String(x ?? "").slice(0, max);
 async function restore(j) {
@@ -2743,16 +2850,17 @@ async function restore(j) {
     const blob = await (await fetch(j.photo)).blob();
     state.photo = { blob, dataUrl: j.photo };
     $("dropImg").src = j.photo; $("dropImg").hidden = false; $("dropTxt").textContent = "다른 사진으로 바꾸려면 누르세요";
-    $("sheetPhoto").innerHTML = ""; const im = new Image(); im.alt = "참고 사진"; im.src = j.photo; im.addEventListener("load", fitPrint); $("sheetPhoto").append(im);
+    renderSheetPhoto();
   }
   // 도식화 표시: 숫자·글자만 받음
   const num = (x) => (Number.isFinite(+x) ? Math.max(-100, Math.min(500, +x)) : 0);
   const cleanNote = (a) => a && a.t === "text" ? { t: "text", x: num(a.x), y: num(a.y), text: str(a.text, 40) }
     : a && a.t === "arrow" ? { t: "arrow", x1: num(a.x1), y1: num(a.y1), x2: num(a.x2), y2: num(a.y2) }
-    : a && a.t === "circle" ? { t: "circle", x: num(a.x), y: num(a.y), r: Math.min(200, Math.abs(num(a.r))) } : null;
+    : a && a.t === "circle" ? { t: "circle", x: num(a.x), y: num(a.y), r: Math.min(200, Math.abs(num(a.r))) }
+    : a && a.t === "img" && typeof a.src === "string" && a.src.length < 900000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(a.src) ? { t: "img", x: num(a.x), y: num(a.y), w: Math.max(6, Math.min(400, num(a.w))), h: Math.max(6, Math.min(400, num(a.h))), src: a.src } : null;
   state.notes = { front: [], back: [] };
   const marks = j.marks || (j.notes && !Array.isArray(j.notes) ? j.notes : null);   // 예전 파일은 notes 에 들어 있음
-  for (const vw of ["front", "back"]) if (Array.isArray(marks?.[vw])) state.notes[vw] = marks[vw].slice(0, 60).map(cleanNote).filter(Boolean);
+  for (const vw of ["front", "back"]) if (Array.isArray(marks?.[vw])) { let ni = 0; state.notes[vw] = marks[vw].slice(0, 60).map(cleanNote).filter((x) => x && (x.t !== "img" || ++ni <= IMG_MAX)); }
   state.prod = cleanProd(j.prod);
   state.offsets = {};
   for (const [key, o] of Object.entries(j.offsets || {})) if (DETAIL_NAMES[key] && o) state.offsets[key] = { dx: Math.max(-40, Math.min(40, num(o.dx))), dy: Math.max(-60, Math.min(60, num(o.dy))) };

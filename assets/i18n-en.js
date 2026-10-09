@@ -4,6 +4,14 @@
    용어: 작업지시서=tech pack, 도식화=flat sketch, 치수표=size spec, 단면=½ (flat) width, 시보리=rib, 요척=fabric consumption */
 var D = (window.I18N_DICT = {});
 Object.assign(D, {
+  "빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.": "Dragging a red handle changes the size spec and the flat follows. Blue marks and logos or pictures added with ‘Add image’ are included in the tech pack, print and saved files.",
+  "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.": "Dragging a red handle changes the size spec; details like pockets can be dragged (left/right pairs stay symmetric). Blue marks and logos or pictures added with ‘Add image’ are included in the tech pack, print and saved files.",
+  "눌러서 참고 사진 넣기 (사진을 끌어다 놓아도 됩니다)": "Click to add a reference photo (or drag one here)", "＋ 눌러서 사진 넣기": "+ Click to add a photo", "바꾸기": "Replace",
+  "🖼 이미지 넣기": "🖼 Add image", "로고·그림 파일(PNG·JPG·SVG)을 도식화 위에 붙입니다. 끌어서 옮기고, 모서리를 끌어 크기를 바꿉니다. 파일을 앞판·뒤판 위로 끌어다 놓아도 됩니다": "Place a logo or picture file (PNG, JPG, SVG) on the flat. Drag it to move and drag a corner to resize. You can also drop a file onto the front or back flat",
+  "크기": "Size", "이미지 크기": "Image size", "앞↔뒤 옮기기": "Move front ↔ back", "고른 이미지를 앞판 ↔ 뒤판으로 옮기기": "Move the selected image between front and back",
+  "PNG·JPG·WEBP·SVG 이미지만 넣을 수 있습니다.": "Only PNG, JPG, WEBP and SVG images can be added.",
+  "이미지를 끌어 옮기고, 모서리를 끌거나 '크기' 막대로 바꾸세요. 파란 표시는 작업지시서·인쇄·저장에 함께 들어갑니다.": "Drag the image to move it; drag a corner or use the 'Size' slider to resize. Blue marks are included in the tech pack, print and saved files.",
+  "이 작업지시서를 읽기 전용으로 보고 인쇄할 수 있습니다. 사진과 도식화에 붙인 이미지는 들어가지 않습니다.": "can view and print it read-only. The photo and images placed on the flats are not included.",
   "작업지시서 언어": "Tech pack language", "한국어": "Korean", "한·영 병기": "Korean + English",
   "작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기": "Language written on the tech pack. For overseas factories choose English or Korean + English",
   "번역 파일을 받지 못했습니다. 인터넷 연결을 확인해 주세요.": "Couldn't download the translation file. Check your internet connection.",
@@ -394,6 +402,7 @@ Object.assign(D, {
 Object.assign(D, { "밑위": "Rise", "벨트고리": "Belt loops", "부자재": "Trims", "케어라벨": "Care label", "배율": "Scale", "(실제 크기)": "(actual size)", "실제 크기": "actual size",
   "치수: Chest": "Size: Chest" });
 window.I18N_RULES = [
+  [/^이미지는 한 면에 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 images can be added per side."], [/^이미지 너비 (\d+) \(모서리를 끌어 크기 조절\)$/, "Image width $1 (drag a corner to resize)"],
   [/^기준: 1cm = ([\d.]+)px \(기준선 (\d+)px = ([\d.]+)cm\)$/, "Scale: 1cm = $1px (reference line $2px = $3cm)"],
   [/^(.+) \(왼쪽 2단계\(디테일\)에서 직접 선택해도 작업지시서를 만들 수 있습니다\.\)$/, function (t, _, a) { var x = t(a); return x == null ? null : x + " (You can also make the tech pack by choosing details in step 2 on the left.)"; }],
   [/^· (.+)$/, function (t, _, a) { var x = t(a); return x == null ? null : "· " + x; }],
