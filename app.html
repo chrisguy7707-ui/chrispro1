@@ -229,8 +229,25 @@
   .ed-view svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
   .ed-view .hd { cursor: grab; } .ed-view .hd:hover circle { r: 7; }
   .ed-view [data-i] { cursor: pointer; }
+  .ed-view .rot { cursor: grab; }
   .ed-view image[data-i] { cursor: move; } .ed-view .rh { cursor: nwse-resize; } .ed-view .rh.ne, .ed-view .rh.sw { cursor: nesw-resize; }
+  .ed-bar .ed-order { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; } .ed-bar .ed-order button:disabled { opacity: .35; cursor: default; }
   .ed-bar .ed-size { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; } .ed-bar .ed-size input { flex: 0 0 120px; min-width: 100px; padding: 0; border: 0; }
+  .sr-only { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
+  .swatches { border: 1px solid var(--ink); }
+  .swatches .cap { font-size: 12px; font-weight: 700; padding: 3px 6px; border-bottom: 1px solid var(--ink); background: #f1f1ee; display: flex; justify-content: space-between; align-items: center; }
+  .sw-add button { border: 1px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; padding: 1px 9px; margin-left: 4px; font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; }
+  .sw-link { font-size: 11px; font-weight: 500; margin-right: 4px; cursor: pointer; white-space: nowrap; } .sw-link input { margin: 0 3px 0 0; vertical-align: -2px; }
+  .sw-list { display: flex; flex-wrap: wrap; gap: 8px; padding: 6px; }
+  .sw { margin: 0; width: 64px; position: relative; text-align: center; }
+  .sw-tile { width: 64px; height: 48px; border: 1px solid var(--ink); cursor: pointer; background-size: cover; background-position: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sw figcaption { font-size: 10.5px; line-height: 1.25; min-height: 13px; word-break: break-all; margin-top: 2px; }
+  .sw-x { position: absolute; right: -5px; top: -6px; width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--ink); background: #fff; color: var(--ink); font-size: 11px; line-height: 1; padding: 0; cursor: pointer; display: none; }
+  .sw:hover .sw-x, .sw:focus-within .sw-x { display: block; }
+  .sw-hint { font-size: 10.5px; color: var(--ink-soft); padding: 0 6px 5px; }
+  .swatches.empty .sw-list { display: none; } .swatches:not(.empty) .sw-hint { display: none; }
+  body.view-only .sw-add, body.view-only .sw-x, body.view-only .sw-hint { display: none !important; } body.view-only .sw-tile { cursor: default; }
+  @media print { .sw-add, .sw-x, .sw-hint, .swatches.empty { display: none !important; } }
   .ref .photo { position: relative; cursor: pointer; }
   .ph-hint { display: block; margin-top: 4px; font-weight: 700; color: #1e5bd8; }
   .ph-tools { position: absolute; right: 4px; top: 4px; display: none; gap: 4px; }
@@ -492,6 +509,8 @@
       <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
       <input type="file" id="jobFile" accept=".json,application/json" hidden />
       <input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp" hidden />
+      <input type="file" id="swFile" accept="image/jpeg,image/png,image/webp" hidden />
+      <input type="color" id="swColor" class="sr-only" tabindex="-1" aria-hidden="true" />
       <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
       <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
       <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
@@ -552,6 +571,11 @@
             <thead><tr><th style="width:70px">구분</th><th>품목</th><th>규격·컬러</th><th style="width:70px">수량</th></tr></thead>
             <tbody></tbody>
           </table>
+          <div class="swatches empty" id="swatchBox">
+            <div class="cap"><span>스와치</span><span class="sw-add" data-noexport><label class="sw-link" title="켜면 컬러 칸의 색 이름(블랙, 네이비…)으로 스와치를 자동으로 채웁니다. 컬러 칸이 비어 있으면 고른 원단 프리셋의 대표 색을 넣습니다"><input type="checkbox" id="swLink" /> 컬러 칸과 연결</label><button type="button" id="swColorBtn" title="원단 색상을 골라 스와치로 넣습니다">＋ 색상</button><button type="button" id="swPhotoBtn" title="원단 조각 사진을 스와치로 넣습니다">＋ 사진</button></span></div>
+            <div class="sw-list" id="swList"></div>
+            <div class="sw-hint" data-noexport>원단 색상·사진을 넣어 공장에 보여 주세요 (최대 6개). ‘컬러 칸과 연결’을 켜면 컬러 칸의 색 이름으로 자동으로 채워집니다</div>
+          </div>
         </section>
       </div>
 
@@ -698,6 +722,10 @@
         <button id="edImgBtn" title="로고·그림 파일(PNG·JPG·SVG)을 도식화 위에 붙입니다. 끌어서 옮기고, 모서리를 끌어 크기를 바꿉니다. 파일을 앞판·뒤판 위로 끌어다 놓아도 됩니다">🖼 이미지 넣기</button>
         <input type="file" id="edImgFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
         <label class="ed-size" id="edSizeBox" hidden>크기 <input type="range" id="edImgSize" min="8" max="260" step="1" aria-label="이미지 크기" /></label>
+        <label class="ed-size" id="edRotBox" hidden>회전 <input type="range" id="edImgRot" min="-180" max="180" step="1" aria-label="이미지 회전" /></label>
+        <button id="edImgRot90" hidden title="고른 이미지를 시계 방향으로 90° 돌립니다. 이미지 위쪽의 동그라미를 끌어서 자유롭게 돌려도 됩니다">↻ 90° 돌리기</button>
+        <span class="ed-order" id="edOrderBox" hidden>순서
+          <button id="edImgTop" title="맨 앞으로 (Shift + ] )">⇈ 맨 앞</button><button id="edImgUp" title="한 칸 앞으로 ( ] )">↑ 앞으로</button><button id="edImgDown" title="한 칸 뒤로 ( [ )">↓ 뒤로</button><button id="edImgBottom" title="맨 뒤로 (Shift + [ )">⇊ 맨 뒤</button></span>
         <button id="edImgFlip" hidden title="고른 이미지를 앞판 ↔ 뒤판으로 옮기기">앞↔뒤 옮기기</button>
         <span class="ed-sep"></span>
         <button id="edDel" title="고른 표시 지우기 (Delete 키)">선택 지우기</button>
@@ -1002,7 +1030,9 @@ const state = {
          sleeve: "set", hem: "straight", waist: "fixed", fpocket: "slant", bpocket: "patch",
          chest: false, kangaroo: false, patch: false, side: true, back: true, cargo: false, pleat: false },
   ai: null,
-  notes: { front: [], back: [] },   // 도식화 편집: 메모·화살표·동그라미
+  swLink: false, swHidden: [],      // 스와치 ↔ 컬러 칸 연결, 연결 상태에서 지운 색(다시 안 만듦)
+  swatches: [],                     // 원단 스와치: { name, color 또는 src(사진) } 최대 6개
+  notes: { front: [], back: [] },   // 도식화 편집: 메모·화살표·동그라미·이미지
   offsets: {},                      // 도식화 편집: 끌어 옮긴 디테일 위치 (cm)
   prod: { cost: { loss: 5, fee: 0 }, colors: "", qty: {}, care: {}, careOpts: null, sample: { name: "", meas: {}, memo: "" }, samples: [] },   // 생산 준비 탭
 };
@@ -1458,7 +1488,7 @@ function annoSVG(view, selected = -1) {
   const list = (state.notes && state.notes[view]) || [];
   if (!list.length) return "";
   const n = (v) => (+v).toFixed(1);
-  const imgs = list.map((a, i) => (a.t === "img" ? `<image data-i="${i}" href="${esc(a.src)}" x="${n(a.x)}" y="${n(a.y)}" width="${n(a.w)}" height="${n(a.h)}" preserveAspectRatio="none"/>` : "")).join("");   // 이미지는 맨 아래
+  const imgs = list.map((a, i) => (a.t === "img" ? `<image data-i="${i}" href="${esc(a.src)}" x="${n(a.x)}" y="${n(a.y)}" width="${n(a.w)}" height="${n(a.h)}" preserveAspectRatio="none"${a.r ? ` transform="rotate(${n(a.r)} ${n(a.x + a.w / 2)} ${n(a.y + a.h / 2)})"` : ""}/>` : "")).join("");   // 이미지는 맨 아래
   return `<defs><marker id="an-${view}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0.5 L8,4 L0,7.5 z" fill="${ANNO}"/></marker></defs><g class="anno">${imgs}`
     + list.map((a, i) => {
       const sel = i === selected ? ' stroke-dasharray="3 2"' : "";
@@ -1650,6 +1680,100 @@ photoBox.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key ==
 $("photoFile").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; takeFile(f, true); });
 photoBox.addEventListener("dragover", (e) => { if (!viewOnly && [...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
 photoBox.addEventListener("drop", (e) => { const f = e.dataTransfer?.files?.[0]; if (!f || viewOnly) return; e.preventDefault(); takeFile(f, true); });
+/* 원단 스와치: 색상 또는 원단 조각 사진(가운데를 정사각형으로 잘라 160px). 이름은 눌러서 고침. 인쇄·내보낸 파일에는 스와치가 있을 때만 나옴 */
+const SW_MAX = 6;
+let swEdit = -1;
+function renderSwatches() {
+  $("swatchBox").classList.toggle("empty", !state.swatches.length);
+  $("swList").innerHTML = state.swatches.map((w, i) => `<figure class="sw" data-i="${i}"><div class="sw-tile" role="button" tabindex="0" title="${w.src ? "눌러서 사진 바꾸기" : "눌러서 색상 바꾸기"}" style="${w.src ? `background-image:url('${w.src}')` : `background:${w.color}`}"></div><button type="button" class="sw-x" data-noexport aria-label="삭제" title="삭제">×</button><figcaption contenteditable spellcheck="false">${esc(w.name || `원단 ${i + 1}`)}</figcaption></figure>`).join("");
+  fitPrint();
+}
+const cleanSwatches = (arr) => (Array.isArray(arr) ? arr.slice(0, 30) : []).map((x) => {
+  const name = str(x?.name, 30);
+  if (typeof x?.src === "string" && x.src.length < 200000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(x.src)) return { name, src: x.src, ...(typeof x.key === "string" && x.key ? { key: str(x.key, 30) } : {}) };
+  if (typeof x?.color === "string" && /^#[0-9a-fA-F]{6}$/.test(x.color)) return { name, color: x.color.toLowerCase(), ...(x.auto === true ? { auto: true } : {}), ...(typeof x.key === "string" && x.key ? { key: str(x.key, 30) } : {}) };
+  return null;
+}).filter(Boolean).slice(0, SW_MAX);
+async function squarePhoto(file) {
+  if (!file || !/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error("type");
+  const im = await createImageBitmap(file), m = Math.min(im.width, im.height), c = document.createElement("canvas"); c.width = c.height = 160;
+  c.getContext("2d").drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, 160, 160);
+  return c.toDataURL("image/jpeg", 0.85);
+}
+$("swColorBtn").addEventListener("click", () => {
+  if (viewOnly) return; if (state.swatches.length >= SW_MAX) return setStatus(`스와치는 ${SW_MAX}개까지 넣을 수 있습니다.`, true);
+  state.swatches.push({ name: "", color: "#d9d4c7" }); swEdit = state.swatches.length - 1; renderSwatches(); scheduleSave();
+  $("swColor").value = "#d9d4c7"; $("swColor").click();
+});
+$("swPhotoBtn").addEventListener("click", () => { if (viewOnly) return; if (state.swatches.length >= SW_MAX) return setStatus(`스와치는 ${SW_MAX}개까지 넣을 수 있습니다.`, true); swEdit = -1; $("swFile").click(); });
+$("swColor").addEventListener("input", (e) => {
+  const w = state.swatches[swEdit]; if (!w || w.src) return; w.color = e.target.value; delete w.auto;   // 직접 고치면 자동 갱신 대상에서 빠짐
+  const t = $("swList").querySelector(`.sw[data-i="${swEdit}"] .sw-tile`); if (t) t.style.background = w.color;
+});
+$("swColor").addEventListener("change", () => scheduleSave());
+$("swFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const src = await squarePhoto(f);
+    if (swEdit >= 0 && state.swatches[swEdit]) state.swatches[swEdit] = { name: state.swatches[swEdit].name, src, ...(state.swatches[swEdit].key ? { key: state.swatches[swEdit].key } : {}) };
+    else state.swatches.push({ name: "", src });
+    renderSwatches(); scheduleSave();
+  } catch (err) { setStatus("JPG, PNG, WEBP 사진만 넣을 수 있습니다.", true); }
+});
+const swOpen = (tile) => {
+  if (viewOnly) return; const i = +tile.closest(".sw").dataset.i, w = state.swatches[i]; if (!w) return; swEdit = i;
+  if (w.src) $("swFile").click(); else { $("swColor").value = w.color; $("swColor").click(); }
+};
+$("swList").addEventListener("click", (e) => {
+  const x = e.target.closest(".sw-x"); if (x) { if (viewOnly) return; const [gone] = state.swatches.splice(+x.closest(".sw").dataset.i, 1); if (state.swLink && gone?.key && !state.swHidden.includes(gone.key)) state.swHidden.push(gone.key); renderSwatches(); scheduleSave(); return; }
+  const t = e.target.closest(".sw-tile"); if (t) swOpen(t);
+});
+$("swList").addEventListener("keydown", (e) => { const t = e.target.closest(".sw-tile"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); swOpen(t); } });
+$("swList").addEventListener("input", (e) => {
+  const cap = e.target.closest("figcaption"); if (!cap) return; const w = state.swatches[+cap.closest(".sw").dataset.i]; if (w) { w.name = cap.textContent.trim().slice(0, 30); delete w.auto; scheduleSave(); }
+});
+/* 컬러 칸·원단 프리셋 ↔ 스와치 연결: 색 이름 → 대표 색 (한국어·영어 이름, 다크·라이트 같은 수식어는 어둡게·밝게) */
+const COLOR_HEX = [
+  ["블랙|검정|검은색|black", "#1f1f22"], ["화이트|흰색|하양|white", "#f7f7f5"], ["아이보리|ivory", "#f3ecd8"], ["크림|cream", "#f5eed3"], ["오프화이트|offwhite", "#efebe0"], ["베이지|beige", "#d8c7a6"], ["샌드|sand", "#cdb892"],
+  ["카멜|camel", "#b98a52"], ["브라운|갈색|brown", "#6b4a34"], ["초콜릿|초코|chocolate", "#4a2f24"], ["모카|mocha", "#8a6a55"], ["탄|tan", "#b88a5a"],
+  ["멜란지그레이|멜란지|melange", "#b4b4b6"], ["라이트그레이|연회색|lightgrey|lightgray", "#cfcfd2"], ["다크그레이|진회색|darkgrey|darkgray", "#5c5c60"], ["차콜|charcoal", "#44464a"], ["그레이|회색|grey|gray", "#9a9a9e"], ["실버|silver", "#c3c5c8"],
+  ["네이비|남색|navy", "#1f2a4a"], ["블루|파랑|파란색|blue", "#2d5fb4"], ["스카이블루|하늘색|skyblue", "#8ec5ee"], ["인디고|indigo", "#2e3f73"], ["데님|denim", "#4b6a9c"], ["로열블루|royalblue", "#2a4bb0"], ["민트|mint", "#a6dcc6"], ["틸|청록|teal", "#2a8a8a"],
+  ["레드|빨강|빨간색|red", "#c8282d"], ["버건디|와인|burgundy|wine", "#6e1f2f"], ["핑크|분홍|pink", "#f0a4bb"], ["코랄|coral", "#f27c66"], ["오렌지|주황|orange", "#f08a2e"], ["옐로우|옐로|노랑|노란색|yellow", "#f4d24a"], ["머스타드|mustard", "#d2a42c"], ["레몬|lemon", "#f5e65b"],
+  ["그린|초록|green", "#3f8f4f"], ["카키|khaki", "#7d7a4e"], ["올리브|olive", "#69683a"], ["라임|lime", "#b7d94a"], ["세이지|sage", "#9fb39a"],
+  ["퍼플|보라|purple", "#6f4aa6"], ["라벤더|lavender", "#b8a6e0"], ["라일락|lilac", "#c3a9e6"], ["바이올렛|violet", "#7a3fb0"],
+].flatMap(([names, hex]) => names.split("|").map((n) => [n, hex])).sort((a, b) => b[0].length - a[0].length);
+const normColor = (t) => String(t).toLowerCase().replace(/[\s·\-_]/g, "").replace(/컬러$|color$/, "");
+const mixHex = (hex, to, k) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - k) + to * k).toString(16).padStart(2, "0")).join("");
+function colorHex(token) {
+  const n = normColor(token), hit = COLOR_HEX.find(([k]) => n.includes(k)); if (!hit) return null;
+  const dark = /다크|딥|진한|dark|deep/.test(n) && !/다크|진/.test(hit[0]), light = /라이트|연한|페일|소프트|light|pale|soft/.test(n) && !/라이트|연/.test(hit[0]);
+  return dark ? mixHex(hit[1], 0, 0.35) : light ? mixHex(hit[1], 255, 0.4) : hit[1];
+}
+const FABRIC_HEX = [[/데님/, "#4b6a9c"], [/린넨/, "#d9cdb4"], [/옥스포드 40|포플린/, "#f1efe9"], [/기모|쭈리/, "#b4b4b6"], [/싱글저지/, "#eeece6"], [/캔버스/, "#d6c8a4"], [/트윌|치노/, "#bda77b"], [/나일론/, "#2b2f36"], [/폴리 스판/, "#44464a"]];
+function syncSwatches() {
+  if (!state.swLink) return;
+  const tokens = txt("fColor").split(/[,，、\/·\n]+/).map((x) => x.trim()).filter(Boolean), seen = new Set(), items = [];
+  const manual = state.swatches.filter((w) => !w.auto), byKey = new Map(manual.filter((w) => w.key).map((w) => [w.key, w])), used = new Set();
+  const add = (key, auto) => { if (seen.has(key) || state.swHidden.includes(key)) return; seen.add(key); const m = byKey.get(key); if (m) { used.add(m); items.push(m); } else items.push(auto); };
+  for (const t of tokens) { const hex = colorHex(t); if (hex) add(normColor(t), { name: t.slice(0, 30), color: hex, auto: true, key: normColor(t) }); }
+  if (!items.length) {   // 색 이름이 없으면 고른 원단 프리셋의 대표 색
+    const f = FABRICS.find((x) => x[0] === $("oFabric").value), hex = f && FABRIC_HEX.find(([re]) => re.test(f[0]))?.[1];
+    if (f && hex) add("fabric:" + f[0], { name: f[0].slice(0, 30), color: hex, auto: true, key: "fabric:" + f[0] });
+  }
+  const next = items.concat(manual.filter((w) => !used.has(w))).slice(0, SW_MAX);
+  if (JSON.stringify(next) === JSON.stringify(state.swatches)) return;
+  state.swatches = next; renderSwatches(); scheduleSave();
+}
+let swSyncT = null;
+new MutationObserver(() => { clearTimeout(swSyncT); swSyncT = setTimeout(syncSwatches, 250); }).observe($("fColor"), { childList: true, characterData: true, subtree: true });
+$("oFabric").addEventListener("change", () => syncSwatches());
+$("swLink").addEventListener("change", (e) => {
+  if (viewOnly) { e.target.checked = state.swLink; return; }
+  state.swLink = e.target.checked;
+  if (state.swLink) { state.swHidden = []; syncSwatches(); }
+  else state.swatches.forEach((w) => { delete w.auto; });   // 연결을 끄면 지금 스와치는 그대로 두고 직접 만든 것처럼 고정
+  scheduleSave();
+});
 const drop = $("drop");
 drop.addEventListener("click", () => $("file").click());
 drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } });
@@ -1880,6 +2004,7 @@ function sheetHTML() {
   const sheet = $("sheet").cloneNode(true);
   sheet.querySelectorAll("[contenteditable]").forEach((n) => n.removeAttribute("contenteditable"));
   sheet.querySelectorAll("[data-noexport]").forEach((n) => n.remove());
+  if (!state.swatches.length) sheet.querySelector("#swatchBox")?.remove();
   sheet.querySelector("#sheetPhoto")?.removeAttribute("title"); sheet.querySelector("#sheetPhoto")?.removeAttribute("role"); sheet.querySelector("#sheetPhoto")?.removeAttribute("tabindex");
   sheet.querySelectorAll("[data-part]").forEach((n) => n.removeAttribute("data-part"));   // 화면용 원문 표시는 파일에 넣지 않음
   return `<!doctype html><html lang="${sheetLang === "en" ? "en" : "ko"}"><head><meta charset="utf-8"><title>${sheetLang === "ko" ? "작업지시서" : sheetLang === "en" ? "Tech pack" : "작업지시서 Tech pack"} ${esc($("fStyle").textContent)}</title><style>${css}
@@ -2011,13 +2136,20 @@ function renderEditor() {
     const sa = ed.sel.view === view && ed.sel.i >= 0 ? state.notes[view][ed.sel.i] : null;
     if (sa && sa.t === "img") {      // 고른 이미지: 점선 테두리 + 네 모서리 크기 손잡이
       const NS = "http://www.w3.org/2000/svg", g = document.createElementNS(NS, "g");
+      if (sa.r) g.setAttribute("transform", `rotate(${sa.r} ${sa.x + sa.w / 2} ${sa.y + sa.h / 2})`);
+      const tx = sa.x + sa.w / 2;
       g.innerHTML = `<rect x="${sa.x}" y="${sa.y}" width="${sa.w}" height="${sa.h}" fill="none" stroke="${ANNO}" stroke-width="1" stroke-dasharray="4 3" pointer-events="none"/>`
+        + `<line x1="${tx}" y1="${sa.y}" x2="${tx}" y2="${sa.y - 14}" stroke="${ANNO}" stroke-width="1" pointer-events="none"/><circle class="rot" cx="${tx}" cy="${sa.y - 14}" r="4.5" fill="${ANNO}" stroke="#fff" stroke-width="1.2"><title>돌리기</title></circle>`
         + [["nw", sa.x, sa.y], ["ne", sa.x + sa.w, sa.y], ["sw", sa.x, sa.y + sa.h], ["se", sa.x + sa.w, sa.y + sa.h]].map(([c, x, y]) => `<circle class="rh ${c}" data-c="${c}" cx="${x}" cy="${y}" r="4.5" fill="#fff" stroke="${ANNO}" stroke-width="1.6"/>`).join("");
       el.append(g);
     }
   }
   const si = ed.sel.view && ed.sel.i >= 0 ? state.notes[ed.sel.view][ed.sel.i] : null, isImg = !!si && si.t === "img";
-  $("edSizeBox").hidden = !isImg; $("edImgFlip").hidden = !isImg;
+  $("edSizeBox").hidden = !isImg; $("edImgFlip").hidden = !isImg; $("edRotBox").hidden = !isImg; $("edImgRot90").hidden = !isImg;
+  if (isImg && document.activeElement !== $("edImgRot")) $("edImgRot").value = Math.round(si.r || 0);
+  const imgIdx = isImg ? state.notes[ed.sel.view].map((a, k) => (a.t === "img" ? k : -1)).filter((k) => k >= 0) : [], pos = imgIdx.indexOf(ed.sel.i);
+  $("edOrderBox").hidden = imgIdx.length < 2;
+  $("edImgTop").disabled = $("edImgUp").disabled = pos === imgIdx.length - 1; $("edImgBottom").disabled = $("edImgDown").disabled = pos === 0;
   if (isImg && document.activeElement !== $("edImgSize")) $("edImgSize").value = Math.round(Math.max(si.w, si.h));
   if (!ed.drag) $("edNote").textContent = isBag() ? "파우치는 손잡이 편집을 아직 지원하지 않습니다. 메모·화살표·동그라미는 넣을 수 있습니다."
     : "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.";
@@ -2038,10 +2170,14 @@ for (const box of [$("edFront"), $("edBack")]) {
   box.addEventListener("pointerdown", (e) => {
     const svg = box.querySelector("svg"); if (!svg) return;
     const view = svg.dataset.view, p = svgPt(svg, e), list = state.notes[view];
-    const hd = e.target.closest(".hd"), an = e.target.closest("[data-i]"), rh = e.target.closest(".rh");
+    const hd = e.target.closest(".hd"), an = e.target.closest("[data-i]"), rh = e.target.closest(".rh"), rot = e.target.closest(".rot");
+    if (ed.tool === "move" && rot && ed.sel.view === view) {          // 이미지 돌리기: 위쪽 동그라미를 끌어 중심 둘레로
+      const a = list[ed.sel.i]; if (!a || a.t !== "img") return;
+      pushUndo(); ed.drag = { kind: "rotate", view, i: ed.sel.i, cx: a.x + a.w / 2, cy: a.y + a.h / 2, r0: a.r || 0 }; box.setPointerCapture(e.pointerId); e.preventDefault(); return;
+    }
     if (ed.tool === "move" && rh && ed.sel.view === view) {          // 이미지 크기: 반대쪽 모서리를 고정하고 비율 유지
       const a = list[ed.sel.i], c = rh.dataset.c; if (!a || a.t !== "img") return;
-      pushUndo(); ed.drag = { kind: "resize", view, i: ed.sel.i, sx: c.includes("e") ? 1 : -1, sy: c.includes("s") ? 1 : -1, ax: c.includes("e") ? a.x : a.x + a.w, ay: c.includes("s") ? a.y : a.y + a.h, ar: a.w / a.h };
+      pushUndo(); ed.drag = { kind: "resize", view, i: ed.sel.i, sx: c.includes("e") ? 1 : -1, sy: c.includes("s") ? 1 : -1, ax: c.includes("e") ? a.x : a.x + a.w, ay: c.includes("s") ? a.y : a.y + a.h, ar: a.w / a.h, r: a.r || 0, cx: a.x + a.w / 2, cy: a.y + a.h / 2 };
       box.setPointerCapture(e.pointerId); e.preventDefault(); return;
     }
     if (ed.tool === "move" && hd) {
@@ -2083,8 +2219,19 @@ for (const box of [$("edFront"), $("edBack")]) {
     }
     const a = state.notes[d.view][d.i]; if (!a) return;
     if (d.kind === "resize") {
-      const w = Math.max(8, Math.min(400, (p.x - d.ax) * d.sx)); a.w = w; a.h = w / d.ar; a.x = d.sx > 0 ? d.ax : d.ax - w; a.y = d.sy > 0 ? d.ay : d.ay - a.h;
+      // 돌아간 이미지: 마우스 위치를 이미지 기준(안 돌린 좌표)으로 바꿔 크기를 정하고, 고정한 모서리가 화면에서 안 움직이게 중심을 옮김
+      const rad = (d.r * Math.PI) / 180, c = Math.cos(rad), sn = Math.sin(rad), dx = p.x - d.cx, dy = p.y - d.cy;
+      const lx = d.cx + dx * c + dy * sn, ly = d.cy - dx * sn + dy * c;
+      const w = Math.max(8, Math.min(400, (lx - d.ax) * d.sx)), h = w / d.ar;
+      const clx = d.sx > 0 ? d.ax + w / 2 : d.ax - w / 2, cly = d.sy > 0 ? d.ay + h / 2 : d.ay - h / 2;
+      const wx = d.cx + (clx - d.cx) * c - (cly - d.cy) * sn, wy = d.cy + (clx - d.cx) * sn + (cly - d.cy) * c;
+      a.w = w; a.h = h; a.x = wx - w / 2; a.y = wy - h / 2;
       renderEditor(); $("edNote").textContent = `이미지 너비 ${Math.round(w)} (모서리를 끌어 크기 조절)`; return;
+    }
+    if (d.kind === "rotate") {
+      let ang = (Math.atan2(p.y - d.cy, p.x - d.cx) * 180) / Math.PI + 90; if (ang > 180) ang -= 360;
+      const near = Math.round(ang / 45) * 45; if (Math.abs(ang - near) < 4) ang = near;   // 0·45·90°… 근처에서는 딱 맞춤
+      a.r = Math.round(ang); renderEditor(); $("edNote").textContent = `이미지 회전 ${a.r}°`; return;
     }
     if (d.kind === "anno") { const dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
       if (a.t === "arrow") { a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; } else { a.x += dx; a.y += dy; } renderEditor(); return; }
@@ -2095,6 +2242,7 @@ for (const box of [$("edFront"), $("edBack")]) {
     const d = ed.drag; if (!d) return; ed.drag = null;
     if (d.kind === "new") { const a = state.notes[d.view][d.i]; if (a && ((a.t === "arrow" && Math.hypot(a.x2 - a.x1, a.y2 - a.y1) < 6) || (a.t === "circle" && a.r < 4))) { state.notes[d.view].splice(d.i, 1); ed.undo.pop(); } else ed.sel = { view: d.view, i: d.i }; }
     if (d.kind === "handle" && d.cm == null) ed.undo.pop();
+    if (d.kind === "rotate" && (state.notes[d.view][d.i]?.r || 0) === d.r0) ed.undo.pop();
     if (d.kind === "resize") { const a = state.notes[d.view][d.i]; if (a) for (const k of ["x", "y", "w", "h"]) a[k] = Math.round(a[k] * 10) / 10; }
     if (d.kind === "detail") { if (!d.moved) ed.undo.pop(); else { const o = state.offsets[d.key]; o.dx = Math.round(o.dx * 2) / 2; o.dy = Math.round(o.dy * 2) / 2; } }   // 0.5cm 단위
     renderFlats(); fitPrint(); scheduleSave(); renderEditor();
@@ -2143,6 +2291,27 @@ $("edImgSize").addEventListener("input", (e) => {
   renderFlats(); renderEditor();
 });
 $("edImgSize").addEventListener("change", () => { sizeUndo = false; fitPrint(); scheduleSave(); });
+/* 이미지끼리 앞뒤 순서 (메모·화살표·동그라미는 항상 이미지 위) */
+function moveImage(mode) {
+  const { view, i } = ed.sel, list = view && state.notes[view]; if (!list || list[i]?.t !== "img") return;
+  const idxs = list.map((a, k) => (a.t === "img" ? k : -1)).filter((k) => k >= 0), pos = idxs.indexOf(i);
+  const to = mode === "top" ? idxs.length - 1 : mode === "bottom" ? 0 : mode === "up" ? pos + 1 : pos - 1;
+  if (to < 0 || to >= idxs.length || to === pos) return;
+  pushUndo(); const imgs = idxs.map((k) => list[k]), [m] = imgs.splice(pos, 1); imgs.splice(to, 0, m); idxs.forEach((k, j) => { list[k] = imgs[j]; });
+  ed.sel = { view, i: idxs[to] }; renderFlats(); fitPrint(); scheduleSave(); renderEditor();
+}
+for (const [id, mode] of [["edImgTop", "top"], ["edImgUp", "up"], ["edImgDown", "down"], ["edImgBottom", "bottom"]]) $(id).addEventListener("click", () => moveImage(mode));
+let rotUndo = false;
+$("edImgRot").addEventListener("input", (e) => {
+  const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || a.t !== "img") return;
+  if (!rotUndo) { pushUndo(); rotUndo = true; }
+  a.r = +e.target.value; renderFlats(); renderEditor();
+});
+$("edImgRot").addEventListener("change", () => { rotUndo = false; fitPrint(); scheduleSave(); });
+$("edImgRot90").addEventListener("click", () => {
+  const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || a.t !== "img") return;
+  pushUndo(); let r = ((a.r || 0) + 90) % 360; if (r > 180) r -= 360; a.r = r; renderFlats(); fitPrint(); scheduleSave(); renderEditor();
+});
 $("edImgFlip").addEventListener("click", () => {
   const { view, i } = ed.sel, a = view && state.notes[view][i]; if (!a || a.t !== "img") return;
   const to = view === "front" ? "back" : "front"; if (state.notes[to].filter((x) => x.t === "img").length >= IMG_MAX) return;
@@ -2160,8 +2329,9 @@ function currentK() {
 }
 $("edClear").addEventListener("click", () => { if (!state.notes.front.length && !state.notes.back.length) return; pushUndo(); state.notes = { front: [], back: [] }; ed.sel = { view: null, i: -1 }; renderFlats(); scheduleSave(); renderEditor(); });
 document.addEventListener("keydown", (e) => {
-  if (activeTab !== "edit" || e.target.matches("input, textarea, [contenteditable]")) return;
+  if (activeTab !== "edit" || e.target.matches?.("input, textarea, [contenteditable]")) return;
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deleteSelected(); }
+  const mv = { "]": "up", "}": "top", "[": "down", "{": "bottom" }[e.key]; if (mv && ed.sel.view) { e.preventDefault(); moveImage(mv); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undoEdit(); }
 });
 
@@ -2479,6 +2649,7 @@ function buildCSV() {
   }
   out.push(""); row("[부자재]"); row("구분", "품목", "규격·컬러", "수량");
   $("trimTable").querySelectorAll("tbody tr").forEach((tr) => { const c = [...tr.children].map((td) => td.textContent.trim()); if (c.some(Boolean)) row(...c); });
+  if (state.swatches.length) { out.push(""); row("[스와치]"); state.swatches.forEach((w, i) => row(w.name || `원단 ${i + 1}`, w.color || "(사진)")); }
   out.push(""); row("[봉제 사양]"); lines($("sewList")).forEach((x, i) => row(i + 1, x));
   out.push(""); row("[주의사항]"); lines($("noteList")).forEach((x) => row(x));
   const r = costCalc();
@@ -2704,6 +2875,7 @@ const unb64u = (t) => { const s = atob(t.replace(/-/g, "+").replace(/_/g, "/"));
 function shareSnapshot(src, withCost) {
   const j = JSON.parse(JSON.stringify(src));
   delete j.photo; delete j.jobId; delete j.jobName;
+  if (j.swatches) j.swatches = j.swatches.filter((w) => !w.src);   // 스와치 사진도 링크에서 뺌 (색상 스와치는 들어감)
   if (j.marks) j.marks = noImages({ front: j.marks.front || [], back: j.marks.back || [] });
   if (!withCost && j.prod) j.prod.cost = {};
   return j;
@@ -2816,7 +2988,7 @@ function snapshot(withPhoto = true) {
     sew: lines($("sewList")), notes: lines($("noteList")),
     photo: withPhoto && state.photo ? state.photo.dataUrl : null,
     pattern: patDraft ? { type: $("patType").value, values: patValues(), mode: $("patPrintMode").value } : null,
-    marks: withPhoto ? state.notes : noImages(state.notes), offsets: state.offsets, prod: state.prod, sheetLang };
+    marks: withPhoto ? state.notes : noImages(state.notes), offsets: state.offsets, prod: state.prod, sheetLang, swatches: withPhoto ? state.swatches : state.swatches.filter((w) => !w.src), swLink: state.swLink, swHidden: state.swHidden };
 }
 const str = (x, max = 300) => String(x ?? "").slice(0, max);
 async function restore(j) {
@@ -2857,11 +3029,12 @@ async function restore(j) {
   const cleanNote = (a) => a && a.t === "text" ? { t: "text", x: num(a.x), y: num(a.y), text: str(a.text, 40) }
     : a && a.t === "arrow" ? { t: "arrow", x1: num(a.x1), y1: num(a.y1), x2: num(a.x2), y2: num(a.y2) }
     : a && a.t === "circle" ? { t: "circle", x: num(a.x), y: num(a.y), r: Math.min(200, Math.abs(num(a.r))) }
-    : a && a.t === "img" && typeof a.src === "string" && a.src.length < 900000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(a.src) ? { t: "img", x: num(a.x), y: num(a.y), w: Math.max(6, Math.min(400, num(a.w))), h: Math.max(6, Math.min(400, num(a.h))), src: a.src } : null;
+    : a && a.t === "img" && typeof a.src === "string" && a.src.length < 900000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(a.src) ? { t: "img", x: num(a.x), y: num(a.y), w: Math.max(6, Math.min(400, num(a.w))), h: Math.max(6, Math.min(400, num(a.h))), r: Number.isFinite(+a.r) ? Math.max(-360, Math.min(360, Math.round(+a.r))) : 0, src: a.src } : null;
   state.notes = { front: [], back: [] };
   const marks = j.marks || (j.notes && !Array.isArray(j.notes) ? j.notes : null);   // 예전 파일은 notes 에 들어 있음
   for (const vw of ["front", "back"]) if (Array.isArray(marks?.[vw])) { let ni = 0; state.notes[vw] = marks[vw].slice(0, 60).map(cleanNote).filter((x) => x && (x.t !== "img" || ++ni <= IMG_MAX)); }
   state.prod = cleanProd(j.prod);
+  state.swatches = cleanSwatches(j.swatches); state.swLink = j.swLink === true; state.swHidden = Array.isArray(j.swHidden) ? j.swHidden.slice(0, 12).map((x) => str(x, 30)) : []; $("swLink").checked = state.swLink; renderSwatches();
   state.offsets = {};
   for (const [key, o] of Object.entries(j.offsets || {})) if (DETAIL_NAMES[key] && o) state.offsets[key] = { dx: Math.max(-40, Math.min(40, num(o.dx))), dy: Math.max(-60, Math.min(60, num(o.dy))) };
   renderFlats(); if (activeTab === "prod") renderProd();

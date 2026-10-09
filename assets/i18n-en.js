@@ -4,6 +4,14 @@
    용어: 작업지시서=tech pack, 도식화=flat sketch, 치수표=size spec, 단면=½ (flat) width, 시보리=rib, 요척=fabric consumption */
 var D = (window.I18N_DICT = {});
 Object.assign(D, {
+  "컬러 칸과 연결": "Link to Color field", "켜면 컬러 칸의 색 이름(블랙, 네이비…)으로 스와치를 자동으로 채웁니다. 컬러 칸이 비어 있으면 고른 원단 프리셋의 대표 색을 넣습니다": "When on, swatches are filled automatically from the color names in the Color field (black, navy…). If the Color field is empty, the typical color of the chosen fabric preset is used",
+  "원단 색상·사진을 넣어 공장에 보여 주세요 (최대 6개). ‘컬러 칸과 연결’을 켜면 컬러 칸의 색 이름으로 자동으로 채워집니다": "Add fabric colors or photos to show the factory (up to 6). Turn on ‘Link to Color field’ to fill them automatically from the color names in the Color field",
+  "순서": "Order", "맨 앞으로 (Shift + ] )": "Bring to front (Shift + ] )", "한 칸 앞으로 ( ] )": "Forward one step ( ] )", "한 칸 뒤로 ( [ )": "Back one step ( [ )", "맨 뒤로 (Shift + [ )": "Send to back (Shift + [ )",
+  "⇈ 맨 앞": "⇈ Front", "↑ 앞으로": "↑ Forward", "↓ 뒤로": "↓ Back", "⇊ 맨 뒤": "⇊ Back-most",
+  "스와치": "Swatches", "＋ 색상": "+ Color", "＋ 사진": "+ Photo", "원단 색상을 골라 스와치로 넣습니다": "Add a fabric color as a swatch", "원단 조각 사진을 스와치로 넣습니다": "Add a photo of a fabric piece as a swatch",
+  "원단 색상·사진을 넣어 공장에 보여 주세요 (최대 6개)": "Add fabric colors or photos to show the factory (up to 6)", "눌러서 사진 바꾸기": "Click to replace the photo", "눌러서 색상 바꾸기": "Click to change the color",
+  "[스와치]": "[Swatches]", "(사진)": "(photo)", "JPG, PNG, WEBP 사진만 넣을 수 있습니다.": "Only JPG, PNG and WEBP photos can be added.",
+  "회전": "Rotate", "이미지 회전": "Image rotation", "↻ 90° 돌리기": "↻ Rotate 90°", "돌리기": "Rotate", "고른 이미지를 시계 방향으로 90° 돌립니다. 이미지 위쪽의 동그라미를 끌어서 자유롭게 돌려도 됩니다": "Rotate the selected image 90° clockwise. You can also drag the circle above the image to rotate freely",
   "빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.": "Dragging a red handle changes the size spec and the flat follows. Blue marks and logos or pictures added with ‘Add image’ are included in the tech pack, print and saved files.",
   "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.": "Dragging a red handle changes the size spec; details like pockets can be dragged (left/right pairs stay symmetric). Blue marks and logos or pictures added with ‘Add image’ are included in the tech pack, print and saved files.",
   "눌러서 참고 사진 넣기 (사진을 끌어다 놓아도 됩니다)": "Click to add a reference photo (or drag one here)", "＋ 눌러서 사진 넣기": "+ Click to add a photo", "바꾸기": "Replace",
@@ -402,6 +410,7 @@ Object.assign(D, {
 Object.assign(D, { "밑위": "Rise", "벨트고리": "Belt loops", "부자재": "Trims", "케어라벨": "Care label", "배율": "Scale", "(실제 크기)": "(actual size)", "실제 크기": "actual size",
   "치수: Chest": "Size: Chest" });
 window.I18N_RULES = [
+  [/^원단 (\d+)$/, "Fabric $1"], [/^스와치는 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 swatches can be added."], [/^이미지 회전 (-?\d+)°$/, "Image rotation $1°"],
   [/^이미지는 한 면에 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 images can be added per side."], [/^이미지 너비 (\d+) \(모서리를 끌어 크기 조절\)$/, "Image width $1 (drag a corner to resize)"],
   [/^기준: 1cm = ([\d.]+)px \(기준선 (\d+)px = ([\d.]+)cm\)$/, "Scale: 1cm = $1px (reference line $2px = $3cm)"],
   [/^(.+) \(왼쪽 2단계\(디테일\)에서 직접 선택해도 작업지시서를 만들 수 있습니다\.\)$/, function (t, _, a) { var x = t(a); return x == null ? null : x + " (You can also make the tech pack by choosing details in step 2 on the left.)"; }],

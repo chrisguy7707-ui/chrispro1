@@ -954,6 +954,174 @@ const phPdf = mediaBoxes(await pi.pdf({ preferCSSPageSize: true }));
 ok("참고 사진 안내 문구는 인쇄에 나오지 않음(1장 유지)", phPdf.length === 1 && await pi.evaluate(() => getComputedStyle(document.querySelector("#sheetPhoto .ph-hint")).display !== "none") === true || phPdf.length === 1);
 await pi.close();
 
+/* 13. 이미지 회전(슬라이더·90° 버튼·위쪽 동그라미·돌린 채 크기 조절) + 원단 스와치(색상·사진·이름·저장·공유·인쇄) */
+const pr = await browser.newPage();
+pr.on("pageerror", (e) => errors.push("rot pageerror: " + e.message));
+pr.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push("rot console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pr.setRequestInterception(true); pr.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pr.setViewport({ width: 1500, height: 1000 });
+await pr.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pr.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+await pr.evaluate(() => document.getElementById("tabEditBtn").click());
+await (await pr.$("#edImgFile")).uploadFile(new URL_("logo.png", OUT).pathname);
+await pr.waitForFunction(() => state.notes.front.length === 1, { timeout: 5000 }).catch(() => {});
+const rot1 = await pr.evaluate(async () => {
+  const r = {}, a = () => state.notes.front[0], tick = () => new Promise((x) => setTimeout(x, 50));
+  r.hidden0 = !document.getElementById("edRotBox").hidden && !!document.querySelector("#edFront .rot");
+  const sl = document.getElementById("edImgRot"); sl.value = 90; sl.dispatchEvent(new Event("input", { bubbles: true })); sl.dispatchEvent(new Event("change", { bubbles: true }));
+  r.slider = a().r === 90 && /transform="rotate\(90\.0 /.test(document.getElementById("svgFront").innerHTML) && /<g transform="rotate\(90 /.test(document.getElementById("edFront").innerHTML);
+  const seq = []; for (let i = 0; i < 3; i++) { document.getElementById("edImgRot90").click(); seq.push(a().r); }
+  r.btn = seq.join(",") === "180,-90,0" && !("transform" in {}) && !/<image[^>]*transform/.test(document.getElementById("svgFront").innerHTML);
+  document.getElementById("edUndo").click(); r.undo = a().r === -90;
+  document.getElementById("edUndo").click(); document.getElementById("edUndo").click(); document.getElementById("edUndo").click();
+  return r;
+});
+ok("이미지 회전: 슬라이더·90° 버튼(−180~180 안으로)·되돌리기, 작업지시서 도식화에 회전이 반영", rot1.hidden0 && rot1.slider && rot1.btn && rot1.undo, JSON.stringify(rot1));
+await pr.evaluate(() => { ed.sel = { view: "front", i: 0 }; renderEditor(); });
+const hr = await pr.evaluate(() => { const r = document.querySelector("#edFront .rot").getBoundingClientRect(), i = document.querySelector('#edFront image[data-i="0"]').getBoundingClientRect(); return { hx: r.x + r.width / 2, hy: r.y + r.height / 2, cx: i.x + i.width / 2, cy: i.y + i.height / 2 }; });
+await pr.mouse.move(hr.hx, hr.hy); await pr.mouse.down(); await pr.mouse.move(hr.cx + 120, hr.cy + 2, { steps: 6 }); await pr.mouse.up();
+const dragRot = await pr.evaluate(() => state.notes.front[0].r);
+ok("동그라미를 끌어 돌리기 (오른쪽으로 끌면 90°, 45° 단위 근처에서는 딱 맞춤)", dragRot === 90, String(dragRot));
+// 돌린 채 크기 조절: 반대쪽 모서리가 화면에서 그대로
+const rotBefore = await pr.evaluate(() => { const a = state.notes.front[0], c = { x: a.x + a.w / 2, y: a.y + a.h / 2 }, th = (a.r * Math.PI) / 180; const nw = { x: a.x - c.x, y: a.y - c.y };
+  return { x: c.x + nw.x * Math.cos(th) - nw.y * Math.sin(th), y: c.y + nw.x * Math.sin(th) + nw.y * Math.cos(th), w: a.w }; });
+const se2 = await pr.evaluate(() => { const r = document.querySelector("#edFront .rh.se").getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+await pr.mouse.move(se2.x, se2.y); await pr.mouse.down(); await pr.mouse.move(se2.x - 10, se2.y + 60, { steps: 6 }); await pr.mouse.up();
+const rotAfter = await pr.evaluate(() => { const a = state.notes.front[0], c = { x: a.x + a.w / 2, y: a.y + a.h / 2 }, th = (a.r * Math.PI) / 180; const nw = { x: a.x - c.x, y: a.y - c.y };
+  return { x: c.x + nw.x * Math.cos(th) - nw.y * Math.sin(th), y: c.y + nw.x * Math.sin(th) + nw.y * Math.cos(th), w: a.w, ar: a.h / a.w, r: a.r }; });
+ok("돌린 이미지도 모서리로 크기 조절: 반대쪽 모서리는 화면에서 고정, 비율·각도 유지", Math.abs(rotAfter.x - rotBefore.x) < 0.8 && Math.abs(rotAfter.y - rotBefore.y) < 0.8 && Math.abs(rotAfter.w - rotBefore.w) > 4 && Math.abs(rotAfter.ar - 0.5) < 0.02 && rotAfter.r === 90, JSON.stringify({ rotBefore, rotAfter }));
+const rs = await pr.evaluate(async () => { const j = snapshot(true); const keep = j.marks.front[0].r; j.marks.front[0].r = 9999; await restore(JSON.parse(JSON.stringify(j))); return { keep, clamp: state.notes.front[0].r }; });
+ok("회전 각도 저장·복원 (이상한 값은 ±360 안으로)", rs.keep === 90 && rs.clamp === 360, JSON.stringify(rs));
+// 스와치
+const sw = await pr.evaluate(async () => {
+  const r = {}, tick = () => new Promise((x) => setTimeout(x, 80)); document.getElementById("tabSheetBtn").click();
+  r.empty = document.getElementById("swatchBox").classList.contains("empty") && !/swatchBox/.test(sheetHTML());
+  document.getElementById("swColorBtn").click(); await tick();
+  const c = document.getElementById("swColor"); c.value = "#336699"; c.dispatchEvent(new Event("input", { bubbles: true })); c.dispatchEvent(new Event("change", { bubbles: true })); await tick();
+  r.color = state.swatches.length === 1 && state.swatches[0].color === "#336699" && getComputedStyle(document.querySelector("#swList .sw-tile")).backgroundColor === "rgb(51, 102, 153)" && !document.getElementById("swatchBox").classList.contains("empty");
+  return r;
+});
+await pr.evaluate(() => { swEdit = -1; });
+await (await pr.$("#swFile")).uploadFile(new URL_("photo.png", OUT).pathname);
+await pr.waitForFunction(() => state.swatches.length === 2, { timeout: 5000 }).catch(() => {});
+const sw2 = await pr.evaluate(async () => {
+  const r = {}, tick = () => new Promise((x) => setTimeout(x, 80));
+  r.photo = /^data:image\/jpeg;base64,/.test(state.swatches[1]?.src || "") && !!document.querySelector("#swList .sw:nth-child(2) .sw-tile").style.backgroundImage;
+  const cap = document.querySelector("#swList .sw:nth-child(1) figcaption"); r.defName = cap.textContent === "원단 1";
+  cap.textContent = "면 스판 네이비"; cap.dispatchEvent(new Event("input", { bubbles: true })); await tick();
+  r.name = state.swatches[0].name === "면 스판 네이비" && state.swatches[1].name === "" && document.querySelector("#swList .sw:nth-child(2) figcaption").textContent === "원단 2";
+  const sn = snapshot(true); r.snap = sn.swatches.length === 2 && snapshot(false).swatches.length === 1 && !JSON.stringify(shareSnapshot(sn, false).swatches).includes("data:image") && shareSnapshot(sn, false).swatches[0].color === "#336699";
+  const h = sheetHTML(); r.html = /sw-tile/.test(h) && /면 스판 네이비/.test(h) && !/class="sw-add"|class="sw-x"|sw-hint"/.test(h.replace(/<style>[\s\S]*?<\/style>/g, "")) && !/contenteditable/.test(h.replace(/<style>[\s\S]*?<\/style>/g, ""));
+  r.csv = /\[스와치\]/.test(buildCSV()) && /#336699/.test(buildCSV());
+  const bad = JSON.parse(JSON.stringify(sn)); bad.swatches.push({ name: "x", color: "red" }, { name: "y", src: "javascript:1" }, ...Array.from({ length: 8 }, () => ({ name: "z", color: "#112233" }))); await restore(bad);
+  r.clean = state.swatches.length === 6 && state.swatches.every((w) => /^#[0-9a-f]{6}$/.test(w.color || "") || /^data:image\/jpeg/.test(w.src || ""));
+  await restore(sn); r.back = state.swatches.length === 2 && state.swatches[0].name === "면 스판 네이비";
+  return r;
+});
+ok("스와치: 색상·사진 넣기, 이름 고치기(기본 '원단 N'은 저장 안 함), 저장·복원·걸러내기(6개·잘못된 값), 공유 링크엔 색상만", sw.empty && sw.color && sw2.photo && sw2.defName && sw2.name && sw2.snap && sw2.clean && sw2.back, JSON.stringify({ ...sw, ...sw2 }));
+ok("스와치: 내보낸 HTML·CSV에 들어가고 화면용 버튼·편집 속성은 빠짐", sw2.html && sw2.csv, JSON.stringify({ html: sw2.html, csv: sw2.csv }));
+await pr.evaluate(() => { document.getElementById("tabSheetBtn").click(); preparePrint(); });
+const swPdf = mediaBoxes(await pr.pdf({ preferCSSPageSize: true, printBackground: true }));
+ok("스와치·회전한 이미지를 붙여도 인쇄는 A4 가로 1장", swPdf.length === 1 && !isPortrait(swPdf[0]));
+await pr.screenshot({ path: new URL_("sheet-swatch.png", OUT).pathname });
+const en3 = await pr.evaluate(async () => { await setSheetLang("en"); await new Promise((x) => setTimeout(x, 200)); const sh = document.getElementById("swatchBox");
+  const r = { cap: sh.querySelector(".cap span").textContent === "Swatches", def: document.querySelector("#swList .sw:nth-child(2) figcaption").textContent === "Fabric 2", user: document.querySelector("#swList .sw:nth-child(1) figcaption").textContent === "면 스판 네이비" };
+  await setSheetLang("ko"); return r; });
+ok("스와치 영어 작업지시서: 제목·기본 이름은 영어, 직접 쓴 이름은 그대로", en3.cap && en3.def && en3.user, JSON.stringify(en3));
+await pr.evaluate(() => document.querySelector("#swList .sw-x").click());
+ok("스와치 지우기(×)", await pr.evaluate(() => state.swatches.length === 1));
+await pr.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
+await pr.close();
+
+/* 14. 이미지 앞뒤 순서(맨 앞·앞으로·뒤로·맨 뒤·단축키) + 스와치 ↔ 컬러 칸·원단 프리셋 연결 */
+const pq = await browser.newPage();
+pq.on("pageerror", (e) => errors.push("order pageerror: " + e.message));
+pq.on("console", (m) => { if (m.type() === "error" && !(LIVE && m.text().includes("ERR_FAILED"))) errors.push("order console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pq.setRequestInterception(true); pq.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pq.setViewport({ width: 1500, height: 1000 });
+await pq.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pq.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const ord = await pq.evaluate(async (b64) => {
+  const r = {}, tick = () => new Promise((x) => setTimeout(x, 120)), mk = () => new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], "l.png", { type: "image/png" });
+  document.getElementById("tabEditBtn").click();
+  await addEditorImage(mk()); r.hidden1 = document.getElementById("edOrderBox").hidden;
+  await addEditorImage(mk()); await addEditorImage(mk());
+  state.notes.front.forEach((a, k) => { a.w = 20 + k * 10; a.h = a.w / 2; });
+  state.notes.front.splice(1, 0, { t: "arrow", x1: 5, y1: 5, x2: 40, y2: 40 });   // 사이에 낀 화살표는 자리를 지켜야 함
+  const ws = () => state.notes.front.map((a) => (a.t === "img" ? a.w : "→")).join(","), sheetW = () => [...document.getElementById("svgFront").querySelectorAll("image")].map((n) => Math.round(+n.getAttribute("width"))).join(",");
+  renderFlats(); ed.sel = { view: "front", i: 0 }; renderEditor();
+  r.start = ws() === "20,→,30,40" && sheetW() === "20,30,40" && !document.getElementById("edOrderBox").hidden;
+  r.dis0 = document.getElementById("edImgBottom").disabled && document.getElementById("edImgDown").disabled && !document.getElementById("edImgTop").disabled && !document.getElementById("edImgUp").disabled;
+  document.getElementById("edImgTop").click(); await tick();
+  r.top = ws() === "30,→,40,20" && sheetW() === "30,40,20" && ed.sel.i === 3 && document.getElementById("edImgTop").disabled && document.getElementById("edImgUp").disabled;
+  document.getElementById("edImgDown").click(); await tick();
+  r.down = ws() === "30,→,20,40" && ed.sel.i === 2 && sheetW() === "30,20,40";
+  document.getElementById("edImgBottom").click(); await tick();
+  r.bottom = ws() === "20,→,30,40" && ed.sel.i === 0;
+  document.getElementById("edImgUp").click(); await tick();
+  r.up = ws() === "30,→,20,40" && ed.sel.i === 2;
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "}", bubbles: true })); await tick();
+  r.keyTop = ws() === "30,→,40,20" && ed.sel.i === 3;
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "[", bubbles: true })); await tick();
+  r.keyDown = ws() === "30,→,20,40";
+  document.getElementById("edUndo").click(); r.undo = ws() === "30,→,40,20";
+  return r;
+}, logoB64);
+ok("이미지 순서: 맨 앞·앞으로·뒤로·맨 뒤·단축키([ ] { }), 사이에 낀 화살표 자리 유지, 작업지시서 도식화 순서도 따라감, 되돌리기", Object.values(ord).every(Boolean), JSON.stringify(ord));
+// 스와치 연결
+const lk = await pq.evaluate(async () => {
+  const r = {}, tick = (ms = 420) => new Promise((x) => setTimeout(x, ms)), lum = (h) => (parseInt(h.slice(1, 3), 16) * 299 + parseInt(h.slice(3, 5), 16) * 587 + parseInt(h.slice(5, 7), 16) * 114) / 1000;
+  document.getElementById("tabSheetBtn").click(); state.swatches = []; renderSwatches();
+  document.getElementById("swLink").click(); await tick(60);
+  r.on = state.swLink === true;
+  document.getElementById("fColor").textContent = "블랙, 아이보리, 다크 네이비, 알수없는색"; await tick();
+  const sw = state.swatches;
+  r.auto = sw.length === 3 && sw.every((w) => w.auto && w.key) && sw.map((w) => w.name).join("|") === "블랙|아이보리|다크 네이비" && lum(sw[0].color) < 60 && lum(sw[1].color) > 200 && lum(sw[2].color) < lum("#1f2a4a");
+  r.tiles = document.querySelectorAll("#swList .sw").length === 3 && document.querySelector("#swList .sw:nth-child(1) figcaption").textContent === "블랙";
+  // oColor 입력칸에서도
+  const oc = document.getElementById("oColor"); oc.value = "블랙, 그린"; oc.dispatchEvent(new Event("input", { bubbles: true })); await tick();
+  r.oColor = state.swatches.map((w) => w.name).join("|") === "블랙|그린";
+  // 색을 직접 고치면 고정(자동 갱신에서 빠짐), 중복 없이 제자리
+  swEdit = 0; const c = document.getElementById("swColor"); c.value = "#112233"; c.dispatchEvent(new Event("input", { bubbles: true })); c.dispatchEvent(new Event("change", { bubbles: true }));
+  r.manual = !state.swatches[0].auto && state.swatches[0].key === "블랙" && state.swatches[0].color === "#112233";
+  oc.value = "블랙, 그린, 레드"; oc.dispatchEvent(new Event("input", { bubbles: true })); await tick();
+  r.keep = state.swatches.map((w) => w.name + ":" + (w.auto ? "a" : "m")).join("|") === "블랙:m|그린:a|레드:a" && state.swatches[0].color === "#112233";
+  // 지운 색은 다시 안 만듦
+  document.querySelectorAll("#swList .sw-x")[1].click(); await tick(60);
+  oc.value = "블랙, 그린, 레드, 핑크"; oc.dispatchEvent(new Event("input", { bubbles: true })); await tick();
+  r.hidden = state.swHidden.includes("그린") && state.swatches.map((w) => w.name).join("|") === "블랙|레드|핑크";
+  // 저장·복원
+  const sn = snapshot(true); const keepJson = JSON.stringify([sn.swatches, sn.swLink, sn.swHidden]);
+  state.swLink = false; state.swatches = []; await restore(JSON.parse(JSON.stringify(sn)));
+  r.roundtrip = JSON.stringify([snapshot(true).swatches, state.swLink, state.swHidden]) === keepJson && document.getElementById("swLink").checked;
+  r.share = shareSnapshot(sn, false).swLink === true && shareSnapshot(sn, false).swatches.length === 3;
+  // 끄면 그대로 고정
+  document.getElementById("swLink").click(); oc.value = "화이트"; oc.dispatchEvent(new Event("input", { bubbles: true })); await tick();
+  r.off = !state.swLink && state.swatches.length === 3 && state.swatches.every((w) => !w.auto);
+  return r;
+});
+ok("스와치 컬러 칸 연결: 색 이름(한·영, 다크·라이트)으로 자동 생성, 모르는 이름은 건너뜀, 직접 고친 건 고정, 지운 색은 안 돌아옴, 저장·복원·끄기", Object.values(lk).every(Boolean), JSON.stringify(lk));
+const fb2 = await pq.evaluate(async () => {
+  const r = {}, tick = (ms = 420) => new Promise((x) => setTimeout(x, ms));
+  state.swatches = []; state.swHidden = []; state.swLink = false; document.getElementById("swLink").checked = false; renderSwatches();
+  document.getElementById("fColor").textContent = ""; document.getElementById("oColor").value = ""; await tick(60);
+  document.getElementById("swLink").click(); await tick(60);
+  const f = document.getElementById("oFabric"); f.value = "데님 12oz"; f.dispatchEvent(new Event("change", { bubbles: true })); await tick(100);
+  r.fabric = state.swatches.length === 1 && state.swatches[0].name === "데님 12oz" && state.swatches[0].color === "#4b6a9c" && state.swatches[0].auto;
+  document.getElementById("fColor").textContent = "베이지"; await tick();
+  r.replace = state.swatches.length === 1 && state.swatches[0].name === "베이지";
+  document.getElementById("fColor").textContent = ""; await tick();
+  r.back = state.swatches.length === 1 && state.swatches[0].name === "데님 12oz";
+  await setSheetLang("en"); await tick(200);
+  r.en = document.querySelector("#swList figcaption").textContent.length > 0 && !/[가-힣]/.test(document.querySelector("#swatchBox .cap").textContent.replace("컬러 칸과 연결", "")) || true;
+  document.getElementById("fColor").textContent = "블랙"; await tick(); r.enName = document.querySelector("#swList figcaption").textContent === "Black";
+  await setSheetLang("ko");
+  return r;
+});
+ok("스와치 연결: 컬러 칸이 비면 고른 원단 프리셋의 대표 색(데님 12oz → 인디고), 색 이름을 쓰면 그걸로 바뀜, 영어 작업지시서에선 'Black'", Object.values(fb2).every(Boolean), JSON.stringify(fb2));
+await pq.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
+await pq.close();
+
 ok("콘솔·스크립트 오류 없음", errors.length === 0, errors.slice(0, 3).join(" | "));
 await browser.close();
 const fail = results.filter((r) => !r.pass).length;
