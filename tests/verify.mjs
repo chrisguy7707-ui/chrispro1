@@ -13,7 +13,7 @@ const results = [];
 const ok = (name, pass, detail = "") => { results.push({ name, pass, detail }); console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`); };
 const pages = (buf) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
 
-const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
+const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, args: process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : [] });
 const page = await browser.newPage();
 /* 봇 탐지 요청: 같은 사이트 도메인의 아주 긴 무작위 한 단계 경로 (github.io 아래에서는 /chrispro1/ 밖의 모든 경로) */
 const isGhBot = (u) => { const x = new globalThis.URL(u); return (x.hostname.endsWith("github.io") && !x.pathname.startsWith("/chrispro1/")) || (!/^(localhost|127\.0\.0\.1)$/.test(x.hostname) && /^\/[A-Za-z0-9_-]{60,}$/.test(x.pathname)); };
@@ -755,6 +755,18 @@ const mobPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
 ok("휴대폰 화면에서 인쇄해도 작업지시서는 A4 가로 1장", mobPdf.length === 1 && !isPortrait(mobPdf[0]), mobPdf.join(" "));
 await page.setViewport({ width: 1500, height: 1000 });
 await page.screenshot({ path: new URL_("desktop.png", OUT).pathname, fullPage: true });
+
+/* 9-2. 공유 링크 압축 해제 상한: 작은 링크가 수백 MB로 풀리는 '압축 폭탄'은 3MB에서 멈추고 거절, 정상 링크는 그대로 */
+const bombRes = await page.evaluate(async () => {
+  const cs = new CompressionStream("deflate-raw"), w = cs.writable.getWriter(); w.write(new Uint8Array(120 * 1024 * 1024)); w.close();
+  const out = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  let b = ""; for (let i = 0; i < out.length; i += 0x8000) b += String.fromCharCode.apply(null, out.subarray(i, i + 0x8000));
+  const h = "#v1=" + btoa(b).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const t0 = performance.now(); let err = ""; try { await unpackJob(h); } catch (e) { err = e.message; }
+  const okLink = await unpackJob("#" + await packJob({ app: "작지", v: 1, hello: "안녕".repeat(100) }));
+  return { err, ms: Math.round(performance.now() - t0), okLink: okLink.hello === "안녕".repeat(100) };
+});
+ok("공유 링크 압축 폭탄(작은 링크 → 120MB)은 3MB에서 멈추고 거절, 정상 링크는 열림", bombRes.err === "너무 큼" && bombRes.okLink && bombRes.ms < 4000, JSON.stringify(bombRes));
 
 /* 10. 영어 화면 (?lang=en): 사전 번역 0건 누락, 작업지시서·인쇄·파일·CSV 영어, 측정 부위로 찾는 기능 유지, 언어 기억·되돌리기 */
 const pe = await browser.newPage();

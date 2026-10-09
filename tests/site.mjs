@@ -19,7 +19,7 @@ const results = [];
 const ok = (name, pass, detail = "") => { results.push(pass); console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? "  — " + detail : ""}`); };
 const pdfPages = (buf) => (Buffer.from(buf).toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
 
-const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true });
+const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, args: process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : [] });
 const page = await browser.newPage();
 /* 봇 탐지 요청: 같은 사이트 도메인의 아주 긴 무작위 한 단계 경로 (github.io 아래에서는 /chrispro1/ 밖의 모든 경로) */
 const isGhBot = (u) => { const x = new globalThis.URL(u); return (x.hostname.endsWith("github.io") && !x.pathname.startsWith("/chrispro1/")) || (!/^(localhost|127\.0\.0\.1)$/.test(x.hostname) && /^\/[A-Za-z0-9_-]{60,}$/.test(x.pathname)); };

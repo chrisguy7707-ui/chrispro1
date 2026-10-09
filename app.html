@@ -495,8 +495,8 @@
       <button role="tab" id="tabSheetBtn" aria-selected="true" aria-controls="sheet">작업지시서</button>
       <button role="tab" id="tabEditBtn" aria-selected="false" aria-controls="edit">도식화 편집</button>
       <button role="tab" id="tabProdBtn" aria-selected="false" aria-controls="prod">생산 준비</button>
-      <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500;opacity:.8">베타</small></button>
-      <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">사진 분석 <small style="font-weight:500;opacity:.8">시험</small></button>
+      <button role="tab" id="tabPatBtn" aria-selected="false" aria-controls="pat">패턴 제도 <small style="font-weight:500">베타</small></button>
+      <button role="tab" id="tabOlzBtn" aria-selected="false" aria-controls="olz">사진 분석 <small style="font-weight:500">시험</small></button>
     </div>
     <div class="view-bar" id="viewBar" hidden>
       <b id="viewTxt">공유받은 작업지시서입니다 (읽기 전용 · 사진 제외)</b>
@@ -2893,7 +2893,10 @@ async function unpackJob(hash) {
   let bytes = unb64u(m[2]);
   if (m[1] === "v1") {
     if (typeof DecompressionStream !== "function") throw new Error("이 브라우저는 압축 링크를 열 수 없음");
-    bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+    // 풀면서 3MB를 넘으면 바로 멈춤 (작은 링크가 수백 MB로 풀리는 '압축 폭탄' 방지)
+    const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw")).getReader(), parts = []; let total = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; total += value.length; if (total > 3e6) { reader.cancel().catch(() => {}); throw new Error("너무 큼"); } parts.push(value); }
+    bytes = new Uint8Array(total); let o = 0; for (const c of parts) { bytes.set(c, o); o += c.length; }
   }
   if (bytes.length > 3e6) throw new Error("너무 큼");
   return JSON.parse(new TextDecoder().decode(bytes));

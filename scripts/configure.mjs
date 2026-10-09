@@ -5,6 +5,7 @@
    - adSlots: 승인 후 만든 광고 단위 ID. 비어 있는 자리는 화면에 나타나지 않음 */
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -119,9 +120,17 @@ const domain = (cfg.customDomain || "").trim().toLowerCase();
 if (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) fs.writeFileSync(path.join(root, "CNAME"), domain + "\n");
 else if (fs.existsSync(path.join(root, "CNAME"))) fs.unlinkSync(path.join(root, "CNAME"));
 const today = new Date().toISOString().slice(0, 10);
+/* sitemap lastmod: 파일을 실제로 고친 날 (git 기록이 있고 바뀐 곳이 없으면 마지막 커밋일, 고치는 중이면 오늘, git이 없으면 파일 수정일).
+   모든 페이지가 매번 '오늘'로 나오면 검색엔진이 날짜 신호를 믿지 않음 */
+const git = (args) => { try { return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch (e) { return null; } };
+const lastmod = (file) => {
+  if (git(["status", "--porcelain", "--", file])) return today;
+  const d = git(["log", "-1", "--format=%cs", "--", file]);
+  return d || new Date(fs.statSync(path.join(root, file)).mtimeMs).toISOString().slice(0, 10);
+};
 fs.writeFileSync(path.join(root, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${PAGES.map((p) => `  <url><loc>${base}${p.loc}</loc><lastmod>${today}</lastmod><priority>${p.priority}</priority></url>`).join("\n")}
+${PAGES.map((p) => `  <url><loc>${base}${p.loc}</loc><lastmod>${lastmod(p.file)}</lastmod><priority>${p.priority}</priority></url>`).join("\n")}
 </urlset>
 `);
 fs.writeFileSync(path.join(root, "robots.txt"), `User-agent: *

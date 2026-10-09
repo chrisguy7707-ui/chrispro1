@@ -1,0 +1,38 @@
+# push·PR마다 도구·사이트 검사를 자동으로 돌림 (tests/verify.mjs, tests/site.mjs)
+# 로컬에서 npm test 가 통과해야 하는 것과 같은 검사. 처음 한 번 Actions 탭에서 통과하는지 확인할 것.
+name: tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 사이트 파일이 최신 설정과 같은지 (npm run configure 결과가 커밋돼 있어야 함)
+        run: |
+          npm run configure
+          git diff --exit-code -- '*.html' robots.txt CNAME || (echo "::error::configure 를 다시 돌려 커밋하세요" && exit 1)
+      - name: 개발 서버
+        run: python3 -m http.server 8766 >/dev/null 2>&1 &
+      - name: 검사
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: |
+          sleep 2
+          node tests/verify.mjs
+          node tests/site.mjs
+      - name: 검사 결과 파일 (실패했을 때)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-out
+          path: tests/out/
+          retention-days: 7

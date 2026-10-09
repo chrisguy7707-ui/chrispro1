@@ -25,10 +25,10 @@
   --shadow: 0 1px 2px rgba(23,23,28,.04), 0 8px 24px rgba(23,23,28,.06);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg: #121216; --paper: #1c1c22; --ink: #f2f0eb; --ink-soft: #a6a6b0; --rule: #2b2b33;
+  :root:not([data-theme="light"]) { --kbd: #ff8f75; --bg: #121216; --paper: #1c1c22; --ink: #f2f0eb; --ink-soft: #a6a6b0; --rule: #2b2b33;
     --lemon-soft: #3a3418; --coral-soft: #3b231d; --mint-soft: #173229; --lilac-soft: #29243d; --sky-soft: #1a2c3a; --dark: #0b0b0e; }
 }
-:root[data-theme="dark"] { --bg: #121216; --paper: #1c1c22; --ink: #f2f0eb; --ink-soft: #a6a6b0; --rule: #2b2b33;
+:root[data-theme="dark"] { --kbd: #ff8f75; --bg: #121216; --paper: #1c1c22; --ink: #f2f0eb; --ink-soft: #a6a6b0; --rule: #2b2b33;
   --lemon-soft: #3a3418; --coral-soft: #3b231d; --mint-soft: #173229; --lilac-soft: #29243d; --sky-soft: #1a2c3a; --dark: #0b0b0e; }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -154,7 +154,7 @@ h3 { font-size: 18px; margin: 0 0 6px; letter-spacing: -0.02em; }
 .toc ol { margin: 6px 0 0; padding-left: 20px; }
 .callout { border: 0; background: var(--lemon-soft); padding: 14px 18px; border-radius: 16px; margin: 20px 0; }
 .updated { font-size: 14px; color: var(--ink-soft); }
-.kbd { font-weight: 700; color: var(--mark); }
+.kbd { font-weight: 700; color: var(--kbd, #b8321a); }   /* 크림 바탕에서 글자 대비 4.5 이상, 어두운 화면은 밝은 코랄 */
 
 /* ---------- 광고 자리: 설정 전에는 숨김, 설정되면 site.js가 .on 추가 ---------- */
 .ad-slot { display: none; }

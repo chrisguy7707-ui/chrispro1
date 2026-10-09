@@ -8,7 +8,8 @@
     "images": "node scripts/render-images.mjs",
     "test": "node tests/verify.mjs && node tests/site.mjs",
     "clip-labels": "node scripts/build-clip-labels.mjs",
-    "i18n-missing": "node scripts/i18n-missing.mjs"
+    "i18n-missing": "node scripts/i18n-missing.mjs",
+    "check-links": "node scripts/check-links.mjs"
   },
   "devDependencies": {
     "@huggingface/transformers": "^4.3.0",
