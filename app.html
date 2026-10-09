@@ -234,6 +234,31 @@
   .stage-bar button.primary { background: var(--mat); color: #fff; border-color: var(--mat); }
   .stage-bar button.primary:hover { box-shadow: 3px 3px 0 var(--coral); }
   .stage-bar select { border-radius: 999px !important; }
+  /* 공장에 보내기: 큰 버튼 + 저장 상태 */
+  .stage-bar .send { font-size: 15px; padding: 10px 20px; box-shadow: 3px 3px 0 var(--tape); }
+  .stage-bar .send:hover { box-shadow: 4px 4px 0 var(--coral); }
+  .stage-bar .save-state { border: 0; background: transparent; box-shadow: none; padding: 9px 6px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .stage-bar .save-state.ok { color: #1c8a64; } .stage-bar .save-state.bad { color: #d4351c; text-decoration: underline; }
+  .stage-bar .save-state.flash-ok { animation: svflash .9s ease-out; }
+  @keyframes svflash { 0% { background: var(--tape); } 100% { background: transparent; } }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stage-bar .save-state { color: #b8c2bc; } :root:not([data-theme="light"]) .stage-bar .save-state.ok { color: #5fe3b8; } }
+  :root[data-theme="dark"] .stage-bar .save-state { color: #b8c2bc; } :root[data-theme="dark"] .stage-bar .save-state.ok { color: #5fe3b8; }
+  .send-check { border: 1.5px solid var(--line); border-radius: 16px; padding: 12px 14px; font-size: 14px; line-height: 1.6; background: #fff; }
+  .send-check.ok { border-color: #1c8a64; background: #effaf5; }
+  .send-check.warn { border-color: #e2b84a; background: #fffbea; }
+  .send-check b { font-weight: 800; }
+  .send-check .miss { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .send-check .miss button { border: 1.5px solid #17171c; background: #fff; border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .send-check .miss button:hover { background: var(--tape); }
+  .send-check small { color: var(--ink-soft); display: block; margin-top: 6px; }
+  .send-cards { display: grid; gap: 10px; }
+  .send-card { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; text-align: left; border: 2px solid #17171c; background: #fff; color: #17171c; border-radius: 18px; padding: 14px 16px; font: inherit; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .send-card:hover { transform: translateY(-1px); box-shadow: 3px 3px 0 var(--tape); }
+  .send-card .ico { grid-row: 1 / 3; font-size: 30px; text-align: center; }
+  .send-card b { font-size: 17px; }
+  .send-card small { color: var(--ink-soft); font-size: 13px; line-height: 1.45; }
+  .send-card.pri { background: #17171c; color: var(--tape); } .send-card.pri small { color: #e6e1d6; }
+  .send-card[hidden] { display: none; }
   .more-menu { position: relative; }
   .more-menu > summary { list-style: none; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; user-select: none; }
   .more-menu > summary::-webkit-details-marker { display: none; }
@@ -625,18 +650,17 @@
       <button id="viewSave">내 스타일에 저장해서 고치기</button>
     </div>
     <div class="stage-bar">
-      <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
-      <button id="saveXlsxBtn" data-tab="sheet" title="엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다">엑셀로 저장</button>
+      <button class="primary send" id="sendBtn" type="button" title="PDF·엑셀·링크 중 하나를 골라 공장에 전달합니다. 빠진 항목도 먼저 알려 드려요">📤 공장에 보내기</button>
+      <button class="primary" id="patPrintBtn" data-tab="pat" type="button" hidden>인쇄 · PDF 저장</button>
       <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
-      <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
       <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
         <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
       <button id="bigViewBtn" class="mob-only" data-tab="sheet" type="button" title="작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)" aria-pressed="false">🔍 크게 보기</button>
       <details class="more-menu" id="moreMenu">
-        <summary title="작업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기">더보기 ⋯</summary>
+        <summary title="백업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기">더보기 ⋯</summary>
         <div class="more-pop">
-          <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업)">작업 저장</button>
-          <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
+          <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업). 기기를 바꾸거나 브라우저 기록을 지울 때를 위한 백업입니다">작업 저장 (백업 파일)</button>
+          <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기 (백업 파일)</button>
           <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
           <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
           <label class="sheet-lang" data-tab="sheet" title="자동: 한 장에 담았을 때 글자가 너무 작아지면(배율 0.72 미만) 2쪽으로 나눕니다. 1쪽 = 도식화·원단·부자재·스와치, 2쪽 = 치수표·봉제 사양·주의사항">인쇄 쪽수
@@ -644,6 +668,7 @@
           <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
         </div>
       </details>
+      <button type="button" class="save-state" id="saveState" title="입력한 내용은 이 브라우저에 자동으로 저장됩니다. 서버로 보내지 않아서, 브라우저 기록을 지우면 사라져요. 눌러서 저장된 스타일 목록을 보세요.">● 자동 저장</button>
       <input type="file" id="jobFile" accept=".json,application/json" hidden />
       <input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp" hidden />
       <input type="file" id="swFile" accept="image/jpeg,image/png,image/webp" hidden />
@@ -960,6 +985,19 @@
       <div class="dlg-in">
         <div class="dlg-head"><h2 id="fbTitle">의견 보내기</h2><button class="dlg-x" data-close aria-label="닫기">×</button></div>
         <div id="fbBox"></div>
+      </div>
+    </dialog>
+    <dialog class="dlg" id="sendDlg" aria-labelledby="sendTitle">
+      <div class="dlg-in">
+        <div class="dlg-head"><h2 id="sendTitle">공장에 보내기</h2><button class="dlg-x" data-close aria-label="닫기">×</button></div>
+        <div class="send-check" id="sendCheck" role="status"></div>
+        <p class="note2">전달할 방법을 고르세요. 어느 쪽이든 지금 화면의 작업지시서가 그대로 나갑니다.</p>
+        <div class="send-cards">
+          <button type="button" class="send-card pri" id="printBtn"><span class="ico" aria-hidden="true">📄</span><b>PDF로 받기</b><small>인쇄 창에서 ‘PDF로 저장’을 고르세요. 가장 많이 쓰는 방법이에요.</small></button>
+          <button type="button" class="send-card" id="saveXlsxBtn" title="엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다"><span class="ico" aria-hidden="true">📊</span><b>엑셀로 받기</b><small>공장이 직접 고치거나 수량을 합칠 때 좋아요. 원가는 들어가지 않아요.</small></button>
+          <button type="button" class="send-card" id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기"><span class="ico" aria-hidden="true">🔗</span><b>링크로 보내기</b><small>카카오톡·메일에 붙여 넣으면 바로 열려요. 사진은 링크에 들어가지 않아요.</small></button>
+        </div>
+        <p class="note2">HTML 파일·도식화 SVG는 도구 막대의 ‘더보기 ⋯’에 있어요.</p>
       </div>
     </dialog>
     <dialog class="dlg" id="shareDlg" aria-labelledby="shareTitle">
@@ -2333,7 +2371,7 @@ function setTab(t) {
   if (t === "edit") renderEditor();
   if (t === "prod") renderProd();
   if (t === "olz") runOutline();
-  document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = n.dataset.tab !== t; });
+  document.querySelectorAll(".stage-bar [data-tab]").forEach((n) => { n.hidden = !n.dataset.tab.split(",").includes(t); });
   if (t === "pat") { syncPatternToTemplate(); applyPendingPattern(); }
 }
 $("tabSheetBtn").addEventListener("click", () => setTab("sheet"));
@@ -3557,6 +3595,34 @@ $("jobFile").addEventListener("change", async (e) => {
   try { await restore(JSON.parse(await f.text())); setStatus(`작업 파일을 열었습니다: ${f.name}`); }
   catch (err) { setStatus("작업 파일을 열지 못했습니다. " + (err.message || ""), true); }
 });
+/* ====================================================================== 공장에 보내기 (PDF·엑셀·링크) + 저장 상태
+   인쇄·엑셀·공유 버튼(printBtn·saveXlsxBtn·shareBtn)은 대화 상자 안의 큰 카드로 옮겼고 동작은 그대로. 먼저 checks()로 빠진 항목을 알려 줌(막지는 않음) */
+function renderSendCheck() {
+  const cs = checks(), must = cs.filter((c) => c[4]), miss = must.filter((c) => !c[2]), soft = cs.filter((c) => !c[4] && !c[2]);
+  const box = $("sendCheck");
+  box.className = "send-check " + (miss.length ? "warn" : "ok");
+  if (!miss.length) box.innerHTML = `<b>✓ 꼭 필요한 항목을 모두 채웠어요.</b>${soft.length ? `<small>채우면 좋은 항목이 더 있어요 (생산 준비 탭의 점검 목록에서 볼 수 있어요).</small>` : ""}`;
+  else box.innerHTML = `<b>공장이 물어볼 만한 항목이 비어 있어요.</b> 눌러서 채우거나, 그대로 보내도 돼요 (학생 과제 등).<div class="miss">${miss.map((c, i) => `<button type="button" data-go="${esc(c[3])}" title="${esc(c[1])}">${esc(c[0])}</button>`).join("")}</div>`;
+}
+$("sendBtn").addEventListener("click", () => {
+  renderSendCheck();
+  const pat = activeTab === "pat";
+  $("saveXlsxBtn").hidden = pat;
+  $("printBtn").querySelector("b").textContent = tt(pat ? "패턴 인쇄 (PDF)" : "PDF로 받기");
+  $("sendDlg").showModal();
+});
+$("sendCheck").addEventListener("click", (e) => { const b = e.target.closest("button[data-go]"); if (!b) return; $("sendDlg").close(); goFill(b.dataset.go); });
+$("sendDlg").addEventListener("click", (e) => { if (e.target.closest(".send-card")) $("sendDlg").close(); }, true);   // 인쇄·공유 창이 뜨기 전에 먼저 닫음
+$("patPrintBtn").addEventListener("click", () => $("printBtn").click());
+let saveStateTimer = 0;
+function setSaveState(kind) {
+  const b = $("saveState"); if (!b) return;
+  b.classList.toggle("ok", kind === "ok"); b.classList.toggle("bad", kind === "bad");
+  b.textContent = kind === "ok" ? tt("✓ 자동 저장됨") : kind === "bad" ? tt("⚠ 자동 저장 못 함 — 백업 파일로 저장하세요") : tt("● 자동 저장");
+  if (kind === "ok" && Date.now() - saveStateTimer > 5000) { saveStateTimer = Date.now(); b.classList.remove("flash-ok"); void b.offsetWidth; b.classList.add("flash-ok"); }   // 깜빡임은 5초에 한 번만
+}
+$("saveState").addEventListener("click", () => $("jobsBtn").click());
+
 /* 자동 저장: 이 브라우저에만 (localStorage). 사진까지 넣다가 용량이 넘치면 사진 없이 */
 let saveTimer = null, autosaveOn = false;
 function scheduleSave() {
@@ -3564,8 +3630,10 @@ function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     const snap = snapshot();
+    let saved = true;
     try { localStorage.setItem("wo_autosave", JSON.stringify(snap)); }
-    catch (e) { try { localStorage.setItem("wo_autosave", JSON.stringify(snapshot(false))); } catch (e2) {} }
+    catch (e) { try { localStorage.setItem("wo_autosave", JSON.stringify(snapshot(false))); } catch (e2) { saved = false; } }
+    setSaveState(saved ? "ok" : "bad");
     if (cur.id) Jobs.put(jobRecord(cur.id, cur.name, snap)).catch(() => {});
   }, 700);
 }

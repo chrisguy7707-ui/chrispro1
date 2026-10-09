@@ -425,6 +425,27 @@ Object.assign(D, {
   "읽기 전용": "read-only", "사진 제외": "photo not included",
 });
 
+/* ---------- 공장에 보내기 · 저장 상태 ---------- */
+Object.assign(D, {
+  "📤 공장에 보내기": "📤 Send to factory", "공장에 보내기": "Send to factory",
+  "PDF·엑셀·링크 중 하나를 골라 공장에 전달합니다. 빠진 항목도 먼저 알려 드려요": "Pick PDF, Excel or a link to send it to the factory. We'll point out missing items first",
+  "백업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기": "Save/open backup file, export HTML/SVG, print pages, send feedback",
+  "작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업). 기기를 바꾸거나 브라우저 기록을 지울 때를 위한 백업입니다": "Save the tech pack, measurement edits, photo and pattern inputs as one file (reopen it to continue). A backup for switching devices or clearing browser data",
+  "작업 저장 (백업 파일)": "Save work (backup file)", "작업 열기 (백업 파일)": "Open work (backup file)",
+  "입력한 내용은 이 브라우저에 자동으로 저장됩니다. 서버로 보내지 않아서, 브라우저 기록을 지우면 사라져요. 눌러서 저장된 스타일 목록을 보세요.": "What you type is saved automatically in this browser. It isn't sent to a server, so clearing browser data erases it. Tap to see your saved styles.",
+  "● 자동 저장": "● Auto-save", "✓ 자동 저장됨": "✓ Auto-saved", "⚠ 자동 저장 못 함 — 백업 파일로 저장하세요": "⚠ Couldn't auto-save — save a backup file",
+  "전달할 방법을 고르세요. 어느 쪽이든 지금 화면의 작업지시서가 그대로 나갑니다.": "Choose how to send it. Either way, the tech pack on screen is what goes out.",
+  "PDF로 받기": "Get a PDF", "인쇄 창에서 ‘PDF로 저장’을 고르세요. 가장 많이 쓰는 방법이에요.": "In the print window choose “Save as PDF”. The most common way.",
+  "엑셀로 받기": "Get an Excel file", "공장이 직접 고치거나 수량을 합칠 때 좋아요. 원가는 들어가지 않아요.": "Good when the factory edits it or adds up quantities. Costs are not included.",
+  "링크로 보내기": "Send a link", "카카오톡·메일에 붙여 넣으면 바로 열려요. 사진은 링크에 들어가지 않아요.": "Paste it into a chat or email and it opens right away. Photos are not included in the link.",
+  "HTML 파일·도식화 SVG는 도구 막대의 ‘더보기 ⋯’에 있어요.": "HTML files and flat-sketch SVGs are under “More ⋯” in the toolbar.",
+  "✓ 꼭 필요한 항목을 모두 채웠어요.": "✓ All the must-have items are filled in.",
+  "채우면 좋은 항목이 더 있어요 (생산 준비 탭의 점검 목록에서 볼 수 있어요).": "There are more nice-to-have items (see the checklist on the Production tab).",
+  "공장이 물어볼 만한 항목이 비어 있어요.": "Some items the factory will ask about are empty.",
+  "눌러서 채우거나, 그대로 보내도 돼요 (학생 과제 등).": "Tap to fill them in, or send as is (e.g. school assignments).",
+  "패턴 인쇄 (PDF)": "Print pattern (PDF)",
+});
+
 /* ---------- 더보기 메뉴 ---------- */
 Object.assign(D, { "더보기 ⋯": "More ⋯", "작업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기": "Save/open work file, export HTML/SVG, print pages, send feedback" });
 
