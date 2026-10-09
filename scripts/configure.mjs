@@ -19,6 +19,7 @@ const PAGES = [
   { file: "index.html", loc: "", priority: "1.0" },
   { file: "app.html", loc: "app.html", priority: "0.9" },
   { file: "guide.html", loc: "guide.html", priority: "0.8" },
+  { file: "form.html", loc: "form.html", priority: "0.8" },
   { file: "factory.html", loc: "factory.html", priority: "0.6" },
   { file: "learn.html", loc: "learn.html", priority: "0.7" },
   { file: "learn-sample.html", loc: "learn-sample.html", priority: "0.6" },
@@ -44,7 +45,7 @@ const PAGES = [
 ];
 const enOf = (koFile) => PAGES.find((p) => p.ko === koFile);
 /* 사이트맵에 넣지 않는 페이지: 404와, 도구 버튼 클릭을 방문 통계로 세는 빈 페이지(e/*.html, 검색 제외·robots 차단) */
-const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern"];
+const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern", "template"];
 const OTHER = ["404.html", ...EVENTS.map((n) => `e/${n}.html`)];
 
 const attr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");

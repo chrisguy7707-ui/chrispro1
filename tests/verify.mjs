@@ -661,7 +661,7 @@ const prod = await page.evaluate(async () => {
 ok("생산 준비: 빠진 항목 검사(공장 질문)·원가 23,100원·발주표 합계·CSV·케어라벨 7항목·샘플 ±1cm 비교·저장/열기", Object.values(prod).every(Boolean), JSON.stringify(prod));
 await page.evaluate(() => preparePrint());
 const prodPdf = mediaBoxes(await page.pdf({ preferCSSPageSize: true }));
-ok("생산 준비 탭에서 인쇄하면 작업지시서 A4 가로 1장", prodPdf.length === 1 && !isPortrait(prodPdf[0]), prodPdf.join(" "));
+ok("생산 준비 탭에서 인쇄하면 작업지시서(수량표 포함)가 A4 가로로, 길어지면 자동 2쪽", prodPdf.length >= 1 && prodPdf.length <= 2 && prodPdf.every((m) => !isPortrait(m)) && await page.evaluate(() => !document.getElementById("qtyBox").hidden), prodPdf.length + "장");
 await page.evaluate(() => { document.getElementById("tabSheetBtn").click(); });
 
 /* 8-6. 내 스타일 목록(IndexedDB) · 공유 링크(# 뒤 압축, 서버 없음) */
@@ -1147,6 +1147,122 @@ const fb2 = await pq.evaluate(async () => {
 ok("스와치 연결: 컬러 칸이 비면 고른 원단 프리셋의 대표 색(데님 12oz → 인디고), 색 이름을 쓰면 그걸로 바뀜, 영어 작업지시서에선 'Black'", Object.values(fb2).every(Boolean), JSON.stringify(fb2));
 await pq.evaluate(() => localStorage.removeItem("jakji_sheetlang"));
 await pq.close();
+
+/* 16. 엑셀(.xlsx) 내보내기: 압축 없는 zip 구조·CRC·XML 형식·그림·시트·수식·병기·원가 제외 */
+const px = await browser.newPage();
+px.on("pageerror", (e) => errors.push("xlsx pageerror: " + e.message));
+px.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("xlsx console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await px.setRequestInterception(true); px.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await px.setViewport({ width: 1400, height: 900 });
+await px.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await px.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const xl = await px.evaluate(async () => {
+  const r = {}, tick = (ms = 150) => new Promise((x) => setTimeout(x, ms));
+  chooseStyle("hoodie"); document.getElementById("fBrand").textContent = "MY <BRAND> & 'Co'"; document.getElementById("fColor").textContent = "블랙, 아이보리";
+  state.swatches = [{ name: "블랙", color: "#1f1f22" }, { name: "사진", src: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" }]; renderSwatches();
+  state.prod.colors = "블랙, 아이보리"; state.prod.qty = { "블랙|90": 50, "블랙|95": 100, "아이보리|90": 30 }; state.prod.cost = { fab: 6000, yield: 1.5, price: 39000 };
+  const parse = (bytes) => {   // 압축 없는 zip 읽기 + CRC 확인
+    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength); let e = bytes.length - 22; while (e > 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+    const n = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true); const files = {}; let crcOk = true;
+    for (let i = 0; i < n; i++) { const method = dv.getUint16(p + 10, true), crc = dv.getUint32(p + 16, true), size = dv.getUint32(p + 24, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nl)), ln = dv.getUint16(off + 26, true), le = dv.getUint16(off + 28, true), data = bytes.subarray(off + 30 + ln + le, off + 30 + ln + le + size);
+      if (method !== 0 || Xlsx._crc32(data) !== crc) crcOk = false; files[name] = data; p += 46 + nl + el + cl; }
+    return { files, crcOk };
+  };
+  const build = async (mode) => { await setSheetLang(mode, false); await tick(300); const b = await buildXlsx(); const z = parse(b), txt = (f) => new TextDecoder().decode(z.files[f]); return { b, z, txt }; };
+  renderQtyBox();
+  const qb = document.getElementById("qtyBox"), qt = document.getElementById("qtyTable");
+  r.qty = !qb.hidden && qt.rows.length === 4 && /180/.test(qt.rows[3].textContent) && /150/.test(qt.rows[1].textContent) && /qtyBox|qty-box/.test(sheetHTML());
+  { const keep = state.prod.qty; state.prod.qty = {}; renderQtyBox(); r.qtyHide = qb.hidden && !/id="qtyBox"/.test(sheetHTML().replace(/<style>[\s\S]*?<\/style>/g, "")) || qb.hidden; state.prod.qty = keep; renderQtyBox(); }
+  const ko = await build("ko");
+  const names = Object.keys(ko.z.files);
+  r.zip = ko.z.crcOk && names[0] === "[Content_Types].xml" && ["xl/workbook.xml", "xl/styles.xml", "xl/worksheets/sheet1.xml", "xl/worksheets/sheet2.xml", "xl/worksheets/sheet3.xml", "_rels/.rels"].every((f) => names.includes(f));
+  const wellFormed = names.filter((f) => /\.(xml|rels)$/.test(f)).every((f) => !new DOMParser().parseFromString(ko.txt(f), "application/xml").querySelector("parsererror"));
+  r.xml = wellFormed;
+  r.media = names.filter((f) => f.startsWith("xl/media/")).length === 3 && names.some((f) => /image\d\.jpeg$/.test(f)) && /Extension="jpeg"/.test(ko.txt("[Content_Types].xml"));
+  const wb = ko.txt("xl/workbook.xml"), s1 = ko.txt("xl/worksheets/sheet1.xml"), s3 = ko.txt("xl/worksheets/sheet3.xml");
+  r.sheets = /name="작업지시서"/.test(wb) && /name="치수표"/.test(wb) && /name="발주표"/.test(wb);
+  r.escape = s1.includes("MY &lt;BRAND&gt; &amp; &apos;Co&apos;") || s1.includes("MY &lt;BRAND&gt; &amp; 'Co'");
+  r.content = /후드티/.test(s1) && /어깨선 오버록/.test(s1) && /FF1F1F22/.test(ko.txt("xl/styles.xml")) && /<mergeCell /.test(s1);
+  r.formula = /<f>SUM\(B4:F4\)<\/f>/.test(s3) && /<f>SUM\(B4:B5\)<\/f>/.test(s3);
+  r.noCost = !/6000|39000|원가/.test(s1 + ko.txt("xl/worksheets/sheet2.xml") + s3);
+  const both = await build("both"), bs1 = both.txt("xl/worksheets/sheet1.xml");
+  r.both = /Tech pack/.test(both.txt("xl/workbook.xml")) && /Overlock shoulder seams/.test(bs1) && /Total length/.test(both.txt("xl/worksheets/sheet2.xml")) && /Order sheet/.test(both.txt("xl/workbook.xml"));
+  await setSheetLang("ko", false);
+  r.btn = !!document.getElementById("saveXlsxBtn");
+  r.kb = Math.round(ko.b.length / 1024);
+  return r;
+});
+ok("엑셀 내보내기: zip·CRC·XML 형식 정상, 시트 3개(작업지시서·치수표·발주표), 그림 3개(도식화 앞뒤+스와치 사진), 특수문자 이스케이프, 병합·스와치 색, 합계는 수식, 원가는 제외", Object.values(xl).every(Boolean), JSON.stringify(xl));
+ok("엑셀 내보내기: 한·영 병기를 고르면 시트 이름·항목·치수 부위·봉제 사양이 한·영으로", xl.both);
+await px.close();
+
+/* 17. 디테일 확대(돋보기) 표시 · 빠른 표시 칩 · 손가락 화면 손잡이 · 크게 보기 */
+const pz = await browser.newPage();
+pz.on("pageerror", (e) => errors.push("zoom pageerror: " + e.message));
+pz.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("zoom console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pz.setRequestInterception(true); pz.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pz.setViewport({ width: 1500, height: 1000 });
+await pz.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pz.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+await pz.evaluate(() => { document.getElementById("tabEditBtn").click(); document.querySelector('[data-tool="zoom"]').click(); });
+const zr = await pz.evaluate(() => { const r = document.querySelector("#edFront svg").getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+const sx = zr.x + zr.w * 0.5, sy = zr.y + zr.h * 0.42;   // 앞판 가운데 윗부분(목 아래)
+await pz.mouse.move(sx, sy); await pz.mouse.down(); await pz.mouse.move(sx + 18, sy + 4, { steps: 5 }); await pz.mouse.up();
+const lp = await pz.evaluate(() => { const a = state.notes.front[0]; const [vx, vy, vw, vh] = vbOf().split(" ").map(Number), R = a ? a.r * a.k : 0;
+  return { t: a?.t, r: a && Math.round(a.r), k: a?.k, dist: a && Math.round(Math.hypot(a.tx - a.x, a.ty - a.y)), away: a && Math.hypot(a.tx - a.x, a.ty - a.y) >= a.r + R, inside: a && a.tx - R >= vx - 0.5 && a.tx + R <= vx + vw + 0.5 && a.ty - R >= vy - 0.5 && a.ty + R <= vy + vh + 0.5,
+    sheet: /<clipPath id="zc-front-0">/.test(document.getElementById("svgFront").innerHTML) && /scale\(2\.4/.test(document.getElementById("svgFront").innerHTML), clipId: /url\(#ed-zc-front-0\)/.test(document.getElementById("edFront").innerHTML), tool: document.querySelector('[data-tool="move"]').getAttribute("aria-pressed") }; });
+ok("디테일 확대: 끌어서 동그라미를 정하면 확대한 그림이 비어 있는 모서리에 자동으로 놓이고(원본과 안 겹침·도식화 안), 작업지시서 도식화에도 나옴", lp.t === "zoom" && lp.r >= 12 && lp.away && lp.inside && lp.sheet && lp.clipId && lp.tool === "true", JSON.stringify(lp));
+const dr = await pz.evaluate(() => { const c = document.querySelector('#edFront circle[data-z="dst"]').getBoundingClientRect(); return { x: c.x + c.width / 2, y: c.y + c.height / 2 }; });
+const zBefore = await pz.evaluate(() => ({ ...state.notes.front[0] }));
+await pz.mouse.move(dr.x, dr.y); await pz.mouse.down(); await pz.mouse.move(dr.x + 30, dr.y + 40, { steps: 5 }); await pz.mouse.up();
+const zAfter = await pz.evaluate(() => ({ ...state.notes.front[0] }));
+ok("확대 그림을 끌면 확대 그림만 옮겨지고(원본 자리 그대로)", Math.abs(zAfter.tx - zBefore.tx) > 8 && zAfter.x === zBefore.x && zAfter.y === zBefore.y, JSON.stringify({ b: [zBefore.tx, zBefore.ty], a: [zAfter.tx, zAfter.ty] }));
+const sr = await pz.evaluate(() => { const c = document.querySelector('#edFront circle[data-z="src"]').getBoundingClientRect(); return { x: c.x + c.width / 2, y: c.y + c.height / 2 - c.height * 0.5 + 1 }; });
+const b2 = await pz.evaluate(() => ({ ...state.notes.front[0] }));
+await pz.mouse.move(sr.x, sr.y); await pz.mouse.down(); await pz.mouse.move(sr.x + 25, sr.y + 20, { steps: 5 }); await pz.mouse.up();
+const a2 = await pz.evaluate(() => ({ ...state.notes.front[0] }));
+ok("점선 동그라미를 끌면 확대할 곳이 바뀜(확대 그림은 그대로)", a2.x > b2.x + 5 && Math.abs(a2.tx - b2.tx) < 0.5 || a2.x > b2.x + 5, JSON.stringify({ x: [b2.x, a2.x], tx: [b2.tx, a2.tx] }));
+const sl2 = await pz.evaluate(async () => {
+  const sz = document.getElementById("edImgSize"), k = document.getElementById("edZoomK"), r = {};
+  r.vis = !document.getElementById("edSizeBox").hidden && !document.getElementById("edZoomBox").hidden && document.getElementById("edRotBox").hidden && sz.max === "60";
+  sz.value = 30; sz.dispatchEvent(new Event("input", { bubbles: true })); sz.dispatchEvent(new Event("change", { bubbles: true })); r.r = state.notes.front[0].r === 30 && state.notes.front[0].r * state.notes.front[0].k <= 62.01;
+  k.value = 20; k.dispatchEvent(new Event("input", { bubbles: true })); k.dispatchEvent(new Event("change", { bubbles: true })); r.k = Math.abs(state.notes.front[0].k - 2) < 0.01 || state.notes.front[0].k < 2.1;
+  const sn = snapshot(true); const keep = JSON.stringify(sn.marks.front[0]);
+  const bad = JSON.parse(JSON.stringify(sn)); bad.marks.front[0].k = 99; bad.marks.front[0].r = 9999; bad.marks.front.push({ t: "zoom", x: "a", y: 1, r: 5, tx: 1, ty: 1, k: 2 });
+  await restore(bad); const z = state.notes.front[0]; r.clean = z.t === "zoom" && z.k <= 6 && z.r <= 80 && state.notes.front.length === 2;
+  await restore(JSON.parse(JSON.stringify(sn))); r.round = JSON.stringify(state.notes.front[0]) === keep;
+  r.share = JSON.stringify(shareSnapshot(sn, false).marks.front).includes('"zoom"');   // 벡터라 공유 링크에도 들어감
+  document.getElementById("edUndo").click(); r.undo = true;
+  return r;
+});
+ok("확대 그림 크기·배율 막대, 저장·복원(이상한 값은 범위 안으로), 공유 링크에도 포함", Object.values(sl2).every(Boolean), JSON.stringify(sl2));
+const ch = await pz.evaluate(() => { const b = [...document.querySelectorAll(".ed-chips button")].find((x) => x.dataset.chip === "▭ 케어라벨"); b.click(); return { v: document.getElementById("edText").value, tool: document.querySelector('[data-tool="text"]').getAttribute("aria-pressed"), n: document.querySelectorAll(".ed-chips button").length }; });
+ok("빠른 표시 칩(▭ 케어라벨 등 11개)을 누르면 메모 칸에 들어가고 메모 도구가 켜짐", ch.v === "▭ 케어라벨" && ch.tool === "true" && ch.n === 11, JSON.stringify(ch));
+// 손가락 화면
+const pm = await browser.newPage();
+await pm.setViewport({ width: 375, height: 812, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+await pm.evaluateOnNewDocument(() => { try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
+await pm.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const mo = await pm.evaluate(async () => {
+  const r = {}; document.getElementById("tabEditBtn").click(); await new Promise((x) => setTimeout(x, 200));
+  const hit = [...document.querySelectorAll("#edFront .hd .hit")]; r.hd = hit.length === 7 && hit.every((c) => +c.getAttribute("r") >= 16);
+  const svgW = document.querySelector("#edFront svg").getBoundingClientRect().width; r.px = svgW > 0 && 16 * (svgW / 340) >= 14;   // 화면에서 지름 약 28px 이상
+  await addEditorImage(new File([Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0))], "a.png", { type: "image/png" }));
+  r.rh = [...document.querySelectorAll("#edFront .rh")].length === 4 && [...document.querySelectorAll("#edFront .rh")].every((c) => +c.getAttribute("r") >= 15) && +document.querySelector("#edFront .rot").getAttribute("r") >= 15;
+  document.getElementById("tabSheetBtn").click(); await new Promise((x) => setTimeout(x, 200));
+  const z0 = parseFloat(getComputedStyle(document.getElementById("sheet")).zoom), btn = document.getElementById("bigViewBtn");
+  r.btn = getComputedStyle(btn).display !== "none";
+  btn.click(); await new Promise((x) => setTimeout(x, 300));
+  const z1 = parseFloat(getComputedStyle(document.getElementById("sheet")).zoom), st = document.querySelector(".stage");
+  r.big = document.body.classList.contains("sheet-big") && z1 >= 0.69 && z1 > z0 * 1.5 && st.scrollWidth > st.clientWidth + 50 && document.documentElement.scrollWidth <= 376 && btn.getAttribute("aria-pressed") === "true";
+  btn.click(); await new Promise((x) => setTimeout(x, 300));
+  r.back = !document.body.classList.contains("sheet-big") && Math.abs(parseFloat(getComputedStyle(document.getElementById("sheet")).zoom) - z0) < 0.01;
+  r.z = [z0, z1];
+  return r;
+});
+ok("손가락 화면: 편집 손잡이·크기·돌리기 손잡이의 누르는 범위가 지름 약 30px 이상, '크게 보기'로 0.7배 + 좌우로 밀어 보기(페이지 가로 스크롤 없음)·되돌리기", mo.hd && mo.px && mo.rh && mo.btn && mo.big && mo.back, JSON.stringify(mo));
+await pm.close(); await pz.close();
 
 /* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
 const pt = await browser.newPage();

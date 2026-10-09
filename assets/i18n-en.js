@@ -4,6 +4,17 @@
    용어: 작업지시서=tech pack, 도식화=flat sketch, 치수표=size spec, 단면=½ (flat) width, 시보리=rib, 요척=fabric consumption */
 var D = (window.I18N_DICT = {});
 Object.assign(D, {
+  "🔍 크게 보기": "🔍 Zoom in", "↩ 한눈에 보기": "↩ Fit to screen", "작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)": "View the tech pack larger so you can tap cells to edit (swipe sideways)",
+  "치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요. PDF로 저장하려면 인쇄 창에서 ‘대상’을 ‘PDF로 저장’, 배율 100%, ‘머리글·바닥글’ 끄기로 하세요.": "Measurements are reference standards. Always correct them from your sample. To save as PDF, in the print window set ‘Destination’ to ‘Save as PDF’, scale 100%, and turn off ‘Headers and footers’.",
+  "🔍 확대": "🔍 Magnify", "확대해서 보여 줄 곳(라벨·주머니·봉제 디테일)을 끌어 동그라미로 정하면 옆에 확대한 그림이 생깁니다. 확대 그림을 끌어 옮길 수 있습니다": "Drag a circle over the spot to show in detail (label, pocket, stitching) and a magnified picture appears next to it. You can drag the magnified picture around",
+  "배율": "Zoom", "확대 배율": "Magnification", "동그라미 크기": "Circle size", "빠른 표시": "Quick marks", "자주 쓰는 표시": "Frequently used marks",
+  "▭ 메인라벨": "▭ Main label", "▭ 케어라벨": "▭ Care label", "▭ 사이즈라벨": "▭ Size label", "▭ 행택": "▭ Hang tag", "바택": "Bartack", "프린트 위치": "Print position", "자수 위치": "Embroidery position", "상침": "Topstitch",
+  "확대한 그림을 끌어 옮기고, 점선 동그라미를 끌면 확대할 곳이 바뀝니다. ‘크기’는 동그라미 크기, ‘배율’은 확대 정도입니다.": "Drag the magnified picture to move it; dragging the dashed circle changes the spot being magnified. ‘Size’ is the circle size and ‘Zoom’ is how much it is magnified.",
+  "양식 다운로드": "Excel templates (Korean)",
+  "수량표 (컬러 × 사이즈)": "Quantity table (color × size)",
+  "차수": "Round", "예: 1차 샘플 / 메인": "e.g. Sample 1 / Bulk", "엑셀로 저장": "Save as Excel",
+  "엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다": "Save as Excel (.xlsx): flat sketch pictures, fabric, trims, swatches and sewing spec, the size spec and the order sheet go into separate sheets. Cost is not included",
+  "엑셀 파일을 만들지 못했습니다. HTML로 내보내기를 이용해 주세요.": "Couldn't create the Excel file. Please use Export HTML instead.",
   "인쇄 쪽수": "Print pages", "자동 (넘치면 2쪽)": "Auto (2 pages if too long)", "1장에 맞춤": "Fit on 1 page", "2장으로 나눔": "Split into 2 pages",
   "자동: 한 장에 담았을 때 글자가 너무 작아지면(배율 0.72 미만) 2쪽으로 나눕니다. 1쪽 = 도식화·원단·부자재·스와치, 2쪽 = 치수표·봉제 사양·주의사항": "Auto: if fitting everything on one page would make the text too small (scale below 0.72), it is split into 2 pages. Page 1 = flats, fabric, trims, swatches; page 2 = size spec, sewing spec, notes",
   "▼ 인쇄하면 여기부터 2쪽입니다 (인쇄 쪽수 ‘자동’: 한 장에 담으면 글자가 너무 작아질 때)": "▼ Page 2 starts here when printed (Print pages ‘Auto’: when one page would make the text too small)",
@@ -413,6 +424,7 @@ Object.assign(D, {
 Object.assign(D, { "밑위": "Rise", "벨트고리": "Belt loops", "부자재": "Trims", "케어라벨": "Care label", "배율": "Scale", "(실제 크기)": "(actual size)", "실제 크기": "actual size",
   "치수: Chest": "Size: Chest" });
 window.I18N_RULES = [
+  [/^‘(.+)’ 표시를 놓을 자리를 도식화에서 누르세요\. 화살표로 위치를 가리키고, 🔍 확대로 자세히 보여 줄 수도 있습니다\.$/, "Click on the flat where to put the ‘$1’ mark. You can point at the spot with an arrow, or show it in detail with 🔍 Magnify."],
   [/^원단 (\d+)$/, "Fabric $1"], [/^스와치는 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 swatches can be added."], [/^이미지 회전 (-?\d+)°$/, "Image rotation $1°"],
   [/^이미지는 한 면에 (\d+)개까지 넣을 수 있습니다\.$/, "Up to $1 images can be added per side."], [/^이미지 너비 (\d+) \(모서리를 끌어 크기 조절\)$/, "Image width $1 (drag a corner to resize)"],
   [/^기준: 1cm = ([\d.]+)px \(기준선 (\d+)px = ([\d.]+)cm\)$/, "Scale: 1cm = $1px (reference line $2px = $3cm)"],

@@ -84,6 +84,8 @@
   .pg-note { display: none; margin: 10px 0 0; padding: 3px 8px; border: 1px dashed var(--mark); border-radius: 6px; font-size: 11px; color: var(--mark); text-align: center; }
   .sheet.two-page .pg-note { display: block; }
   .p2-head { display: none; }
+  .mob-only { display: none; }
+  @media (max-width: 960px) { .mob-only { display: inline-flex; } .stage { min-width: 0; } body.sheet-big .stage { overflow-x: auto; } }
   .i18n-nl { white-space: pre-line; }   /* 한·영 병기: 한국어 줄 아래 영어 줄 */
   .sheet-lang { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
   .sheet-lang select { border: 1px solid var(--rule); border-radius: 8px; padding: 7px 8px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
@@ -230,12 +232,18 @@
   .ed-grid figure { margin: 0; border: 1px solid var(--ink); }
   .ed-grid figcaption { font-size: 12px; color: var(--ink-soft); text-align: center; padding: 4px; border-top: 1px dashed var(--rule); }
   .ed-view svg { display: block; width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
-  .ed-view .hd { cursor: grab; } .ed-view .hd:hover circle { r: 7; }
+  .ed-view .hd { cursor: grab; } .ed-view .hd:hover circle:not(.hit) { r: 7; }
   .ed-view [data-i] { cursor: pointer; }
   .ed-view .rot { cursor: grab; }
   .ed-view image[data-i] { cursor: move; } .ed-view .rh { cursor: nwse-resize; } .ed-view .rh.ne, .ed-view .rh.sw { cursor: nesw-resize; }
+  .ed-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; margin: 8px 0 0; font-size: 12px; color: var(--ink-soft); }
+  .ed-chips button { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .ed-chips button:hover { background: var(--lemon-soft); }
   .ed-bar .ed-order { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; } .ed-bar .ed-order button:disabled { opacity: .35; cursor: default; }
   .ed-bar .ed-size { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; } .ed-bar .ed-size input { flex: 0 0 120px; min-width: 100px; padding: 0; border: 0; }
+  .qty-box { border: 1px solid var(--ink); } .qty-box .cap { font-size: 12px; font-weight: 700; padding: 3px 6px; border-bottom: 1px solid var(--ink); background: #f1f1ee; }
+  .sheet table.qty { border: 0; } .sheet table.qty th, .sheet table.qty td { border-width: 0 1px 1px 0; text-align: center; padding: 3px 4px; } .sheet table.qty th:first-child { text-align: left; }
+  .sheet table.qty tr:last-child th, .sheet table.qty tr:last-child td { border-bottom: 0; font-weight: 700; } .sheet table.qty td.tot, .sheet table.qty th.tot { background: #fff4c2; font-weight: 700; }
   .sr-only { position: fixed; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
   .swatches { border: 1px solid var(--ink); }
   .swatches .cap { font-size: 12px; font-weight: 700; padding: 3px 6px; border-bottom: 1px solid var(--ink); background: #f1f1ee; display: flex; justify-content: space-between; align-items: center; }
@@ -525,12 +533,14 @@
         <select id="printPages" aria-label="인쇄 쪽수"><option value="auto">자동 (넘치면 2쪽)</option><option value="one">1장에 맞춤</option><option value="two">2장으로 나눔</option></select></label>
       <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
         <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
+      <button id="bigViewBtn" class="mob-only" data-tab="sheet" type="button" title="작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)" aria-pressed="false">🔍 크게 보기</button>
+      <button id="saveXlsxBtn" data-tab="sheet" title="엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다">엑셀로 저장</button>
       <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
       <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
       <button id="savePatBtn" data-tab="pat" hidden>패턴 SVG 저장 (실물 크기)</button>
       <select id="patPrintMode" data-tab="pat" hidden aria-label="패턴 인쇄 방식" style="border:1px solid var(--rule);border-radius:8px;padding:8px;font:inherit;font-size:14px;background:#fff;color:var(--ink)">
         <option value="tiles">A4 나눠 인쇄</option><option value="one">한 장 (플로터·대형 출력)</option></select>
-      <span class="note" data-tab="sheet">치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요.</span>
+      <span class="note" data-tab="sheet">치수는 참고용 표준값입니다. 샘플 실측으로 꼭 수정하세요. PDF로 저장하려면 인쇄 창에서 ‘대상’을 ‘PDF로 저장’, 배율 100%, ‘머리글·바닥글’ 끄기로 하세요.</span>
       <span class="note" data-tab="pat" hidden>인쇄하면 1장은 축소도, 나머지는 실물 크기 A4 분할입니다. 배율 100%로 인쇄하세요.</span>
     </div>
 
@@ -553,7 +563,8 @@
           <tr>
             <th>디자이너</th><td contenteditable id="fDesigner" data-ph="이름 (학생은 이름·학번)"></td>
             <th>공장</th><td contenteditable id="fFactory" data-ph="맡길 공장 (학생은 비워도 됨)"></td>
-            <th>컬러</th><td contenteditable id="fColor" colspan="3"></td>
+            <th>컬러</th><td contenteditable id="fColor"></td>
+            <th>차수</th><td contenteditable id="fRound" data-ph="예: 1차 샘플 / 메인"></td>
           </tr>
         </table>
       </div>
@@ -580,6 +591,10 @@
             <thead><tr><th style="width:70px">구분</th><th>품목</th><th>규격·컬러</th><th style="width:70px">수량</th></tr></thead>
             <tbody></tbody>
           </table>
+          <div class="qty-box" id="qtyBox" hidden>
+            <div class="cap"><span>수량표 (컬러 × 사이즈)</span></div>
+            <table id="qtyTable" class="qty"></table>
+          </div>
           <div class="swatches empty" id="swatchBox">
             <div class="cap"><span>스와치</span><span class="sw-add" data-noexport><label class="sw-link" title="켜면 컬러 칸의 색 이름(블랙, 네이비…)으로 스와치를 자동으로 채웁니다. 컬러 칸이 비어 있으면 고른 원단 프리셋의 대표 색을 넣습니다"><input type="checkbox" id="swLink" /> 컬러 칸과 연결</label><button type="button" id="swColorBtn" title="원단 색상을 골라 스와치로 넣습니다">＋ 색상</button><button type="button" id="swPhotoBtn" title="원단 조각 사진을 스와치로 넣습니다">＋ 사진</button></span></div>
             <div class="sw-list" id="swList"></div>
@@ -729,10 +744,12 @@
         <input id="edText" type="text" maxlength="40" placeholder="메모 글자 (예: 스냅 단추 2개)" aria-label="메모 글자" />
         <button data-tool="arrow" aria-pressed="false" title="끌어서 화살표">↗ 화살표</button>
         <button data-tool="circle" aria-pressed="false" title="끌어서 동그라미 강조">◯ 동그라미</button>
+        <button data-tool="zoom" aria-pressed="false" title="확대해서 보여 줄 곳(라벨·주머니·봉제 디테일)을 끌어 동그라미로 정하면 옆에 확대한 그림이 생깁니다. 확대 그림을 끌어 옮길 수 있습니다">🔍 확대</button>
         <span class="ed-sep"></span>
         <button id="edImgBtn" title="로고·그림 파일(PNG·JPG·SVG)을 도식화 위에 붙입니다. 끌어서 옮기고, 모서리를 끌어 크기를 바꿉니다. 파일을 앞판·뒤판 위로 끌어다 놓아도 됩니다">🖼 이미지 넣기</button>
         <input type="file" id="edImgFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
         <label class="ed-size" id="edSizeBox" hidden>크기 <input type="range" id="edImgSize" min="8" max="260" step="1" aria-label="이미지 크기" /></label>
+        <label class="ed-size" id="edZoomBox" hidden>배율 <input type="range" id="edZoomK" min="15" max="50" step="1" aria-label="확대 배율" /></label>
         <label class="ed-size" id="edRotBox" hidden>회전 <input type="range" id="edImgRot" min="-180" max="180" step="1" aria-label="이미지 회전" /></label>
         <button id="edImgRot90" hidden title="고른 이미지를 시계 방향으로 90° 돌립니다. 이미지 위쪽의 동그라미를 끌어서 자유롭게 돌려도 됩니다">↻ 90° 돌리기</button>
         <span class="ed-order" id="edOrderBox" hidden>순서
@@ -744,6 +761,7 @@
         <button id="edClear">표시 모두 지우기</button>
         <button id="edReset" title="끌어 옮긴 주머니 등을 처음 자리로">디테일 위치 처음으로</button>
       </div>
+      <div class="ed-chips" aria-label="자주 쓰는 표시"><span>빠른 표시</span><button type="button" data-chip="▭ 메인라벨">▭ 메인라벨</button><button type="button" data-chip="▭ 케어라벨">▭ 케어라벨</button><button type="button" data-chip="▭ 사이즈라벨">▭ 사이즈라벨</button><button type="button" data-chip="▭ 행택">▭ 행택</button><button type="button" data-chip="단추">단추</button><button type="button" data-chip="스냅">스냅</button><button type="button" data-chip="지퍼">지퍼</button><button type="button" data-chip="상침">상침</button><button type="button" data-chip="바택">바택</button><button type="button" data-chip="프린트 위치">프린트 위치</button><button type="button" data-chip="자수 위치">자수 위치</button></div>
       <p class="pat-note" id="edNote" role="status">빨간 손잡이를 끌면 치수표가 바뀌고 도식화도 따라 바뀝니다. 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.</p>
       <div class="ed-grid">
         <figure><div class="ed-view" id="edFront"></div><figcaption>앞판 FRONT · 손잡이로 치수 조절</figcaption></figure>
@@ -800,7 +818,7 @@
       </div>
     </section>
     <footer class="app-foot">
-      <nav aria-label="사이트 안내"><a href="./">홈</a><a href="guide.html">작업지시서 작성법</a><a href="learn.html">배우기</a><a href="factory.html">공장 찾기 안내</a><a href="about.html">사이트 소개</a><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="contact.html">문의</a><a href="contact.html#feedback">🔒 의견 보내기</a><a href="?lang=en" class="lang-sw" data-i18n-skip lang="en">🌐 English</a></nav>
+      <nav aria-label="사이트 안내"><a href="./">홈</a><a href="form.html">양식 다운로드</a><a href="guide.html">작업지시서 작성법</a><a href="learn.html">배우기</a><a href="factory.html">공장 찾기 안내</a><a href="about.html">사이트 소개</a><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a><a href="contact.html">문의</a><a href="contact.html#feedback">🔒 의견 보내기</a><a href="?lang=en" class="lang-sw" data-i18n-skip lang="en">🌐 English</a></nav>
       <p>치수는 레귤러핏 참고 표준값이며 샘플 실측을 대체하지 않습니다. © 2026 작지</p>
     </footer>
     <div id="patPrint" aria-hidden="true"></div>
@@ -844,6 +862,7 @@
 <script src="assets/pattern.js"></script>
 <script src="assets/pattern-garments.js"></script>
 <script src="assets/outline.js"></script>
+<script src="assets/xlsx.js"></script>
 <script>
 /* ======================================================================
    데이터: 사이즈 체계 · 품목별 치수 기준값 · 기본 봉제사양
@@ -1448,9 +1467,11 @@ function skirtGeom() {
   const k = Math.min(275 / Lt, 150 / Math.max(HM, W)), wHalf = (W / 2) * k;
   return { wL: 150 - wHalf, wR: 150 + wHalf, lenY: 30 + Lt * k, flare: Math.max(0, (HM / 2) * k - wHalf), k };
 }
+const LAST_INNER = {};   // 방금 그린 도식화 본체(앞/뒤): 디테일 확대 표시가 같은 그림을 확대해서 씀
+const vbOf = () => { const t = T[state.opt.template]; return t.kind === "dress" ? "0 -20 340 345" : t.kind === "top" || t.kind === "bag" ? "0 -20 340 270" : "0 -20 340 350"; };
 function buildSVG(view) {
   const o = state.opt, t = T[o.template];
-  const vb = t.kind === "dress" ? "0 -20 340 345" : t.kind === "top" || t.kind === "bag" ? "0 -20 340 270" : "0 -20 340 350";
+  const vb = vbOf();
   let inner = "", dims = "";
   const front = view === "front";
   if (t.kind === "top" || t.kind === "dress") {
@@ -1502,6 +1523,7 @@ function buildSVG(view) {
     }
   }
   const cap = t.kind === "bag" ? (front ? "앞면" : "옆면") : front ? "앞판" : "뒤판";
+  LAST_INNER[view] = inner;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" role="img" aria-label="${t.name} ${cap} 도식화">${DEFS}${inner}${dims}${annoSVG(view)}</svg>`;
 }
 
@@ -1518,6 +1540,13 @@ function annoSVG(view, selected = -1) {
       if (a.t === "text") return `<text data-i="${i}" x="${n(a.x)}" y="${n(a.y)}" font-size="9" font-family="sans-serif" font-weight="700" fill="${ANNO}" stroke="#fff" stroke-width="2.6" paint-order="stroke"${i === selected ? ' text-decoration="underline"' : ""}>${esc(a.text)}</text>`;
       if (a.t === "arrow") return `<line data-i="${i}" x1="${n(a.x1)}" y1="${n(a.y1)}" x2="${n(a.x2)}" y2="${n(a.y2)}" stroke="${ANNO}" stroke-width="1.4" marker-end="url(#an-${view})"${sel}/>`;
       if (a.t === "circle") return `<circle data-i="${i}" cx="${n(a.x)}" cy="${n(a.y)}" r="${n(a.r)}" fill="none" stroke="${ANNO}" stroke-width="1.4"${sel}/>`;
+      if (a.t === "zoom") {   // 디테일 확대: 점선 동그라미(원본 자리) + 같은 도식화를 k배 확대해 동그라미로 오려 낸 그림 + 이어 주는 선
+        const R = a.r * a.k, id = `zc-${view}-${i}`, body = (LAST_INNER[view] || "").replace(/ data-(?:d|s)="[^"]*"/g, ""), dx = a.tx - a.x, dy = a.ty - a.y, dist = Math.hypot(dx, dy) || 1, ux = dx / dist, uy = dy / dist;
+        const line = dist > a.r + R + 2 ? `<line x1="${n(a.x + ux * a.r)}" y1="${n(a.y + uy * a.r)}" x2="${n(a.tx - ux * R)}" y2="${n(a.ty - uy * R)}" stroke="${ANNO}" stroke-width="1" stroke-dasharray="3 2"/>` : "";
+        return `<g class="zoom"><circle data-i="${i}" data-z="src" cx="${n(a.x)}" cy="${n(a.y)}" r="${n(a.r)}" fill="none" stroke="${ANNO}" stroke-width="1.2" stroke-dasharray="3 2"/><circle data-i="${i}" data-z="src" cx="${n(a.x)}" cy="${n(a.y)}" r="${n(a.r)}" fill="none" stroke="transparent" stroke-width="9" pointer-events="stroke"/>${line}`
+          + `<clipPath id="${id}"><circle cx="${n(a.tx)}" cy="${n(a.ty)}" r="${n(R)}"/></clipPath><circle cx="${n(a.tx)}" cy="${n(a.ty)}" r="${n(R)}" fill="#fff"/><g clip-path="url(#${id})" pointer-events="none"><g transform="translate(${n(a.tx)} ${n(a.ty)}) scale(${n(a.k)}) translate(${n(-a.x)} ${n(-a.y)})">${body}</g></g>`
+          + `<circle data-i="${i}" data-z="dst" cx="${n(a.tx)}" cy="${n(a.ty)}" r="${n(R)}" fill="transparent" stroke="${ANNO}" stroke-width="1.6"${sel}/></g>`;
+      }
       return "";
     }).join("") + "</g>";
 }
@@ -1582,7 +1611,7 @@ function renderKindControls() {
   $("pocketChecks").hidden = bag;
   $("specCap").textContent = bag ? "치수표 (단위 cm, 완성 치수)" : "치수표 (단위 cm, 단면 기준)";
 }
-function renderAll() { ensureSizeSystem(); renderKindControls(); renderSizeChips(); renderLabelBox(); renderSpec(); renderFlats(); fitPrint(); if (typeof activeTab !== "undefined" && activeTab === "prod") renderProd(); }
+function renderAll() { ensureSizeSystem(); renderKindControls(); renderSizeChips(); renderLabelBox(); renderSpec(); renderFlats(); renderQtyBox(); fitPrint(); if (typeof activeTab !== "undefined" && activeTab === "prod") renderProd(); }
 function renderContent() { renderTrims(); renderSew(); fitPrint(); }
 
 /* ====================================================================== 옵션 입력 연결 */
@@ -1661,9 +1690,13 @@ $("specTable").addEventListener("input", () => { clearTimeout(flatTimer); flatTi
 /* 화면 폭이 A4 가로(1123px)보다 좁으면 작업지시서를 축소해 보여 줌. 인쇄 배율과는 별개 */
 function fitScreen() {
   const st = document.querySelector(".stage"), cs = getComputedStyle(st);
-  const avail = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  document.documentElement.style.setProperty("--fit", Math.min(1, avail / 1123).toFixed(3));
+  const avail = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), big = document.body.classList.contains("sheet-big");
+  document.documentElement.style.setProperty("--fit", (big ? Math.min(1, Math.max(avail / 1123, 0.7)) : Math.min(1, avail / 1123)).toFixed(3));   // 크게 보기: 0.7배(화면보다 넓어 좌우로 밀어서 봄)
 }
+$("bigViewBtn").addEventListener("click", () => {
+  const on = document.body.classList.toggle("sheet-big"); $("bigViewBtn").setAttribute("aria-pressed", on); $("bigViewBtn").textContent = on ? "↩ 한눈에 보기" : "🔍 크게 보기";
+  fitScreen(); fitPrint(); if (on) $("sheet").scrollIntoView({ block: "start" });
+});
 window.addEventListener("resize", fitScreen);
 window.addEventListener("beforeprint", () => { preparePrint(); track(activeTab === "pat" ? "pattern" : "print"); });
 
@@ -2151,19 +2184,20 @@ function editHandles() {
 }
 function skirtGeomDress(r) { const dv = baseVals(), wv = (dv["허리단면"] || 46) / 2 * r.k, hemHalf = (dv["밑단단면"] || 70) / 2 * r.k;
   return { wv, flare: state.opt.shape === "h" ? Math.max(4, hemHalf - wv) * 0.4 : Math.max(8, hemHalf - wv), lenY: Math.min(320, r.top + (dv["총장"] || 110) * r.k) }; }
+const COARSE = matchMedia("(pointer: coarse)").matches || innerWidth < 760;   // 손가락 화면: 손잡이를 키우고 누르는 범위는 더 넓게
 function renderEditor() {
   for (const view of ["front", "back"]) {
     const box = view === "front" ? $("edFront") : $("edBack");
     let svg = buildSVG(view);
     if (ed.sel.view === view && ed.sel.i >= 0) svg = svg.replace(/<defs><marker id="an-[\s\S]*?<\/g><\/svg>$/, annoSVG(view, ed.sel.i) + "</svg>");
     // 숨겨진 작업지시서 도식화와 화살촉 이름(id)이 겹치면 숨긴 쪽을 가리켜 안 보이므로 편집기용 이름으로 바꿈
-    box.innerHTML = svg.replace(/id="(ar|an-front|an-back)"/g, 'id="ed-$1"').replace(/url\(#(ar|an-front|an-back)\)/g, "url(#ed-$1)");
+    box.innerHTML = svg.replace(/id="(ar|an-front|an-back|zc-[a-z]+-\d+)"/g, 'id="ed-$1"').replace(/url\(#(ar|an-front|an-back|zc-[a-z]+-\d+)\)/g, "url(#ed-$1)");
     const el = box.querySelector("svg"); el.dataset.view = view;
     if (view === "front" && !isBag()) {
       const NS = "http://www.w3.org/2000/svg", g = document.createElementNS(NS, "g");
       editHandles().forEach((h, i) => {
         const hg = document.createElementNS(NS, "g"); hg.setAttribute("class", "hd"); hg.dataset.h = i;
-        hg.innerHTML = `<circle cx="${h.x.toFixed(1)}" cy="${h.y.toFixed(1)}" r="5.5" fill="#fff" stroke="#c62828" stroke-width="2"/><title>${esc(h.part)} 끌기</title>`;
+        hg.innerHTML = `<circle class="hit" cx="${h.x.toFixed(1)}" cy="${h.y.toFixed(1)}" r="${COARSE ? 17 : 9}" fill="transparent"/><circle cx="${h.x.toFixed(1)}" cy="${h.y.toFixed(1)}" r="${COARSE ? 8 : 5.5}" fill="#fff" stroke="#c62828" stroke-width="2" pointer-events="none"/><title>${esc(h.part)} 끌기</title>`;
         g.append(hg);
       });
       el.append(g);
@@ -2174,18 +2208,22 @@ function renderEditor() {
       if (sa.r) g.setAttribute("transform", `rotate(${sa.r} ${sa.x + sa.w / 2} ${sa.y + sa.h / 2})`);
       const tx = sa.x + sa.w / 2;
       g.innerHTML = `<rect x="${sa.x}" y="${sa.y}" width="${sa.w}" height="${sa.h}" fill="none" stroke="${ANNO}" stroke-width="1" stroke-dasharray="4 3" pointer-events="none"/>`
-        + `<line x1="${tx}" y1="${sa.y}" x2="${tx}" y2="${sa.y - 14}" stroke="${ANNO}" stroke-width="1" pointer-events="none"/><circle class="rot" cx="${tx}" cy="${sa.y - 14}" r="4.5" fill="${ANNO}" stroke="#fff" stroke-width="1.2"><title>돌리기</title></circle>`
-        + [["nw", sa.x, sa.y], ["ne", sa.x + sa.w, sa.y], ["sw", sa.x, sa.y + sa.h], ["se", sa.x + sa.w, sa.y + sa.h]].map(([c, x, y]) => `<circle class="rh ${c}" data-c="${c}" cx="${x}" cy="${y}" r="4.5" fill="#fff" stroke="${ANNO}" stroke-width="1.6"/>`).join("");
+        + `<line x1="${tx}" y1="${sa.y}" x2="${tx}" y2="${sa.y - 14}" stroke="${ANNO}" stroke-width="1" pointer-events="none"/><circle class="rot" cx="${tx}" cy="${sa.y - 14}" r="${COARSE ? 16 : 9}" fill="transparent"><title>돌리기</title></circle><circle cx="${tx}" cy="${sa.y - 14}" r="${COARSE ? 7.5 : 4.5}" fill="${ANNO}" stroke="#fff" stroke-width="1.2" pointer-events="none"/>`
+        + [["nw", sa.x, sa.y], ["ne", sa.x + sa.w, sa.y], ["sw", sa.x, sa.y + sa.h], ["se", sa.x + sa.w, sa.y + sa.h]].map(([c, x, y]) => `<circle class="rh ${c}" data-c="${c}" cx="${x}" cy="${y}" r="${COARSE ? 16 : 9}" fill="transparent"/><circle cx="${x}" cy="${y}" r="${COARSE ? 7.5 : 4.5}" fill="#fff" stroke="${ANNO}" stroke-width="1.6" pointer-events="none"/>`).join("");
       el.append(g);
     }
   }
   const si = ed.sel.view && ed.sel.i >= 0 ? state.notes[ed.sel.view][ed.sel.i] : null, isImg = !!si && si.t === "img";
-  $("edSizeBox").hidden = !isImg; $("edImgFlip").hidden = !isImg; $("edRotBox").hidden = !isImg; $("edImgRot90").hidden = !isImg;
+  const isZoom = !!si && si.t === "zoom", sz = $("edImgSize");
+  $("edSizeBox").hidden = !(isImg || isZoom); $("edZoomBox").hidden = !isZoom; $("edImgFlip").hidden = !isImg;
+  sz.min = isZoom ? 6 : 8; sz.max = isZoom ? 60 : 260; $("edSizeBox").firstChild.textContent = isZoom ? "동그라미 크기 " : "크기 ";
+  if (isZoom && document.activeElement !== $("edZoomK")) $("edZoomK").value = Math.round(si.k * 10); $("edRotBox").hidden = !isImg; $("edImgRot90").hidden = !isImg;
   if (isImg && document.activeElement !== $("edImgRot")) $("edImgRot").value = Math.round(si.r || 0);
   const imgIdx = isImg ? state.notes[ed.sel.view].map((a, k) => (a.t === "img" ? k : -1)).filter((k) => k >= 0) : [], pos = imgIdx.indexOf(ed.sel.i);
   $("edOrderBox").hidden = imgIdx.length < 2;
   $("edImgTop").disabled = $("edImgUp").disabled = pos === imgIdx.length - 1; $("edImgBottom").disabled = $("edImgDown").disabled = pos === 0;
   if (isImg && document.activeElement !== $("edImgSize")) $("edImgSize").value = Math.round(Math.max(si.w, si.h));
+  if (isZoom && document.activeElement !== $("edImgSize")) $("edImgSize").value = Math.round(si.r);
   if (!ed.drag) $("edNote").textContent = isBag() ? "파우치는 손잡이 편집을 아직 지원하지 않습니다. 메모·화살표·동그라미는 넣을 수 있습니다."
     : "빨간 손잡이를 끌면 치수표 값이 바뀌고, 주머니 같은 디테일은 직접 끌어 옮길 수 있습니다 (좌우 한 쌍은 대칭). 파란 표시와 ‘이미지 넣기’로 붙인 로고·그림은 작업지시서·인쇄·저장에 함께 들어갑니다.";
 }
@@ -2225,7 +2263,7 @@ for (const box of [$("edFront"), $("edBack")]) {
       pushUndo(); ed.drag = { kind: "detail", key, side, k, last: p, moved: false }; box.setPointerCapture(e.pointerId); e.preventDefault(); return;
     }
     if (ed.tool === "move" && an) {
-      ed.sel = { view, i: +an.dataset.i }; pushUndo(); ed.drag = { kind: "anno", view, i: +an.dataset.i, last: p }; box.setPointerCapture(e.pointerId); renderEditor(); return;
+      ed.sel = { view, i: +an.dataset.i }; pushUndo(); ed.drag = { kind: "anno", view, i: +an.dataset.i, last: p, part: an.dataset.z || "" }; box.setPointerCapture(e.pointerId); renderEditor(); return;
     }
     if (ed.tool === "move") { ed.sel = { view: null, i: -1 }; renderEditor(); return; }
     if (ed.tool === "text") {
@@ -2233,7 +2271,7 @@ for (const box of [$("edFront"), $("edBack")]) {
       pushUndo(); list.push({ t: "text", x: p.x, y: p.y, text: text.slice(0, 40) }); ed.sel = { view, i: list.length - 1 }; renderFlats(); scheduleSave(); renderEditor(); return;
     }
     pushUndo();
-    const item = ed.tool === "arrow" ? { t: "arrow", x1: p.x, y1: p.y, x2: p.x + 1, y2: p.y + 1 } : { t: "circle", x: p.x, y: p.y, r: 2 };
+    const item = ed.tool === "arrow" ? { t: "arrow", x1: p.x, y1: p.y, x2: p.x + 1, y2: p.y + 1 } : ed.tool === "zoom" ? { t: "zoom", x: p.x, y: p.y, r: 2, tx: p.x, ty: p.y, k: 2.4 } : { t: "circle", x: p.x, y: p.y, r: 2 };
     list.push(item); ed.drag = { kind: "new", view, i: list.length - 1, start: p }; box.setPointerCapture(e.pointerId); renderEditor();
   });
   box.addEventListener("pointermove", (e) => {
@@ -2269,13 +2307,13 @@ for (const box of [$("edFront"), $("edBack")]) {
       a.r = Math.round(ang); renderEditor(); $("edNote").textContent = `이미지 회전 ${a.r}°`; return;
     }
     if (d.kind === "anno") { const dx = p.x - d.last.x, dy = p.y - d.last.y; d.last = p;
-      if (a.t === "arrow") { a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; } else { a.x += dx; a.y += dy; } renderEditor(); return; }
+      if (a.t === "arrow") { a.x1 += dx; a.y1 += dy; a.x2 += dx; a.y2 += dy; } else if (a.t === "zoom" && d.part === "dst") { a.tx += dx; a.ty += dy; } else { a.x += dx; a.y += dy; if (a.t === "zoom") { a.tx += dx; a.ty += dy; } } renderEditor(); return; }
     if (a.t === "arrow") { a.x2 = p.x; a.y2 = p.y; } else a.r = Math.max(3, Math.hypot(p.x - a.x, p.y - a.y));
     renderEditor();
   });
   const end = () => {
     const d = ed.drag; if (!d) return; ed.drag = null;
-    if (d.kind === "new") { const a = state.notes[d.view][d.i]; if (a && ((a.t === "arrow" && Math.hypot(a.x2 - a.x1, a.y2 - a.y1) < 6) || (a.t === "circle" && a.r < 4))) { state.notes[d.view].splice(d.i, 1); ed.undo.pop(); } else ed.sel = { view: d.view, i: d.i }; }
+    if (d.kind === "new") { const a = state.notes[d.view][d.i]; if (a && ((a.t === "arrow" && Math.hypot(a.x2 - a.x1, a.y2 - a.y1) < 6) || ((a.t === "circle" || a.t === "zoom") && a.r < 4))) { state.notes[d.view].splice(d.i, 1); ed.undo.pop(); } else { ed.sel = { view: d.view, i: d.i }; if (a.t === "zoom") { placeLoupe(a); setTool("move"); $("edNote").textContent = "확대한 그림을 끌어 옮기고, 점선 동그라미를 끌면 확대할 곳이 바뀝니다. ‘크기’는 동그라미 크기, ‘배율’은 확대 정도입니다."; } } }
     if (d.kind === "handle" && d.cm == null) ed.undo.pop();
     if (d.kind === "rotate" && (state.notes[d.view][d.i]?.r || 0) === d.r0) ed.undo.pop();
     if (d.kind === "resize") { const a = state.notes[d.view][d.i]; if (a) for (const k of ["x", "y", "w", "h"]) a[k] = Math.round(a[k] * 10) / 10; }
@@ -2319,13 +2357,22 @@ for (const [box, view] of [[$("edFront"), "front"], [$("edBack"), "back"]]) {   
 }
 let sizeUndo = false;
 $("edImgSize").addEventListener("input", (e) => {
-  const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || a.t !== "img") return;
+  const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || (a.t !== "img" && a.t !== "zoom")) return;
   if (!sizeUndo) { pushUndo(); sizeUndo = true; }
+  if (a.t === "zoom") { a.r = +e.target.value; if (a.r * a.k > 62) a.k = Math.max(1.5, 62 / a.r); renderFlats(); renderEditor(); return; }
   const m = Math.max(a.w, a.h), k = +e.target.value / m, cx = a.x + a.w / 2, cy = a.y + a.h / 2;
   a.w = Math.round(a.w * k * 10) / 10; a.h = Math.round(a.h * k * 10) / 10; a.x = Math.round((cx - a.w / 2) * 10) / 10; a.y = Math.round((cy - a.h / 2) * 10) / 10;
   renderFlats(); renderEditor();
 });
 $("edImgSize").addEventListener("change", () => { sizeUndo = false; fitPrint(); scheduleSave(); });
+/* 디테일 확대: 확대한 그림(동그라미)을 도식화의 비어 있는 모서리 쪽에 자동으로 놓음 — 원본 동그라미와 겹치지 않는 모서리 중 가장 가까운 곳 */
+function placeLoupe(a) {
+  const [vx, vy, vw, vh] = vbOf().split(" ").map(Number);
+  if (a.r * a.k > 62) a.k = Math.max(1.5, 62 / a.r);
+  const R = a.r * a.k, m = 6, cand = [[vx + R + m, vy + R + m], [vx + vw - R - m, vy + R + m], [vx + R + m, vy + vh - R - m], [vx + vw - R - m, vy + vh - R - m]]
+    .map(([x, y]) => ({ x, y, d: Math.hypot(x - a.x, y - a.y) })), ok = cand.filter((c) => c.d >= a.r + R + 8).sort((p, q) => p.d - q.d);
+  const best = ok[0] || cand.sort((p, q) => q.d - p.d)[0]; a.tx = Math.round(best.x * 10) / 10; a.ty = Math.round(best.y * 10) / 10;
+}
 /* 이미지끼리 앞뒤 순서 (메모·화살표·동그라미는 항상 이미지 위) */
 function moveImage(mode) {
   const { view, i } = ed.sel, list = view && state.notes[view]; if (!list || list[i]?.t !== "img") return;
@@ -2336,6 +2383,15 @@ function moveImage(mode) {
   ed.sel = { view, i: idxs[to] }; renderFlats(); fitPrint(); scheduleSave(); renderEditor();
 }
 for (const [id, mode] of [["edImgTop", "top"], ["edImgUp", "up"], ["edImgDown", "down"], ["edImgBottom", "bottom"]]) $(id).addEventListener("click", () => moveImage(mode));
+let zoomUndo = false;
+$("edZoomK").addEventListener("input", (e) => {
+  const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || a.t !== "zoom") return;
+  if (!zoomUndo) { pushUndo(); zoomUndo = true; }
+  a.k = Math.min(+e.target.value / 10, Math.max(1.2, 62 / a.r)); renderFlats(); renderEditor();
+});
+$("edZoomK").addEventListener("change", () => { zoomUndo = false; fitPrint(); scheduleSave(); });
+$("edImgSize").addEventListener("change", () => { fitPrint(); });
+document.querySelectorAll("#edChips button, .ed-chips button").forEach((b) => b.addEventListener("click", () => { const label = b.textContent.trim(); $("edText").value = label; setTool("text"); $("edText").focus(); $("edNote").textContent = `‘${label}’ 표시를 놓을 자리를 도식화에서 누르세요. 화살표로 위치를 가리키고, 🔍 확대로 자세히 보여 줄 수도 있습니다.`; }));
 let rotUndo = false;
 $("edImgRot").addEventListener("input", (e) => {
   const a = ed.sel.view && state.notes[ed.sel.view][ed.sel.i]; if (!a || a.t !== "img") return;
@@ -2644,11 +2700,22 @@ function renderOrder() {
   if (!state.prod.colors) state.prod.colors = txt("fColor") || $("oColor").value.trim();
   if (document.activeElement !== $("ordColors")) $("ordColors").value = state.prod.colors;
   const cs = ordColors(), zs = ordSizes();
+  renderQtyBox();
   if (!cs.length) { $("ordTable").innerHTML = `<tr><td>위 칸에 컬러를 넣으면 표가 생깁니다.</td></tr>`; return; }
   const colSum = (z) => cs.reduce((a, c) => a + qtyOf(c, z), 0), rowSum = (c) => zs.reduce((a, z) => a + qtyOf(c, z), 0);
   $("ordTable").innerHTML = `<tr><th>컬러 \\ 사이즈</th>${zs.map((z) => `<th class="n">${sizeLabel(z, true)}</th>`).join("")}<th class="n">합계</th></tr>`
     + cs.map((c) => `<tr><th>${esc(c)}</th>${zs.map((z) => `<td><input type="number" min="0" step="1" data-q="${esc(c + "|" + z)}" value="${qtyOf(c, z) || ""}" aria-label="${esc(c)} ${esc(sizeLabel(z))} 수량" /></td>`).join("")}<td class="n" data-rs="${esc(c)}">${rowSum(c)}</td></tr>`).join("")
     + `<tr><th>합계</th>${zs.map((z) => `<td class="n" data-cs="${esc(z)}">${colSum(z)}</td>`).join("")}<td class="n"><b id="ordTotal">${orderTotal()}</b>장</td></tr>`;
+}
+/* 작업지시서 본문의 수량표: 생산 준비 탭에서 컬러·수량을 넣었을 때만 보임 (합계가 0이면 숨김 → 인쇄·내보내기에도 안 나옴) */
+function renderQtyBox() {
+  const cs = ordColors(), zs = ordSizes(), box = $("qtyBox");
+  if (!cs.length || !orderTotal()) { box.hidden = true; $("qtyTable").innerHTML = ""; return; }
+  const colSum = (z) => cs.reduce((a, c) => a + qtyOf(c, z), 0), rowSum = (c) => zs.reduce((a, z) => a + qtyOf(c, z), 0);
+  $("qtyTable").innerHTML = `<tr><th>컬러</th>${zs.map((z) => `<th>${sizeLabel(z, true, true)}</th>`).join("")}<th class="tot">합계</th></tr>`
+    + cs.map((c) => `<tr><th>${esc(c)}</th>${zs.map((z) => `<td>${qtyOf(c, z) || ""}</td>`).join("")}<td class="tot">${rowSum(c)}</td></tr>`).join("")
+    + `<tr><th>합계</th>${zs.map((z) => `<td>${colSum(z) || ""}</td>`).join("")}<td class="tot">${orderTotal()}</td></tr>`;
+  box.hidden = false; fitPrint();
 }
 $("ordColors").addEventListener("input", (e) => { state.prod.colors = e.target.value.slice(0, 200); renderOrder(); });
 $("ordTable").addEventListener("input", (e) => {
@@ -2658,7 +2725,7 @@ $("ordTable").addEventListener("input", (e) => {
   const cs = ordColors(), zs = ordSizes();
   cs.forEach((c) => { const n = $("ordTable").querySelector(`[data-rs="${CSS.escape(c)}"]`); if (n) n.textContent = zs.reduce((a, z) => a + qtyOf(c, z), 0); });
   zs.forEach((z) => { const n = $("ordTable").querySelector(`[data-cs="${CSS.escape(z)}"]`); if (n) n.textContent = cs.reduce((a, c) => a + qtyOf(c, z), 0); });
-  $("ordTotal").textContent = orderTotal();
+  $("ordTotal").textContent = orderTotal(); renderQtyBox(); scheduleSave();
 });
 $("ordApply").addEventListener("click", () => {
   const cs = ordColors(), t = orderTotal();
@@ -2671,7 +2738,7 @@ const csvCell = (x) => `"${String(x ?? "").replace(/"/g, '""')}"`;
 function buildCSV() {
   const out = [], row = (...a) => out.push(a.map((x) => csvCell(typeof x === "string" ? ts(x) : x)).join(","));
   row("[작업지시서]", styleNo());
-  for (const id of ["fBrand", "fStyle", "fSeason", "fDate", "fItem", "fQty", "fDue", "fDesigner", "fFactory", "fColor", "fFabric", "fMix", "fWeight", "fYield"]) row($(id).previousElementSibling?.textContent || id, shown(id));
+  for (const id of ["fBrand", "fStyle", "fSeason", "fDate", "fItem", "fQty", "fDue", "fDesigner", "fFactory", "fColor", "fRound", "fFabric", "fMix", "fWeight", "fYield"]) row($(id).previousElementSibling?.textContent || id, shown(id));
   row("사이즈", $("fSizes").textContent);
   out.push(""); row("[치수표]", $("specCap").textContent);
   $("specTable").querySelectorAll("tr").forEach((tr) => row(...[...tr.children].map((td) => td.textContent.trim())));
@@ -2692,6 +2759,94 @@ function buildCSV() {
   return "﻿" + out.join("\r\n");
 }
 $("ordCsv").addEventListener("click", () => saveFile(`작업지시서_${styleNo()}.csv`, buildCSV(), "text/csv;charset=utf-8"));
+
+/* ---- 엑셀(.xlsx) 내보내기 (assets/xlsx.js): 시트 1 작업지시서(머리·도식화 그림·원단·부자재·스와치·봉제·주의), 시트 2 치수표, 시트 3 발주표(컬러를 넣었을 때, 합계는 수식). 글자는 작업지시서 언어를 따르고 원가는 넣지 않음 ---- */
+async function svgToPng(svg, width) {
+  const vb = svg.match(/viewBox="([-\d.\s]+)"/)[1].split(/\s+/).map(Number), k = width / vb[2], h = Math.round(vb[3] * k);
+  const img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", `<svg width="${width}" height="${h}" `)); await img.decode();
+  const c = document.createElement("canvas"); c.width = width * 2; c.height = h * 2; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  return { data: new Uint8Array(await (await new Promise((r) => c.toBlob(r, "image/png"))).arrayBuffer()), w: width, h };
+}
+const dataUrlBytes = (u) => Uint8Array.from(atob(u.split(",")[1]), (c) => c.charCodeAt(0));
+const cellLines = (el) => [...el.querySelectorAll("li")].map((li) => li.textContent.trim()).filter(Boolean);
+const rowH = (text, widthUnits) => { let n = 0; for (const part of String(text).split("\n")) { let u = 0; for (const ch of part) u += /[ -~]/.test(ch) ? 1 : 2; n += Math.max(1, Math.ceil(u / widthUnits)); } return Math.max(18, n * 14 + 6); };   // 병합 칸은 엑셀이 줄 높이를 못 맞추므로 직접 계산
+async function buildXlsx() {
+  const X = window.Xlsx, HEAD = "F1F1EE", BASE = "FFF4C2", shownT = (id) => $(id).textContent.trim();
+  const th = (v, o = {}) => ({ v, b: true, fill: HEAD, al: "center", ...o }), td = (v, o = {}) => ({ v, ...o });
+  const nm = (k) => ts(k).replace(/\s*\n\s*/g, " ").slice(0, 28);
+  // ---- 시트 1
+  const rows = [], merges = [], rh = {}, R = () => rows.length;      // R() = 다음에 쓸 행 번호(0부터)
+  const put = (r, c, cell) => { (rows[r] = rows[r] || [])[c] = cell; };
+  const span = (r, c1, c2, cell) => { put(r, c1, cell); if (c2 > c1) merges.push(`${X.colName(c1)}${r + 1}:${X.colName(c2)}${r + 1}`); };
+  span(0, 0, 11, { v: ts("작업지시서"), b: true, sz: 16, al: "center", fill: HEAD }); rh[1] = sheetLang === "both" ? 44 : 30;
+  const hdr = [["fBrand", "fStyle", "fSeason", "fDate"], ["fItem", "fSizes", "fQty", "fDue"], ["fDesigner", "fFactory", "fColor", "fRound"]];
+  hdr.forEach((ids, i) => ids.forEach((id, k) => { const c = k * 3, lab = $(id).previousElementSibling?.textContent.trim() || ""; put(1 + i, c, th(lab)); span(1 + i, c + 1, c + 2, td(shownT(id))); rh[2 + i] = Math.max(24, rowH(shownT(id), 20)); }));
+  span(5, 0, 11, th(ts("도식화"), { al: "left" }));
+  const [fi, bi] = await Promise.all([svgToPng(buildSVG("front"), 440), svgToPng(buildSVG("back"), 440)]);
+  const images = [{ data: fi.data, type: "png", col: 0, row: 6, dx: 10, dy: 4, w: fi.w, h: fi.h }, { data: bi.data, type: "png", col: 6, row: 6, dx: 10, dy: 4, w: bi.w, h: bi.h }];
+  const imgRows = Math.ceil((fi.h + 12) / 20);
+  for (let r = 6; r < 6 + imgRows; r++) { rh[r + 1] = 15; for (let c = 0; c < 12; c++) put(r, c, { v: "", bd: false }); }
+  for (let c = 0; c < 12; c++) { put(6, c, { v: "", bd: true }); }
+  let r = 6 + imgRows;
+  // 원단 | 부자재
+  span(r, 0, 5, th(ts("원단"), { al: "left" })); span(r, 6, 11, th(ts("부자재"), { al: "left" })); r++;
+  const fabric = ["fFabric", "fMix", "fWeight", "fYield"].map((id) => [$(id).closest("tr")?.querySelector("th")?.textContent.trim() || "", shownT(id)]);
+  const trims = [...$("trimTable").querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent.trim())).filter((x) => x.some(Boolean));
+  put(r, 6, th(ts("구분"))); span(r, 7, 8, th(ts("품목"))); span(r, 9, 10, th(ts("규격·컬러"))); put(r, 11, th(ts("수량")));
+  const nR = Math.max(fabric.length, trims.length, 4);
+  for (let i = 0; i < nR; i++) {
+    const rr = r + 1 + i, f = fabric[i], t = trims[i] || [];
+    if (f) { span(rr, 0, 1, th(f[0], { al: "left" })); span(rr, 2, 5, td(f[1])); } else { span(rr, 0, 5, td("", { bd: false })); }
+    put(rr, 6, td(t[0] || "")); span(rr, 7, 8, td(t[1] || "")); span(rr, 9, 10, td(t[2] || "")); put(rr, 11, td(t[3] || ""));
+    rh[rr + 1] = Math.max(20, rowH(t[1] || "", 16), rowH(t[2] || "", 16), f ? rowH(f[1], 40) : 0);
+  }
+  r += 1 + nR + 1;
+  // 스와치 (색 칸 + 이름, 사진 스와치는 그림)
+  if (state.swatches.length) {
+    span(r, 0, 11, th(ts("스와치"), { al: "left" })); r++;
+    state.swatches.forEach((w, i) => {
+      const c = i * 2; span(r, c, c + 1, w.src ? td("", {}) : td("", { fill: w.color.slice(1).toUpperCase() })); span(r + 1, c, c + 1, td(w.name || ts(`원단 ${i + 1}`), { al: "center" }));
+      if (w.src) images.push({ data: dataUrlBytes(w.src), type: "jpeg", col: c, row: r, dx: 4, dy: 2, w: 80, h: 48 });
+    });
+    rh[r + 1] = 40; rh[r + 2] = 22; r += 3;
+  }
+  // 봉제 사양 | 주의사항
+  span(r, 0, 5, th(ts("봉제 사양"), { al: "left" })); span(r, 6, 11, th(ts("주의사항"), { al: "left" })); r++;
+  const sew = cellLines($("sewList")).map((x, i) => `${i + 1}. ${x}`), notes = cellLines($("noteList")).map((x) => "· " + x);
+  for (let i = 0; i < Math.max(sew.length, notes.length, 1); i++) {
+    span(r, 0, 5, td(sew[i] || "")); span(r, 6, 11, td(notes[i] || "")); rh[r + 1] = Math.max(20, rowH(sew[i] || "", 62), rowH(notes[i] || "", 62)); r++;
+  }
+  r++; span(r, 0, 8, td(ts("치수 허용오차 ±1cm (별도 협의 시 협의값 우선)"), { bd: false, sz: 9, color: "666666" })); span(r, 9, 11, td(ts("작지로 작성") + " · jakji.app", { bd: false, sz: 9, color: "666666", al: "right" }));
+  const sheet1 = { name: nm("작업지시서"), cols: Array(12).fill(11), rows, merges, rowHeights: rh, images };
+  // ---- 시트 2: 치수표
+  const trs = [...$("specTable").querySelectorAll("tr")], n = trs[0].children.length, cap = [$("specCap").textContent.trim(), $("specMeta").textContent.trim()].filter(Boolean).join("  ·  ");
+  const srows = [[{ v: cap, b: true, al: "left", bd: false }], []], smerge = [`A1:${X.colName(n - 1)}1`], srh = {};
+  srows.push([...trs[0].children].map((c, i) => th(c.textContent.trim().replace(/\s*\n\s*/g, "\n").replace(/([^\n(])\(/, "$1\n("), c.classList.contains("base") ? { fill: BASE } : {})));
+  srh[3] = 34;
+  trs.slice(1).forEach((tr, ri) => {
+    srows.push([...tr.children].map((c, i) => {
+      const t = c.textContent.trim(), base = c.classList.contains("base"), num = parseFloat(t), isVal = i >= 3 && i < n - 1;
+      if (i === 0) return { v: t, b: true, color: "C62828", al: "center" };
+      if (isVal && Number.isFinite(num)) return { v: num, al: "center", b: base, ...(base ? { fill: BASE } : {}) };
+      return i === n - 1 ? { v: t, al: "center", color: "666666" } : { v: t, al: "left", ...(i === 2 ? { color: "666666", sz: 9 } : {}) };
+    })); srh[srows.length] = 30;
+  });
+  srows.push([]); srows.push([{ v: ts("치수 허용오차 ±1cm (별도 협의 시 협의값 우선)"), bd: false, sz: 9, color: "666666" }]); smerge.push(`A${srows.length}:${X.colName(n - 1)}${srows.length}`);
+  const sheets = [sheet1, { name: nm("치수표"), cols: [7, 16, 30, ...Array(n - 4).fill(9), 9], rows: srows, merges: smerge, rowHeights: srh }];
+  // ---- 시트 3: 발주표 (합계는 수식)
+  const cs = ordColors(), zs = ordSizes();
+  if (cs.length) {
+    const L = (i) => X.colName(i), orows = [[{ v: nm("발주표"), b: true, bd: false, sz: 12 }], [], [th(ts("컬러")), ...zs.map((z) => th(sizeLabel(z, false, true).replace(/ \(/, "\n("))), th(ts("합계"))]];
+    cs.forEach((c, i) => { const rr = 4 + i, sum = cs.length ? zs.reduce((a, z) => a + qtyOf(c, z), 0) : 0; orows.push([{ v: c, b: true }, ...zs.map((z) => ({ v: qtyOf(c, z) || "", al: "center" })), { v: sum, f: `SUM(${L(1)}${rr}:${L(zs.length)}${rr})`, b: true, al: "center", fill: BASE }]); });
+    const tr = 4 + cs.length; orows.push([th(ts("합계")), ...zs.map((z, k) => ({ v: cs.reduce((a, c) => a + qtyOf(c, z), 0), f: `SUM(${L(k + 1)}4:${L(k + 1)}${tr - 1})`, b: true, al: "center", fill: HEAD })), { v: orderTotal(), f: `SUM(${L(zs.length + 1)}4:${L(zs.length + 1)}${tr - 1})`, b: true, al: "center", fill: BASE }]);
+    sheets.push({ name: nm("발주표"), cols: [18, ...zs.map(() => 9), 10], rows: orows, rowHeights: { 3: 34 }, merges: [`A1:${L(zs.length + 1)}1`] });
+  }
+  return X.build({ sheets });
+}
+$("saveXlsxBtn").addEventListener("click", async () => {
+  try { const bytes = await buildXlsx(); await saveFile(`작업지시서_${styleNo()}.xlsx`, bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); }
+  catch (e) { console.error(e); setStatus("엑셀 파일을 만들지 못했습니다. HTML로 내보내기를 이용해 주세요.", true); }
+});
 
 /* ④ 케어라벨: 가정용 섬유제품 표시사항 7가지 */
 const CARE_OPTS = ["물세탁 30℃, 중성세제 사용", "손세탁 권장", "드라이클리닝 가능", "물세탁 금지, 드라이클리닝만", "염소계 표백제 사용 금지", "기계 건조 금지, 그늘에 뉘어 말림",
@@ -3070,12 +3225,13 @@ async function restore(j) {
   const cleanNote = (a) => a && a.t === "text" ? { t: "text", x: num(a.x), y: num(a.y), text: str(a.text, 40) }
     : a && a.t === "arrow" ? { t: "arrow", x1: num(a.x1), y1: num(a.y1), x2: num(a.x2), y2: num(a.y2) }
     : a && a.t === "circle" ? { t: "circle", x: num(a.x), y: num(a.y), r: Math.min(200, Math.abs(num(a.r))) }
+    : a && a.t === "zoom" ? { t: "zoom", x: num(a.x), y: num(a.y), r: Math.max(3, Math.min(80, Math.abs(num(a.r)))), tx: num(a.tx), ty: num(a.ty), k: Math.max(1.2, Math.min(6, Number.isFinite(+a.k) ? +a.k : 2.4)) }
     : a && a.t === "img" && typeof a.src === "string" && a.src.length < 900000 && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(a.src) ? { t: "img", x: num(a.x), y: num(a.y), w: Math.max(6, Math.min(400, num(a.w))), h: Math.max(6, Math.min(400, num(a.h))), r: Number.isFinite(+a.r) ? Math.max(-360, Math.min(360, Math.round(+a.r))) : 0, src: a.src } : null;
   state.notes = { front: [], back: [] };
   const marks = j.marks || (j.notes && !Array.isArray(j.notes) ? j.notes : null);   // 예전 파일은 notes 에 들어 있음
   for (const vw of ["front", "back"]) if (Array.isArray(marks?.[vw])) { let ni = 0; state.notes[vw] = marks[vw].slice(0, 60).map(cleanNote).filter((x) => x && (x.t !== "img" || ++ni <= IMG_MAX)); }
   state.prod = cleanProd(j.prod);
-  state.swatches = cleanSwatches(j.swatches); state.swLink = j.swLink === true; state.swHidden = Array.isArray(j.swHidden) ? j.swHidden.slice(0, 12).map((x) => str(x, 30)) : []; $("swLink").checked = state.swLink; renderSwatches();
+  renderQtyBox(); state.swatches = cleanSwatches(j.swatches); state.swLink = j.swLink === true; state.swHidden = Array.isArray(j.swHidden) ? j.swHidden.slice(0, 12).map((x) => str(x, 30)) : []; $("swLink").checked = state.swLink; renderSwatches();
   state.offsets = {};
   for (const [key, o] of Object.entries(j.offsets || {})) if (DETAIL_NAMES[key] && o) state.offsets[key] = { dx: Math.max(-40, Math.min(40, num(o.dx))), dy: Math.max(-60, Math.min(60, num(o.dy))) };
   renderFlats(); if (activeTab === "prod") renderProd();

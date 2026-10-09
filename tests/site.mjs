@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.SITE_URL || "http://localhost:8766/";
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
-const PAGES = ["index.html", "app.html", "guide.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html",
+const PAGES = ["index.html", "app.html", "guide.html", "form.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html",
   "en/index.html", "en/guide.html", "en/about.html", "en/contact.html", "en/privacy.html", "en/terms.html"];
 const EN_PAGES = PAGES.filter((f) => f.startsWith("en/"));
 const locOf = (f) => f.replace(/(^|\/)index\.html$/, "$1");
@@ -132,8 +132,15 @@ const bar5 = await kb.evaluate(() => !!document.querySelector(".lang-bar"));
 await lb.evaluate(() => localStorage.removeItem("jakji_lang")); await lb.close(); await kb.close();
 ok("영어 브라우저: 한국어 페이지에 영어판 안내 띠(이동은 하지 않음), 닫으면 다시 안 뜸, 도구는 #공유 내용 유지, 한국어 브라우저·영어 페이지엔 없음",
   bar1.url === "/guide.html" && bar1.go === "en/guide.html" && !bar2 && bar3 === "?lang=en#v1=abc" && !bar4 && !bar5, JSON.stringify({ bar1, bar2, bar3, bar4, bar5 }));
+/* 3-2b. 양식 다운로드: form.html의 엑셀 링크 18개가 모두 열리고 진짜 .xlsx(zip, 시트 2개 이상, 도식화 그림 2개)이며 남·여가 서로 다름 */
+await page.goto(BASE + "form.html", { waitUntil: "networkidle0" });
+const tplLinks = await page.$$eval("a[data-tpl]", (as) => as.map((a) => a.getAttribute("href")));
+const tplInfo = await page.evaluate(async (hrefs) => { const out = []; for (const h of hrefs) { const b = new Uint8Array(await (await fetch(h, { cache: "no-store" })).arrayBuffer()), t = new TextDecoder("latin1").decode(b); out.push({ h, kb: Math.round(b.length / 1024), zip: b[0] === 0x50 && b[1] === 0x4b, sheets: new Set(t.match(/xl\/worksheets\/sheet\d\.xml/g) || []).size >= 2, imgs: new Set(t.match(/xl\/media\/image\d\.png/g) || []).size === 2, w: /44/.test(h) }); } return out; }, tplLinks);
+const tplBad = tplInfo.filter((x) => !(x.zip && x.sheets && x.imgs && x.kb > 20));
+ok(`양식 다운로드 페이지: 엑셀 링크 18개(품목 9 × 남·여)가 모두 열리는 진짜 .xlsx(시트 2개·도식화 그림 2개)`, tplLinks.length === 18 && new Set(tplLinks).size === 18 && tplBad.length === 0, tplBad.map((x) => x.h).join(", ") || `${tplLinks.length}개`);
+
 /* 3-3. 버튼 사용 횟수용 빈 페이지(e/*.html): 열리고, 검색 제외(noindex)·robots 차단, 통계 로더만 있고, 사이트맵·다른 페이지 링크에는 없음 */
-const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern"], evBad = [];
+const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern", "template"], evBad = [];
 for (const n of EVENTS) {
   const res = await page.goto(BASE + `e/${n}.html`, { waitUntil: "networkidle0" });
   const h = await page.evaluate(() => ({ robots: document.querySelector('meta[name="robots"]')?.content, beacon: /cloudflareinsights/.test(document.head.innerHTML), analytics: window.SITE?.analytics === true, text: document.body.innerText.trim() }));
