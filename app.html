@@ -234,6 +234,17 @@
   .stage-bar button.primary { background: var(--mat); color: #fff; border-color: var(--mat); }
   .stage-bar button.primary:hover { box-shadow: 3px 3px 0 var(--coral); }
   .stage-bar select { border-radius: 999px !important; }
+  .more-menu { position: relative; }
+  .more-menu > summary { list-style: none; border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; user-select: none; }
+  .more-menu > summary::-webkit-details-marker { display: none; }
+  .more-menu[open] > summary { background: var(--mat); color: #fff; border-color: var(--mat); }
+  .more-pop { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; min-width: 240px; display: grid; gap: 6px; padding: 10px; background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 36px rgba(23,23,28,.22); }
+  .more-pop { grid-template-columns: minmax(0, 1fr); }
+  .more-pop button { width: 100%; box-sizing: border-box; text-align: left; }
+  .more-pop .sheet-lang { justify-content: space-between; padding: 2px 4px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stage-bar > .sheet-lang { color: #e6e1d6; } }
+  :root[data-theme="dark"] .stage-bar > .sheet-lang { color: #e6e1d6; }
+  @media (max-width: 560px) { .more-menu { position: static; } .more-pop { left: 0; right: 0; } .stage-bar { position: relative; } }
   .stage-bar .note { font-size: 12px; color: var(--ink-soft); align-self: center; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .stage-bar .note { color: #b8c2bc; } }
 
@@ -615,23 +626,28 @@
     </div>
     <div class="stage-bar">
       <button class="primary" id="printBtn">인쇄 · PDF 저장</button>
-      <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업)">작업 저장</button>
-      <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
+      <button id="saveXlsxBtn" data-tab="sheet" title="엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다">엑셀로 저장</button>
+      <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
+      <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
+      <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
+        <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
+      <button id="bigViewBtn" class="mob-only" data-tab="sheet" type="button" title="작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)" aria-pressed="false">🔍 크게 보기</button>
+      <details class="more-menu" id="moreMenu">
+        <summary title="작업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기">더보기 ⋯</summary>
+        <div class="more-pop">
+          <button id="saveJobBtn" title="작업지시서·치수 수정·사진·패턴 입력을 파일 하나로 저장 (다시 열어 이어서 작업)">작업 저장</button>
+          <button id="openJobBtn" title="저장한 작업 파일(.json) 열기">작업 열기</button>
+          <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
+          <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
+          <label class="sheet-lang" data-tab="sheet" title="자동: 한 장에 담았을 때 글자가 너무 작아지면(배율 0.72 미만) 2쪽으로 나눕니다. 1쪽 = 도식화·원단·부자재·스와치, 2쪽 = 치수표·봉제 사양·주의사항">인쇄 쪽수
+            <select id="printPages" aria-label="인쇄 쪽수"><option value="auto">자동 (넘치면 2쪽)</option><option value="one">1장에 맞춤</option><option value="two">2장으로 나눔</option></select></label>
+          <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
+        </div>
+      </details>
       <input type="file" id="jobFile" accept=".json,application/json" hidden />
       <input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp" hidden />
       <input type="file" id="swFile" accept="image/jpeg,image/png,image/webp" hidden />
       <input type="color" id="swColor" class="sr-only" tabindex="-1" aria-hidden="true" />
-      <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
-      <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
-      <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
-      <label class="sheet-lang" data-tab="sheet" title="자동: 한 장에 담았을 때 글자가 너무 작아지면(배율 0.72 미만) 2쪽으로 나눕니다. 1쪽 = 도식화·원단·부자재·스와치, 2쪽 = 치수표·봉제 사양·주의사항">인쇄 쪽수
-        <select id="printPages" aria-label="인쇄 쪽수"><option value="auto">자동 (넘치면 2쪽)</option><option value="one">1장에 맞춤</option><option value="two">2장으로 나눔</option></select></label>
-      <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
-        <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
-      <button id="bigViewBtn" class="mob-only" data-tab="sheet" type="button" title="작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)" aria-pressed="false">🔍 크게 보기</button>
-      <button id="saveXlsxBtn" data-tab="sheet" title="엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다">엑셀로 저장</button>
-      <button id="saveHtmlBtn" data-tab="sheet">HTML로 내보내기</button>
-      <button id="saveSvgBtn" data-tab="sheet">도식화 SVG 저장</button>
       <button id="savePatBtn" data-tab="pat" hidden>패턴 SVG 저장 (실물 크기)</button>
       <select id="patPrintMode" data-tab="pat" hidden aria-label="패턴 인쇄 방식" style="border:1px solid var(--rule);border-radius:8px;padding:8px;font:inherit;font-size:14px;background:#fff;color:var(--ink)">
         <option value="tiles">A4 나눠 인쇄</option><option value="one">한 장 (플로터·대형 출력)</option></select>
@@ -1714,7 +1730,10 @@ function renderKindControls() {
   const bag = isBag();
   $("genderSeg").hidden = bag;
   const kind = T[state.opt.template].kind, isTop = kind === "top" || kind === "dress", isPants = kind === "pants";
-  for (const id of ["oFit", "oNeck", "oRib", "oShape"]) $(id).closest("label").hidden = bag;
+  $("oFit").closest("label").hidden = bag;
+  for (const id of ["oNeck", "oRib"]) $(id).closest("label").hidden = !isTop;                       // 넥라인·밑단/소매단: 상의·원피스만
+  $("oClosure").closest("label").hidden = !(isTop || bag);                                           // 여밈: 상의·원피스·파우치(지퍼)
+  $("oShape").closest("label").hidden = !(kind === "skirt" || kind === "dress");                     // 스커트·원피스 모양
   for (const id of ["oSleeve"]) $(id).closest("label").hidden = !isTop;
   $("oHem").closest("label").hidden = kind !== "top";
   for (const id of ["oWaist", "oFpocket", "oBpocket"]) $(id).closest("label").hidden = !isPants;
@@ -2323,6 +2342,10 @@ $("tabOlzBtn").addEventListener("click", () => setTab("olz"));
 $("tabEditBtn").addEventListener("click", () => setTab("edit"));
 $("tabCardsBtn").addEventListener("click", () => setTab("cards"));
 $("tabFavBtn").addEventListener("click", () => setTab("favs"));
+{ const mm = $("moreMenu");   // 더보기: 바깥을 누르거나 항목을 고르거나 Esc면 닫힘
+  document.addEventListener("click", (e) => { if (mm.open && !mm.contains(e.target)) mm.open = false; });
+  mm.addEventListener("click", (e) => { if (e.target.closest(".more-pop button")) setTimeout(() => { mm.open = false; }, 0); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && mm.open) { mm.open = false; mm.querySelector("summary").focus(); } }); }
 $("favTop").addEventListener("click", () => { setTab("favs"); document.querySelector(".stage").scrollIntoView({ behavior: "smooth", block: "start" }); });
 $("tabProdBtn").addEventListener("click", () => setTab("prod"));
 

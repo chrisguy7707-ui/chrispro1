@@ -1430,6 +1430,36 @@ ok("즐겨찾기: 영어 화면에서 탭·카드·버튼이 모두 영어", /Fa
 await pfv.evaluate(() => { try { localStorage.removeItem("jakji_favs"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
 await pfv.close();
 
+/* 14-c. 첫 화면 정리: 품목과 무관한 선택 숨김 · 도구 막대는 핵심 버튼만 + '더보기' */
+const pui = await browser.newPage();
+pui.on("pageerror", (e) => errors.push("ui pageerror: " + e.message));
+pui.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("ui console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pui.setRequestInterception(true); pui.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pui.setViewport({ width: 1400, height: 1000 });
+await pui.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pui.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const ui = await pui.evaluate(async () => {
+  const r = {}, tick = (ms = 120) => new Promise((x) => setTimeout(x, ms)), $ = (id) => document.getElementById(id), shown = (id) => !$(id).closest("label").hidden && $(id).closest("label").offsetParent !== null;
+  const want = {};   // 소분류 → 보여야 하는 선택
+  const vis = (...ids) => ids.filter(shown).join();
+  chooseStyle("tee_short"); await tick(); r.top = vis("oNeck", "oRib", "oShape", "oSleeve", "oClosure", "oWaist");
+  chooseStyle(Object.keys(STYLES).find((k) => T[STYLES[k].template].kind === "pants")); await tick(); r.pants = vis("oNeck", "oRib", "oShape", "oSleeve", "oClosure", "oWaist");
+  chooseStyle(Object.keys(STYLES).find((k) => T[STYLES[k].template].kind === "skirt")); await tick(); r.skirt = vis("oNeck", "oRib", "oShape", "oSleeve", "oClosure");
+  chooseStyle(Object.keys(STYLES).find((k) => T[STYLES[k].template].kind === "dress")); await tick(); r.dress = vis("oNeck", "oRib", "oShape", "oSleeve", "oClosure");
+  chooseStyle("tee_short"); await tick();
+  const bar = document.querySelector(".stage-bar"), mm = $("moreMenu"), outside = [...bar.querySelectorAll(":scope > button, :scope > label")].filter((n) => n.offsetParent !== null).map((n) => n.id || n.className);
+  r.bar = outside.length; r.main = ["printBtn", "saveXlsxBtn", "jobsBtn", "shareBtn"].every((id) => $(id).offsetParent !== null && !mm.contains($(id)));
+  r.closed = !mm.open && !$("saveHtmlBtn").checkVisibility() && !$("fbBtn").checkVisibility();
+  mm.querySelector("summary").click(); await tick(); r.opened = mm.open && ["saveJobBtn", "openJobBtn", "saveHtmlBtn", "saveSvgBtn", "printPages", "fbBtn"].every((id) => $(id).offsetParent !== null);
+  document.body.click(); await tick(); r.outsideClose = !mm.open;
+  mm.querySelector("summary").click(); await tick(); $("fbBtn").click(); await tick(300); r.itemClose = !mm.open && $("fbDlg").open; $("fbDlg").close();
+  mm.querySelector("summary").click(); await tick(); document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); await tick(); r.esc = !mm.open;
+  return r;
+});
+ok("첫 화면 정리: 상의에선 스커트·원피스 모양·허리 숨김, 바지에선 넥라인·밑단·소매·모양 숨김(허리만), 스커트는 모양만, 원피스는 넥라인·소매·모양", ui.top === "oNeck,oRib,oSleeve,oClosure" && ui.pants === "oWaist" && ui.skirt === "oShape" && ui.dress === "oNeck,oRib,oShape,oSleeve,oClosure", JSON.stringify(ui));
+ok("도구 막대: 핵심 버튼 4개+언어 선택만 보이고 나머지는 ‘더보기’ 안(바깥 누름·항목 선택·Esc로 닫힘)", ui.main && ui.closed && ui.opened && ui.outsideClose && ui.itemClose && ui.esc && ui.bar <= 6, JSON.stringify(ui));
+await pui.close();
+
 /* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
 const pt = await browser.newPage();
 pt.on("pageerror", (e) => errors.push("track pageerror: " + e.message));

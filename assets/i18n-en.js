@@ -425,6 +425,9 @@ Object.assign(D, {
   "읽기 전용": "read-only", "사진 제외": "photo not included",
 });
 
+/* ---------- 더보기 메뉴 ---------- */
+Object.assign(D, { "더보기 ⋯": "More ⋯", "작업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기": "Save/open work file, export HTML/SVG, print pages, send feedback" });
+
 /* ---------- 즐겨찾기 탭 ---------- */
 Object.assign(D, {
   "즐겨찾기": "Favorites", "★ 즐겨찾기": "★ Favorites",
