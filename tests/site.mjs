@@ -167,6 +167,21 @@ for (const [pg, label] of [["form-english.html", "한국어 영문 양식 페이
   ok(`${label}: 영문 엑셀 18개가 모두 열리는 진짜 .xlsx(영어 시트)`, hrefs.length === 18 && new Set(hrefs).size === 18 && files.every((x) => x.st === 200 && x.zip && x.en && !x.ko && x.kb > 20) && gl >= 3, files.filter((x) => !(x.st === 200 && x.zip && x.en && !x.ko)).map((x) => x.h).join(", "));
 }
 
+/* 3-2d. 앱 설치(PWA) 파일 + 화면 모드 전환 버튼: manifest·아이콘·서비스 워커가 열리고, 공개 페이지마다 전환 버튼이 있고 누르면 어두운 화면 */
+const pwaFiles = await page.evaluate(async (base) => { const out = {}; for (const f of ["manifest.json", "sw.js", "assets/icons/icon-192.png", "assets/icons/icon-512.png", "assets/icons/maskable-512.png", "assets/icons/apple-touch-icon.png"]) { const r = await fetch(new URL(f, base), { cache: "no-store" }); out[f] = r.status + " " + (r.headers.get("content-type") || ""); } return out; }, BASE);
+const pwaBad = Object.entries(pwaFiles).filter(([f, v]) => !v.startsWith("200") || (f.endsWith(".png") && !/image\/png/.test(v)) || (f === "sw.js" && !/javascript/.test(v)));
+ok("앱 설치 파일: manifest.json·sw.js·아이콘 4개가 열리고 형식이 맞음", pwaBad.length === 0, pwaBad.map((x) => x.join(" ")).join(", "));
+const themeBad = [];
+for (const f of PAGES.filter((x) => x !== "app.html")) {
+  await page.goto(BASE + f, { waitUntil: "networkidle0" });
+  const r = await page.evaluate(() => { const b = document.getElementById("themeBtn"); const before = getComputedStyle(document.body).backgroundColor; if (b) b.click(); return { btn: !!b, pressed: b?.getAttribute("aria-pressed"), attr: document.documentElement.getAttribute("data-theme"), changed: getComputedStyle(document.body).backgroundColor !== before, label: b?.getAttribute("aria-label") || "", lang: document.documentElement.lang }; });
+  await page.evaluate(() => { const b = document.getElementById("themeBtn"); if (b) b.click(); });
+  const okLabel = r.lang === "en" ? /dark|light/.test(r.label) && !/[가-힣]/.test(r.label) : /화면/.test(r.label);
+  if (!r.btn || r.attr !== "dark" || r.pressed !== "true" || !r.changed || !okLabel) themeBad.push(`${f}:${JSON.stringify(r)}`);
+}
+await page.evaluate(() => { try { localStorage.removeItem("jakji_theme"); } catch (e) {} });
+ok(`화면 모드 전환 버튼: 공개 페이지 ${PAGES.length - 1}쪽 모두에 있고, 누르면 어두운 화면(영어 페이지는 영어 라벨)`, themeBad.length === 0, themeBad.slice(0, 3).join(" | "));
+
 /* 3-3. 버튼 사용 횟수용 빈 페이지(e/*.html): 열리고, 검색 제외(noindex)·robots 차단, 통계 로더만 있고, 사이트맵·다른 페이지 링크에는 없음 */
 const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern", "template"], evBad = [];
 for (const n of EVENTS) {

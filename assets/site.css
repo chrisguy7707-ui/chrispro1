@@ -18,6 +18,9 @@
   --sky-soft: #def1ff;
   --mark: #e5482a;
   --dark: #15181e;          /* 바닥·띠 */
+  --th-bg: #f1f3f6;
+  --on-ink: #ffffff;        /* 먹색 버튼 위 글자 */
+  --line: var(--rule);      /* 인라인 스타일 호환 */
   --dark-ink: #f4f1ea;
   /* 예전 이름 (인라인 스타일 호환) */
   --mat: var(--dark); --mat-deep: var(--ink); --mat-ink: var(--dark-ink); --tape: var(--lemon);
@@ -26,6 +29,18 @@
 }
 *, *::before, *::after { box-sizing: border-box; }
 :root { color-scheme: light; }
+/* ---------- 어두운 화면 (전환 버튼은 assets/site.js, 고른 값은 localStorage jakji_theme) ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1014; --paper: #171a20; --ink: #eef0f4; --ink-soft: #a9b0bc; --rule: #2b303a;
+  --lemon-soft: #3b3516; --coral-soft: #3b231d; --mint-soft: #173229; --lilac-soft: #29243d; --sky-soft: #1a2c3a;
+  --dark: #0a0b0e; --kbd: #ff8f75; --th-bg: #222731; --on-ink: #15181e;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+.theme-btn { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); display: inline-grid; place-items: center; padding: 0; cursor: pointer; transition: border-color .15s, transform .15s; }
+.theme-btn:hover { border-color: var(--ink); transform: translateY(-1px); }
+.theme-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.theme-btn .sun { display: none; } :root[data-theme="dark"] .theme-btn .sun { display: block; } :root[data-theme="dark"] .theme-btn .moon { display: none; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--ink); line-height: 1.7; word-break: keep-all; overflow-wrap: break-word; -webkit-font-smoothing: antialiased; }
 a { color: inherit; text-underline-offset: 3px; }
@@ -59,9 +74,10 @@ header.mat::before, header.mat::after { content: none; }
   background: var(--lemon) repeating-linear-gradient(90deg, rgba(23,23,28,.55) 0 1.5px, transparent 1.5px 10px) bottom / 100% 7px no-repeat; }
 .hero .lead { font-size: clamp(18px, 2.2vw, 21px); line-height: 1.7; margin: 22px 0 0; color: var(--ink); }
 .hero .lead strong { background: linear-gradient(transparent 62%, var(--lemon) 62%); padding: 0 2px; }
+:root[data-theme="dark"] .hero .lead strong { background: linear-gradient(transparent 62%, rgba(255,225,77,.38) 62%); }
 .hero .sub { font-size: 15px; color: var(--ink-soft); margin: 12px 0 0; }
 .cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 30px; }
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 15px 26px; border-radius: 14px; font-weight: 800; font-size: 17px; text-decoration: none; background: var(--ink); color: #fff; border: 2px solid var(--ink); transition: transform .15s, box-shadow .15s; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 15px 26px; border-radius: 14px; font-weight: 800; font-size: 17px; text-decoration: none; background: var(--ink); color: var(--on-ink); border: 2px solid var(--ink); transition: transform .15s, box-shadow .15s; }
 .btn::after { content: "→"; transition: transform .15s; }
 .btn:hover { transform: translateY(-2px); box-shadow: 4px 4px 0 var(--lemon); }
 .btn:hover::after { transform: translateX(3px); }
@@ -84,7 +100,7 @@ h3 { font-size: 20px; margin: 0 0 6px; letter-spacing: -0.02em; }
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; counter-reset: s; list-style: none; padding: 0; margin: 0; }
 .steps li { position: relative; background: var(--paper); border: 1px solid var(--rule); border-radius: 22px; padding: 22px; counter-increment: s; transition: transform .2s; }
 .steps li:hover { transform: translateY(-4px); }
-.steps li::before { content: counter(s, decimal-leading-zero); display: block; font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; margin-bottom: 14px; color: var(--ink);
+.steps li::before { content: counter(s, decimal-leading-zero); display: block; font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; margin-bottom: 14px; color: #15181e;
   width: fit-content; padding: 6px 10px; border-radius: 12px; background: var(--lemon); }
 .steps li:nth-child(2)::before { background: var(--mint); }
 .steps li:nth-child(3)::before { background: var(--lilac); }
@@ -123,7 +139,7 @@ h3 { font-size: 20px; margin: 0 0 6px; letter-spacing: -0.02em; }
 .band::before { content: ""; position: absolute; z-index: -1; right: -60px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: var(--lemon); opacity: .22; }
 .band::after { content: none; }
 .band h2 { margin: 0; color: #fff; }
-.band .btn { background: var(--lemon); color: var(--ink); border-color: var(--lemon); }
+.band .btn { background: var(--lemon); color: #15181e; border-color: var(--lemon); }
 .band .btn:hover { box-shadow: 4px 4px 0 #fff; }
 .note { font-size: 15px; color: var(--ink-soft); }
 
@@ -141,7 +157,7 @@ h3 { font-size: 20px; margin: 0 0 6px; letter-spacing: -0.02em; }
 .article table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 16px 0; font-size: 15px; line-height: 1.6; background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
 .article th, .article td { border-bottom: 1px solid var(--rule); padding: 11px 13px; text-align: left; vertical-align: top; }
 .article tr:last-child th, .article tr:last-child td { border-bottom: 0; }
-.article th { background: #f1f3f6; white-space: nowrap; }
+.article th { background: var(--th-bg); white-space: nowrap; }
 .table-scroll { overflow-x: auto; }
 .toc { background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; padding: 16px 22px; }
 .toc ol { margin: 6px 0 0; padding-left: 20px; }

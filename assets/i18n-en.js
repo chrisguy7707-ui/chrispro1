@@ -425,6 +425,19 @@ Object.assign(D, {
   "읽기 전용": "read-only", "사진 제외": "photo not included",
 });
 
+/* ---------- 앱으로 설치 · 화면 모드 ---------- */
+Object.assign(D, {
+  "📲 앱으로 설치": "📲 Install app", "홈 화면에 추가해 앱처럼 쓰고, 인터넷이 없어도 열기": "Add to your home screen to use it like an app, even offline",
+  "앱으로 설치하기": "Install as an app",
+  "홈 화면에 추가하면 주소창 없이 앱처럼 열리고, 인터넷이 없어도 열립니다. 아래 순서를 따라 하세요.": "Added to your home screen, it opens like an app without the address bar, and it works offline. Follow the steps below.",
+  "아이폰(Safari)": "iPhone (Safari)", "안드로이드(Chrome)": "Android (Chrome)", "컴퓨터(Chrome·Edge)": "Computer (Chrome / Edge)",
+  "화면 아래 공유 버튼(네모에서 화살표가 위로 나간 모양)을 누르고 ‘홈 화면에 추가’를 고르세요.": "Tap the Share button at the bottom of the screen (a square with an arrow pointing up), then choose “Add to Home Screen”.",
+  "오른쪽 위 ⋮ 메뉴에서 ‘앱 설치’ 또는 ‘홈 화면에 추가’를 고르세요.": "In the ⋮ menu at the top right, choose “Install app” or “Add to Home screen”.",
+  "주소창 오른쪽의 설치 아이콘을 누르세요.": "Click the install icon at the right end of the address bar.",
+  "설치해도 작업 내용은 이 기기 안에만 저장됩니다. 기기를 바꿀 때는 ‘작업 저장’ 파일이나 공유 링크를 쓰세요.": "Even when installed, your work is saved only on this device. To move to another device, use a work file (“Save work”) or a share link.",
+  "앱으로 설치했습니다. 홈 화면에서 열어 보세요.": "Installed. Open it from your home screen.",
+});
+
 /* ---------- 더보기 메뉴 ---------- */
 Object.assign(D, { "더보기 ⋯": "More ⋯", "작업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기": "Save/open work file, export HTML/SVG, print pages, send feedback" });
 

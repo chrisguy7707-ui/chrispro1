@@ -1460,6 +1460,132 @@ ok("첫 화면 정리: 상의에선 스커트·원피스 모양·허리 숨김, 
 ok("도구 막대: 핵심 버튼 4개+언어 선택만 보이고 나머지는 ‘더보기’ 안(바깥 누름·항목 선택·Esc로 닫힘)", ui.main && ui.closed && ui.opened && ui.outsideClose && ui.itemClose && ui.esc && ui.bar <= 6, JSON.stringify(ui));
 await pui.close();
 
+/* 14-e. 어두운 화면 전환 버튼 + 글자 대비(밝은·어두운 화면 모두) + 서류(작업지시서)는 늘 흰 종이, 인쇄는 밝은 화면과 같음 */
+const CONTRAST_JS = `(sels) => {
+  const parse = (c) => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null; const [r, g, b, a = 1] = m[1].split(",").map((x) => parseFloat(x)); return { r, g, b, a }; };
+  const lum = ({ r, g, b }) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const bgOf = (el) => { for (let n = el; n; n = n.parentElement) { const c = parse(getComputedStyle(n).backgroundColor); if (c && c.a > 0.85) return c; } return { r: 255, g: 255, b: 255 }; };
+  const out = [];
+  for (const sel of sels) { const el = document.querySelector(sel); if (!el || el.offsetParent === null && getComputedStyle(el).position !== "fixed") { out.push([sel, "없음"]); continue; }
+    const fg = parse(getComputedStyle(el).color), bg = bgOf(el), l1 = lum(fg), l2 = lum(bg); out.push([sel, Math.round(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)) * 10) / 10]); }
+  return out; }`;
+const pth = await browser.newPage();
+pth.on("pageerror", (e) => errors.push("theme pageerror: " + e.message));
+pth.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text())) errors.push("theme console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await pth.setRequestInterception(true); pth.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await pth.setViewport({ width: 1400, height: 1000 });
+await pth.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { if (!sessionStorage.getItem("th_seed")) { sessionStorage.setItem("th_seed", "1"); localStorage.removeItem("jakji_theme"); localStorage.removeItem("wo_autosave"); } localStorage.setItem("jakji_lang", "ko"); localStorage.removeItem("jakji_sheetlang"); } catch (e) {} });
+await pth.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const APP_SELS = ["#sizeChips .chip:not([aria-pressed=true])", "#sizeChips .chip[aria-pressed=true]", ".panel .grid2 label.f", ".hint", ".step h2", ".mini-nav a", "#tabSheetBtn .tl", "#tabEditBtn .tl", "#tabFavBtn .tl", "#tabPatBtn .tb", ".stage-bar button:not(.primary)", ".stage-bar button.primary", ".stage-bar .note", ".sheet-lang", ".app-foot", "#genderSeg button[aria-pressed=true]", "#genderSeg button[aria-pressed=false]", "#oStyle", ".fav-star"];
+await new Promise((x) => setTimeout(x, 300));
+const lightC = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(APP_SELS)})`);
+const th = {};
+th.initLight = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), btn: !!document.getElementById("themeBtn"), pressed: document.getElementById("themeBtn")?.getAttribute("aria-pressed"), lbl: document.getElementById("themeBtn")?.getAttribute("aria-label"), bg: getComputedStyle(document.body).backgroundColor, sheetBg: getComputedStyle(document.getElementById("sheet")).backgroundColor }));
+await pth.evaluate(() => document.getElementById("themeBtn").click());
+th.dark = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), ls: localStorage.getItem("jakji_theme"), pressed: document.getElementById("themeBtn").getAttribute("aria-pressed"), lbl: document.getElementById("themeBtn").getAttribute("aria-label"), bg: getComputedStyle(document.body).backgroundColor, sheetBg: getComputedStyle(document.getElementById("sheet")).backgroundColor, thBorder: getComputedStyle(document.querySelector("#sheet th")).borderTopColor, sheetInk: getComputedStyle(document.querySelector("#sheet td")).color }));
+await new Promise((x) => setTimeout(x, 500));   // 색이 바뀌는 애니메이션(0.15초)이 끝난 뒤에 잼
+const darkC = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(APP_SELS)})`);
+// 어두운 화면에서 모든 탭을 열어 오류·글자 대비 확인
+const tabC = {};
+for (const [id, sels] of [["tabEditBtn", [".ed-bar button:not([aria-pressed=true])", ".ed-bar button[aria-pressed=true]", "#edNote", ".ed-chips button"]], ["tabProdBtn", [".prod-nav button:not([aria-pressed=true])", ".prod-nav button[aria-pressed=true]", ".chk li b", ".chk-score"]], ["tabPatBtn", [".pat-form label", ".pat-form input", ".pat-note", ".pat-beta"]], ["tabOlzBtn", [".olz-btn", ".olz-box", ".photo-box .pb-title"]], ["tabFavBtn", [".fv-hero h2", ".fv-sec h3", ".fv-btn", ".fv-empty", ".fv-note"]]]) {
+  await pth.evaluate((id) => document.getElementById(id).click(), id); await new Promise((x) => setTimeout(x, 350));
+  tabC[id] = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(sels)})`);
+}
+await pth.evaluate(() => document.getElementById("tabSheetBtn").click());
+// 인쇄: 어두운 화면에서도 서류는 밝은 모양
+await pth.emulateMediaType("print");
+th.print = await pth.evaluate(() => ({ body: getComputedStyle(document.body).backgroundColor, sheet: getComputedStyle(document.getElementById("sheet")).backgroundColor, ink: getComputedStyle(document.querySelector("#sheet td")).color }));
+await pth.emulateMediaType("screen");
+const pdfDark = (await pth.pdf({ preferCSSPageSize: true })).length;
+// 새로 열어도 유지(그리기 전에 적용), 다른 페이지에도 적용, 다시 눌러 밝게
+await pth.goto(URL + "?lang=ko", { waitUntil: "domcontentloaded" });
+th.persist = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), bg: getComputedStyle(document.documentElement).backgroundColor, body: getComputedStyle(document.body).backgroundColor }));
+await pth.goto(new URL_("index.html", URL).href.replace("app.html", "index.html"), { waitUntil: "networkidle0" });
+th.site = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), btn: !!document.getElementById("themeBtn"), bg: getComputedStyle(document.body).backgroundColor, meta: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") }));
+const SITE_SELS = [".nav a:not([aria-current])", ".hero h1", ".hero .lead", ".hero .sub", ".btn:not(.ghost)", ".btn.ghost", ".steps li p", ".card p", ".faq summary", ".band h2", ".foot .links a", ".foot p"];
+await new Promise((x) => setTimeout(x, 500));
+const siteDark = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(SITE_SELS)})`);
+await pth.evaluate(() => document.getElementById("themeBtn").click());
+th.siteLight = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), ls: localStorage.getItem("jakji_theme"), bg: getComputedStyle(document.body).backgroundColor, meta: document.querySelector('meta[name="theme-color"]')?.getAttribute("content") }));
+await new Promise((x) => setTimeout(x, 500));
+const siteLight = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(SITE_SELS)})`);
+await pth.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const pdfLight = (await pth.pdf({ preferCSSPageSize: true })).length;
+th.back = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme") }));
+const lowC = (arr, min = 4.5) => arr.filter(([, r]) => r === "없음" || r < min).map(([s2, r]) => `${s2}=${r}`);
+const lowTab = Object.entries(tabC).flatMap(([k, arr]) => lowC(arr).map((x) => `${k}:${x}`));
+ok("화면 모드 버튼: 기본은 밝은 화면, 누르면 어두운 화면(기억·aria-pressed·라벨), 서류(작업지시서)는 어두운 화면에서도 흰 종이·검은 선",
+  th.initLight.attr === null && th.initLight.btn && th.initLight.pressed === "false" && /어두운/.test(th.initLight.lbl) && th.dark.attr === "dark" && th.dark.ls === "dark" && th.dark.pressed === "true" && /밝은/.test(th.dark.lbl) &&
+  th.dark.bg !== th.initLight.bg && th.dark.sheetBg === "rgb(255, 255, 255)" && th.dark.sheetInk === "rgb(29, 29, 27)" && th.dark.thBorder === "rgb(29, 29, 27)", JSON.stringify(th.initLight) + JSON.stringify(th.dark));
+ok("글자 대비 4.5 이상(밝은 화면): 도구 화면 주요 글자·버튼·탭", lowC(lightC).length === 0, lowC(lightC).join(", "));
+ok("글자 대비 4.5 이상(어두운 화면): 도구 화면 + 도식화 편집·생산 준비·패턴·사진 분석·즐겨찾기 탭", lowC(darkC).length === 0 && lowTab.length === 0, lowC(darkC).concat(lowTab).join(", "));
+ok("인쇄는 어두운 화면에서도 밝은 화면과 같음(흰 바탕·검은 글자), PDF 쪽 수 같음", th.print.body === "rgb(255, 255, 255)" && th.print.sheet === "rgb(255, 255, 255)" && /rgb\(29, 29, 27\)|rgb\(21, 24, 30\)/.test(th.print.ink) && Math.abs(pdfDark - pdfLight) / pdfLight < 0.35, JSON.stringify(th.print) + ` pdf ${pdfDark}/${pdfLight}`);
+ok("어두운 화면: 새로 열어도 그리기 전에 적용(깜빡임 없음), 대문·다른 페이지에도 적용, 버튼으로 다시 밝게(기억 삭제·theme-color 갱신)", th.persist.attr === "dark" && th.persist.body === th.dark.bg && th.site.attr === "dark" && th.site.btn && th.site.bg === th.dark.bg && th.site.meta === "#0e1014" && th.siteLight.attr === null && th.siteLight.ls === null && th.siteLight.meta === "#f6f7f9" && th.back.attr === null, JSON.stringify({ persist: th.persist, site: th.site, siteLight: th.siteLight, back: th.back }));
+ok("글자 대비 4.5 이상: 대문(밝은·어두운 화면 모두)", lowC(siteDark).length === 0 && lowC(siteLight).length === 0, lowC(siteDark).map((x) => "dark:" + x).concat(lowC(siteLight).map((x) => "light:" + x)).join(", "));
+await pth.close();
+
+/* 14-f. 앱으로 설치(PWA): manifest·아이콘·서비스 워커·오프라인, 설치 버튼(크롬 설치 창·아이폰 안내·이미 설치면 숨김) */
+const ppw = await browser.newPage();
+ppw.on("pageerror", (e) => errors.push("pwa pageerror: " + e.message));
+ppw.on("console", (m) => { if (m.type() === "error" && !benignConsole(m.text()) && !/ERR_INTERNET_DISCONNECTED/.test(m.text())) errors.push("pwa console: " + m.text()); });
+if (isRemote(process.env.APP_URL || "")) { await ppw.setRequestInterception(true); ppw.on("request", (r) => (isGhBot(r.url()) ? r.abort() : r.continue())); }
+await ppw.setViewport({ width: 1400, height: 1000 });
+await ppw.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("jakji_theme"); localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
+await ppw.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const pw = await ppw.evaluate(async () => {
+  const r = {}, $ = (id) => document.getElementById(id), tick = (ms = 150) => new Promise((x) => setTimeout(x, ms));
+  const link = document.querySelector('link[rel="manifest"]'); r.link = !!link && !!document.querySelector('link[rel="apple-touch-icon"]') && document.querySelector('meta[name="apple-mobile-web-app-capable"]')?.content === "yes";
+  const mf = await (await fetch(link.href, { cache: "no-store" })).json(); r.mf = mf.name && mf.short_name === "작지" && mf.display === "standalone" && /app\.html/.test(mf.start_url) && mf.icons.some((i) => i.sizes === "192x192") && mf.icons.some((i) => i.sizes === "512x512" && i.purpose === "any") && mf.icons.some((i) => i.purpose === "maskable") && /^#/.test(mf.theme_color) && /^#/.test(mf.background_color);
+  r.icons = []; for (const i of mf.icons) { const b = new Uint8Array(await (await fetch(new URL(i.src, link.href), { cache: "no-store" })).arrayBuffer()); r.icons.push(b[0] === 0x89 && b[1] === 0x50 && b.length > 1000); }
+  const reg = await navigator.serviceWorker.ready; r.sw = !!reg.active && reg.scope.endsWith("/");
+  r.btnHidden = $("pwaBtn").hidden;   // 설치 신호가 없으면(컴퓨터, 이벤트 없음) 숨김
+  // 크롬: 설치 신호가 오면 버튼이 보이고, 누르면 설치 창
+  let prompted = 0; const ev = new Event("beforeinstallprompt", { cancelable: true }); ev.prompt = async () => { prompted++; }; ev.userChoice = Promise.resolve({ outcome: "accepted" });
+  window.dispatchEvent(ev); await tick(); r.show = !$("pwaBtn").hidden && ev.defaultPrevented;
+  $("pwaBtn").click(); await tick(); r.prompt = prompted === 1 && $("pwaBtn").hidden && !$("pwaDlg").open;
+  return r;
+});
+await ppw.reload({ waitUntil: "networkidle0" });
+const pw2 = await ppw.evaluate(async () => {
+  const r = {}; await navigator.serviceWorker.ready; r.ctrl = !!navigator.serviceWorker.controller;
+  const names = await caches.keys(); r.cache = names.includes("jakji-pwa-v1"); const c = await caches.open("jakji-pwa-v1"); const keys = (await c.keys()).map((q) => new URL(q.url).pathname);
+  r.core = ["app.html", "assets/xlsx.js", "assets/site.css", "manifest.json"].every((p) => keys.some((k) => k.endsWith("/" + p))); r.n = keys.length; return r;
+});
+// 오프라인: 서비스 워커 쪽 네트워크도 끊고 새로고침 → 담아 둔 파일로 열림
+let offlineOk = false, offlineDetail = "";
+try {
+  const swT = await browser.waitForTarget((t) => t.type() === "service_worker" && t.url().endsWith("sw.js"), { timeout: 5000 });
+  const sws = await swT.createCDPSession(); await sws.send("Network.enable"); await sws.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+  await ppw.setOfflineMode(true);
+  await ppw.reload({ waitUntil: "load" }).catch(() => {});
+  const off = await ppw.evaluate(() => ({ title: document.title, sheet: !!document.getElementById("sheet"), tabs: document.querySelectorAll(".tabs button").length, ok: !!document.getElementById("themeBtn") }));
+  offlineOk = /작지/.test(off.title) && off.sheet && off.tabs >= 6; offlineDetail = JSON.stringify(off);
+  await sws.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 }); await ppw.setOfflineMode(false);
+} catch (e) { offlineDetail = String(e.message || e); await ppw.setOfflineMode(false).catch(() => {}); }
+ok("앱으로 설치: manifest(이름·standalone·아이콘 192/512/maskable)·아이콘 파일·애플 홈 화면 태그, 서비스 워커 활성, 설치 신호가 오면 버튼 → 설치 창", pw.link && pw.mf && pw.icons.every(Boolean) && pw.sw && pw.show && pw.prompt, JSON.stringify(pw));
+ok("앱으로 설치: 새로고침 뒤 서비스 워커가 페이지를 맡고 앱 파일이 담김(app.html·xlsx.js·css·manifest)", pw2.ctrl && pw2.cache && pw2.core, JSON.stringify(pw2));
+ok("오프라인에서도 앱이 열림(인터넷을 끊고 새로고침 → 담아 둔 파일로 작업지시서 화면)", offlineOk, offlineDetail);
+await ppw.close();
+// 아이폰 사파리: 설치 신호가 없어도 ‘앱으로 설치’ 버튼 → 홈 화면에 추가 안내. 이미 설치(standalone)면 숨김 + 저장 공간 유지 요청
+const pio = await browser.newPage();
+await pio.setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1");
+await pio.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+await pio.evaluateOnNewDocument(() => { window.addEventListener("beforeinstallprompt", (e) => e.stopImmediatePropagation(), true); window.JAKJI_NO_MAILTO = true; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
+await pio.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const io = await pio.evaluate(async () => { const $ = (id) => document.getElementById(id), tick = (ms = 150) => new Promise((x) => setTimeout(x, ms)); const r = {};
+  r.show = !$("pwaBtn").hidden; $("pwaBtn").click(); await tick(); r.dlg = $("pwaDlg").open && $("pwaDlg").querySelectorAll(".pwa-steps li").length === 3 && /홈 화면에 추가/.test($("pwaDlg").textContent); $("pwaDlg").close(); return r; });
+await pio.close();
+const pst = await browser.newPage();
+await pst.setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1");
+await pst.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true });
+await pst.evaluateOnNewDocument(() => { window.JAKJI_NO_MAILTO = true; window.__persist = 0; try { localStorage.removeItem("wo_autosave"); localStorage.setItem("jakji_lang", "ko"); } catch (e) {}
+  const mm = window.matchMedia.bind(window); window.matchMedia = (q) => (/standalone/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} } : mm(q));
+  try { Object.defineProperty(navigator, "storage", { value: { persist: async () => { window.__persist++; return true; } }, configurable: true }); } catch (e) {} });
+await pst.goto(URL + "?lang=ko", { waitUntil: "networkidle0" });
+const st = await pst.evaluate(() => ({ hidden: document.getElementById("pwaBtn").hidden, persist: window.__persist }));
+await pst.close();
+ok("앱으로 설치: 아이폰 사파리에서는 버튼 → ‘홈 화면에 추가’ 안내 3단계, 이미 설치해서 쓰는 중이면 버튼 숨김 + 저장 공간 유지 요청", io.show && io.dlg && st.hidden && st.persist >= 1, JSON.stringify({ io, st }));
+
 /* 15. 주요 버튼 사용 횟수 통계: 숨긴 빈 페이지(e/이름.html)만 불러옴 · 내용·주소 변화 없음 · 공유받은 화면·DNT·통계 꺼짐이면 안 셈 · 같은 버튼 5초 중복 제거 */
 const pt = await browser.newPage();
 pt.on("pageerror", (e) => errors.push("track pageerror: " + e.message));

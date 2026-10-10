@@ -11,7 +11,8 @@
     "i18n-missing": "node scripts/i18n-missing.mjs",
     "check-links": "node scripts/check-links.mjs",
     "templates": "node scripts/build-templates.mjs",
-    "form-pages": "node scripts/build-form-pages.mjs"
+    "form-pages": "node scripts/build-form-pages.mjs",
+    "icons": "node scripts/render-icons.mjs"
   },
   "devDependencies": {
     "@huggingface/transformers": "^4.3.0",

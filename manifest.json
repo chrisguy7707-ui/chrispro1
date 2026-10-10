@@ -1,0 +1,19 @@
+{
+  "name": "작지 — 옷 작업지시서 메이커",
+  "short_name": "작지",
+  "description": "옷 사진과 사이즈만 고르면 도식화·치수표·원단·부자재·봉제 사양이 담긴 작업지시서를 만드는 무료 도구",
+  "id": "app.html",
+  "start_url": "app.html?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "ko",
+  "background_color": "#f6f7f9",
+  "theme_color": "#15181e",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

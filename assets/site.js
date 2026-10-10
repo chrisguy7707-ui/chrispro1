@@ -45,3 +45,30 @@
   function show() { document.body.insertBefore(bar, document.body.firstChild); }
   if (document.body) show(); else document.addEventListener("DOMContentLoaded", show);
 })();
+
+/* 화면 모드 전환(밝은 화면 ↔ 어두운 화면): 고른 값은 localStorage jakji_theme에 기억. 기본은 밝은 화면.
+   처음 그릴 때의 적용은 각 페이지 <head>의 짧은 스크립트(scripts/configure.mjs)가 함(깜빡임 방지). 버튼은 머리 막대(.topbar) 또는 도구의 .brand 줄 끝에 넣음 */
+(function () {
+  var root = document.documentElement, en = root.lang === "en" || /[?&]lang=en/.test(location.search);
+  var T = en ? { dark: "Switch to dark mode", light: "Switch to light mode" } : { dark: "어두운 화면으로 바꾸기", light: "밝은 화면으로 바꾸기" };
+  var ICON = '<svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 019.8 3.5a8.5 8.5 0 1010.7 10.7z"/></svg>' +
+    '<svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>';
+  var host = document.querySelector(".topbar") || document.querySelector(".brand");
+  if (!host) return;
+  var btn = document.createElement("button");
+  btn.type = "button"; btn.className = "theme-btn"; btn.id = "themeBtn"; btn.innerHTML = ICON;
+  function isDark() { return root.getAttribute("data-theme") === "dark"; }
+  function paint() {
+    var d = isDark(); btn.setAttribute("aria-pressed", d ? "true" : "false");
+    var t = d ? T.light : T.dark; btn.title = t; btn.setAttribute("aria-label", t);
+    var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", d ? "#0e1014" : "#f6f7f9");
+  }
+  function set(d) {
+    if (d) root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
+    try { if (d) localStorage.setItem("jakji_theme", "dark"); else localStorage.removeItem("jakji_theme"); } catch (e) {}
+    paint(); document.dispatchEvent(new CustomEvent("jakji-theme", { detail: { dark: d } }));
+  }
+  btn.addEventListener("click", function () { set(!isDark()); });
+  window.addEventListener("storage", function (e) { if (e.key === "jakji_theme") { if (e.newValue === "dark") root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme"); paint(); } });
+  host.appendChild(btn); paint();
+})();
