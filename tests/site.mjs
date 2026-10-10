@@ -175,13 +175,13 @@ ok("앱 설치 파일: manifest.json·sw.js·아이콘 4개가 열리고 형식�
 const themeBad = [];
 for (const f of PAGES.filter((x) => x !== "app.html")) {
   await page.goto(BASE + f, { waitUntil: "networkidle0" });
-  const r = await page.evaluate(() => { const b = document.getElementById("themeBtn"); const before = getComputedStyle(document.body).backgroundColor; if (b) b.click(); return { btn: !!b, pressed: b?.getAttribute("aria-pressed"), attr: document.documentElement.getAttribute("data-theme"), changed: getComputedStyle(document.body).backgroundColor !== before, label: b?.getAttribute("aria-label") || "", lang: document.documentElement.lang }; });
+  const r = await page.evaluate(() => { const b = document.getElementById("themeBtn"); const before = getComputedStyle(document.body).backgroundColor; if (b) { b.click(); b.click(); } return { btn: !!b, mode: b?.dataset.mode, attr: document.documentElement.getAttribute("data-theme"), changed: getComputedStyle(document.body).backgroundColor !== before, label: b?.getAttribute("aria-label") || "", lang: document.documentElement.lang }; });   // 자동 → 밝게 → 어둡게
   await page.evaluate(() => { const b = document.getElementById("themeBtn"); if (b) b.click(); });
-  const okLabel = r.lang === "en" ? /dark|light/.test(r.label) && !/[가-힣]/.test(r.label) : /화면/.test(r.label);
-  if (!r.btn || r.attr !== "dark" || r.pressed !== "true" || !r.changed || !okLabel) themeBad.push(`${f}:${JSON.stringify(r)}`);
+  const okLabel = r.lang === "en" ? /Display mode/.test(r.label) && !/[가-힣]/.test(r.label) : /화면 모드/.test(r.label);
+  if (!r.btn || r.attr !== "dark" || r.mode !== "dark" || !r.changed || !okLabel) themeBad.push(`${f}:${JSON.stringify(r)}`);
 }
 await page.evaluate(() => { try { localStorage.removeItem("jakji_theme"); } catch (e) {} });
-ok(`화면 모드 전환 버튼: 공개 페이지 ${PAGES.length - 1}쪽 모두에 있고, 누르면 어두운 화면(영어 페이지는 영어 라벨)`, themeBad.length === 0, themeBad.slice(0, 3).join(" | "));
+ok(`화면 모드 전환 버튼: 공개 페이지 ${PAGES.length - 1}쪽 모두에 있고, 자동 → 밝게 → 어둡게로 바뀜(영어 페이지는 영어 라벨)`, themeBad.length === 0, themeBad.slice(0, 3).join(" | "));
 
 /* 3-3. 버튼 사용 횟수용 빈 페이지(e/*.html): 열리고, 검색 제외(noindex)·robots 차단, 통계 로더만 있고, 사이트맵·다른 페이지 링크에는 없음 */
 const EVENTS = ["print", "save", "export", "share", "mystyle", "pattern", "template"], evBad = [];

@@ -102,8 +102,8 @@ function headBlock(html, page) {
   if (/^[a-f0-9]{32}$/i.test(cfg.analyticsToken || "")) lines.push(`<script>if(!/^#v[01]=/.test(location.hash)){var s=document.createElement("script");s.type="module";s.src="https://static.cloudflareinsights.com/beacon.min.js";s.setAttribute("data-cf-beacon",'{"token": "${cfg.analyticsToken}"}');document.head.appendChild(s)}</script>`);
   // 광고·문의 메일·비밀 의견 주소 (assets/site.js, assets/feedback.js 가 읽음)
   lines.push(`<script>window.SITE = ${JSON.stringify(site).replace(/</g, "\\u003c")};</script>`);
-  // 어두운 화면: 고른 값(localStorage jakji_theme)을 그리기 전에 적용(깜빡임 방지). 기본은 밝은 화면. 전환 버튼은 assets/site.js
-  lines.unshift('<script>try{if(localStorage.getItem("jakji_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>');
+  // 화면 모드: 고른 값(localStorage jakji_theme = light·dark, 없으면 자동=기기 설정)을 그리기 전에 적용(깜빡임 방지). 전환 버튼은 assets/site.js
+  lines.unshift('<script>try{var t=localStorage.getItem("jakji_theme");if(t==="dark"||(t!=="light"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>');
   return lines.join("\n");
 }
 

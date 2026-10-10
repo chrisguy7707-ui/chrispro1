@@ -6,7 +6,7 @@
 <link rel="icon" href="data:," />
 <!-- 방문 통계용 빈 페이지: 작지 도구에서 'template'(양식 내려받기)을 눌렀다는 사실만 세기 위해 숨겨서 한 번 불러옵니다 (내용·기기 정보 없음) -->
 <!-- SITE:HEAD-START -->
-<script>try{if(localStorage.getItem("jakji_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<script>try{var t=localStorage.getItem("jakji_theme");if(t==="dark"||(t!=="light"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <base href="/" />
 <meta name="robots" content="noindex" />
 <meta name="naver-site-verification" content="35c561e73c51511616b97a4546f0d702f3566f71" />

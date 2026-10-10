@@ -1480,9 +1480,11 @@ const APP_SELS = ["#sizeChips .chip:not([aria-pressed=true])", "#sizeChips .chip
 await new Promise((x) => setTimeout(x, 300));
 const lightC = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(APP_SELS)})`);
 const th = {};
-th.initLight = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), btn: !!document.getElementById("themeBtn"), pressed: document.getElementById("themeBtn")?.getAttribute("aria-pressed"), lbl: document.getElementById("themeBtn")?.getAttribute("aria-label"), bg: getComputedStyle(document.body).backgroundColor, sheetBg: getComputedStyle(document.getElementById("sheet")).backgroundColor }));
-await pth.evaluate(() => document.getElementById("themeBtn").click());
-th.dark = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), ls: localStorage.getItem("jakji_theme"), pressed: document.getElementById("themeBtn").getAttribute("aria-pressed"), lbl: document.getElementById("themeBtn").getAttribute("aria-label"), bg: getComputedStyle(document.body).backgroundColor, sheetBg: getComputedStyle(document.getElementById("sheet")).backgroundColor, thBorder: getComputedStyle(document.querySelector("#sheet th")).borderTopColor, sheetInk: getComputedStyle(document.querySelector("#sheet td")).color }));
+th.initLight = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), btn: !!document.getElementById("themeBtn"), mode: document.getElementById("themeBtn")?.dataset.mode, lbl: document.getElementById("themeBtn")?.getAttribute("aria-label"), bg: getComputedStyle(document.body).backgroundColor, sheetBg: getComputedStyle(document.getElementById("sheet")).backgroundColor }));
+await pth.evaluate(() => document.getElementById("themeBtn").click());   // 자동 → 밝게(기기 설정이 어두워도 밝게 고정)
+th.light = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), ls: localStorage.getItem("jakji_theme"), mode: document.getElementById("themeBtn").dataset.mode, lbl: document.getElementById("themeBtn").getAttribute("aria-label") }));
+await pth.evaluate(() => document.getElementById("themeBtn").click());   // 밝게 → 어둡게
+th.dark = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), ls: localStorage.getItem("jakji_theme"), mode: document.getElementById("themeBtn").dataset.mode, lbl: document.getElementById("themeBtn").getAttribute("aria-label"), bg: getComputedStyle(document.body).backgroundColor, sheetBg: getComputedStyle(document.getElementById("sheet")).backgroundColor, thBorder: getComputedStyle(document.querySelector("#sheet th")).borderTopColor, sheetInk: getComputedStyle(document.querySelector("#sheet td")).color }));
 await new Promise((x) => setTimeout(x, 500));   // 색이 바뀌는 애니메이션(0.15초)이 끝난 뒤에 잼
 const darkC = await pth.evaluate(`(${CONTRAST_JS})(${JSON.stringify(APP_SELS)})`);
 // 어두운 화면에서 모든 탭을 열어 오류·글자 대비 확인
@@ -1514,14 +1516,38 @@ const pdfLight = (await pth.pdf({ preferCSSPageSize: true })).length;
 th.back = await pth.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme") }));
 const lowC = (arr, min = 4.5) => arr.filter(([, r]) => r === "없음" || r < min).map(([s2, r]) => `${s2}=${r}`);
 const lowTab = Object.entries(tabC).flatMap(([k, arr]) => lowC(arr).map((x) => `${k}:${x}`));
-ok("화면 모드 버튼: 기본은 밝은 화면, 누르면 어두운 화면(기억·aria-pressed·라벨), 서류(작업지시서)는 어두운 화면에서도 흰 종이·검은 선",
-  th.initLight.attr === null && th.initLight.btn && th.initLight.pressed === "false" && /어두운/.test(th.initLight.lbl) && th.dark.attr === "dark" && th.dark.ls === "dark" && th.dark.pressed === "true" && /밝은/.test(th.dark.lbl) &&
+ok("화면 모드 버튼: 자동(기기 설정) → 밝게 → 어둡게 순서로 바뀌고(기억·라벨·data-mode), 서류(작업지시서)는 어두운 화면에서도 흰 종이·검은 선",
+  th.initLight.attr === null && th.initLight.btn && th.initLight.mode === "auto" && /자동/.test(th.initLight.lbl) && /밝게/.test(th.light.lbl) && th.light.mode === "light" && th.light.ls === "light" && th.light.attr === null && th.dark.attr === "dark" && th.dark.ls === "dark" && th.dark.mode === "dark" && /어둡게/.test(th.dark.lbl) && /자동/.test(th.dark.lbl) &&
   th.dark.bg !== th.initLight.bg && th.dark.sheetBg === "rgb(255, 255, 255)" && th.dark.sheetInk === "rgb(29, 29, 27)" && th.dark.thBorder === "rgb(29, 29, 27)", JSON.stringify(th.initLight) + JSON.stringify(th.dark));
 ok("글자 대비 4.5 이상(밝은 화면): 도구 화면 주요 글자·버튼·탭", lowC(lightC).length === 0, lowC(lightC).join(", "));
 ok("글자 대비 4.5 이상(어두운 화면): 도구 화면 + 도식화 편집·생산 준비·패턴·사진 분석·즐겨찾기 탭", lowC(darkC).length === 0 && lowTab.length === 0, lowC(darkC).concat(lowTab).join(", "));
 ok("인쇄는 어두운 화면에서도 밝은 화면과 같음(흰 바탕·검은 글자), PDF 쪽 수 같음", th.print.body === "rgb(255, 255, 255)" && th.print.sheet === "rgb(255, 255, 255)" && /rgb\(29, 29, 27\)|rgb\(21, 24, 30\)/.test(th.print.ink) && Math.abs(pdfDark - pdfLight) / pdfLight < 0.35, JSON.stringify(th.print) + ` pdf ${pdfDark}/${pdfLight}`);
-ok("어두운 화면: 새로 열어도 그리기 전에 적용(깜빡임 없음), 대문·다른 페이지에도 적용, 버튼으로 다시 밝게(기억 삭제·theme-color 갱신)", th.persist.attr === "dark" && th.persist.body === th.dark.bg && th.site.attr === "dark" && th.site.btn && th.site.bg === th.dark.bg && th.site.meta === "#0e1014" && th.siteLight.attr === null && th.siteLight.ls === null && th.siteLight.meta === "#f6f7f9" && th.back.attr === null, JSON.stringify({ persist: th.persist, site: th.site, siteLight: th.siteLight, back: th.back }));
+ok("어두운 화면: 새로 열어도 그리기 전에 적용(깜빡임 없음), 대문·다른 페이지에도 적용, 버튼으로 자동으로 돌아가면 기억 삭제·theme-color 갱신(기기가 밝으면 밝게)", th.persist.attr === "dark" && th.persist.body === th.dark.bg && th.site.attr === "dark" && th.site.btn && th.site.bg === th.dark.bg && th.site.meta === "#0e1014" && th.siteLight.attr === null && th.siteLight.ls === null && th.siteLight.meta === "#f6f7f9" && th.back.attr === null, JSON.stringify({ persist: th.persist, site: th.site, siteLight: th.siteLight, back: th.back }));
 ok("글자 대비 4.5 이상: 대문(밝은·어두운 화면 모두)", lowC(siteDark).length === 0 && lowC(siteLight).length === 0, lowC(siteDark).map((x) => "dark:" + x).concat(lowC(siteLight).map((x) => "light:" + x)).join(", "));
+// 자동 모드: 저장된 값이 없으면 기기 설정(prefers-color-scheme)을 따라가고, 밝게/어둡게를 고르면 그 값이 우선
+const pau = await browser.newPage();
+pau.on("pageerror", (e) => errors.push("autotheme pageerror: " + e.message));
+await pau.setViewport({ width: 1400, height: 1000 });
+await pau.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
+await pau.evaluateOnNewDocument(() => { try { if (!sessionStorage.getItem("au_seed")) { sessionStorage.setItem("au_seed", "1"); localStorage.removeItem("jakji_theme"); localStorage.removeItem("wo_autosave"); } localStorage.setItem("jakji_lang", "ko"); } catch (e) {} });
+await pau.goto(URL + "?lang=ko", { waitUntil: "domcontentloaded" });
+const au = {};
+au.sysDark = await pau.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), body: getComputedStyle(document.body).backgroundColor }));   // 그리기 전에 기기 설정 적용
+await pau.waitForFunction(() => document.getElementById("themeBtn"), { timeout: 8000 });
+au.mode = await pau.evaluate(() => document.getElementById("themeBtn").dataset.mode);
+await pau.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]); await new Promise((x) => setTimeout(x, 300));
+au.liveLight = await pau.evaluate(() => document.documentElement.getAttribute("data-theme"));   // 기기 설정이 바뀌면 바로 따라감
+await pau.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]); await new Promise((x) => setTimeout(x, 300));
+au.liveDark = await pau.evaluate(() => document.documentElement.getAttribute("data-theme"));
+await pau.evaluate(() => document.getElementById("themeBtn").click()); await new Promise((x) => setTimeout(x, 300));   // 자동 → 밝게: 기기가 어두워도 밝게
+au.forceLight = await pau.evaluate(() => ({ attr: document.documentElement.getAttribute("data-theme"), ls: localStorage.getItem("jakji_theme") }));
+await pau.reload({ waitUntil: "domcontentloaded" });
+au.forceLightReload = await pau.evaluate(() => document.documentElement.getAttribute("data-theme"));
+await pau.evaluate(() => { localStorage.setItem("jakji_theme", "dark"); }); await pau.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);
+await pau.reload({ waitUntil: "domcontentloaded" });
+au.forceDarkReload = await pau.evaluate(() => document.documentElement.getAttribute("data-theme"));   // 기기가 밝아도 어둡게 고른 값이 우선
+ok("자동 화면 모드: 저장된 값이 없으면 기기 설정을 그리기 전에 따르고 바뀌면 바로 따라감, 밝게·어둡게를 고르면 그 값이 우선(새로 열어도 유지)", au.sysDark.attr === "dark" && au.mode === "auto" && au.liveLight === null && au.liveDark === "dark" && au.forceLight.attr === null && au.forceLight.ls === "light" && au.forceLightReload === null && au.forceDarkReload === "dark", JSON.stringify(au));
+await pau.close();
 await pth.close();
 
 /* 14-f. 앱으로 설치(PWA): manifest·아이콘·서비스 워커·오프라인, 설치 버튼(크롬 설치 창·아이폰 안내·이미 설치면 숨김) */

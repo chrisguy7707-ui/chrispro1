@@ -15,7 +15,7 @@
   if (l === "en" || window.SHEET_LANG !== "ko") document.write('<script src="assets/i18n-en.js"><\/script><script src="assets/i18n.js"><\/script>'); })();
 </script>
 <!-- SITE:HEAD-START -->
-<script>try{if(localStorage.getItem("jakji_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<script>try{var t=localStorage.getItem("jakji_theme");if(t==="dark"||(t!=="light"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="canonical" href="https://jakji.app/app.html" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="작지" />
@@ -92,7 +92,8 @@
   .theme-btn { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--rule); background: var(--surface); color: var(--ink); display: grid; place-items: center; padding: 0; cursor: pointer; transition: border-color .15s, transform .15s; }
   .theme-btn:hover { border-color: var(--ink); transform: translateY(-1px); }
   .theme-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .theme-btn .sun { display: none; } :root[data-theme="dark"] .theme-btn .sun { display: block; } :root[data-theme="dark"] .theme-btn .moon { display: none; }
+  .theme-btn svg { display: none; }
+  .theme-btn[data-mode="auto"] .i-auto, .theme-btn[data-mode="light"] .i-light, .theme-btn[data-mode="dark"] .i-dark { display: block; }
   :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   *, *::before, *::after { box-sizing: inherit; }

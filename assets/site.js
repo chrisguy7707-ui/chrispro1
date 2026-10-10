@@ -46,29 +46,36 @@
   if (document.body) show(); else document.addEventListener("DOMContentLoaded", show);
 })();
 
-/* 화면 모드 전환(밝은 화면 ↔ 어두운 화면): 고른 값은 localStorage jakji_theme에 기억. 기본은 밝은 화면.
-   처음 그릴 때의 적용은 각 페이지 <head>의 짧은 스크립트(scripts/configure.mjs)가 함(깜빡임 방지). 버튼은 머리 막대(.topbar) 또는 도구의 .brand 줄 끝에 넣음 */
+/* 화면 모드: 자동(기기 설정 따름) → 밝게 → 어둡게 순서로 바뀌는 버튼. 고른 값은 localStorage jakji_theme("light"·"dark", 자동이면 없음).
+   처음 그릴 때의 적용은 각 페이지 <head>의 짧은 스크립트(scripts/configure.mjs)가 함(깜빡임 방지). 버튼은 머리 막대(.topbar) 또는 도구의 .brand 줄 끝에 넣음.
+   적용 결과는 <html data-theme="dark">(어두울 때만 속성이 있음), 버튼의 data-mode는 고른 값(auto·light·dark) */
 (function () {
   var root = document.documentElement, en = root.lang === "en" || /[?&]lang=en/.test(location.search);
-  var T = en ? { dark: "Switch to dark mode", light: "Switch to light mode" } : { dark: "어두운 화면으로 바꾸기", light: "밝은 화면으로 바꾸기" };
-  var ICON = '<svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 019.8 3.5a8.5 8.5 0 1010.7 10.7z"/></svg>' +
-    '<svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>';
+  var NAME = en ? { auto: "Auto (follows your device)", light: "Light", dark: "Dark" } : { auto: "자동 (기기 설정을 따름)", light: "밝게", dark: "어둡게" };
+  var NEXT = { auto: "light", light: "dark", dark: "auto" };
+  var ICON = '<svg class="i-auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 010 17z" fill="currentColor" stroke="none"/></svg>' +
+    '<svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>' +
+    '<svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 019.8 3.5a8.5 8.5 0 1010.7 10.7z"/></svg>';
   var host = document.querySelector(".topbar") || document.querySelector(".brand");
   if (!host) return;
+  var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
   var btn = document.createElement("button");
   btn.type = "button"; btn.className = "theme-btn"; btn.id = "themeBtn"; btn.innerHTML = ICON;
-  function isDark() { return root.getAttribute("data-theme") === "dark"; }
-  function paint() {
-    var d = isDark(); btn.setAttribute("aria-pressed", d ? "true" : "false");
-    var t = d ? T.light : T.dark; btn.title = t; btn.setAttribute("aria-label", t);
-    var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", d ? "#0e1014" : "#f6f7f9");
-  }
-  function set(d) {
+  function mode() { var v = null; try { v = localStorage.getItem("jakji_theme"); } catch (e) {} return v === "dark" || v === "light" ? v : "auto"; }
+  function dark(m) { return m === "dark" || (m === "auto" && !!mq && mq.matches); }
+  function apply() {
+    var m = mode(), d = dark(m);
     if (d) root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
-    try { if (d) localStorage.setItem("jakji_theme", "dark"); else localStorage.removeItem("jakji_theme"); } catch (e) {}
-    paint(); document.dispatchEvent(new CustomEvent("jakji-theme", { detail: { dark: d } }));
+    btn.setAttribute("data-mode", m);
+    var nx = NAME[NEXT[m]].replace(/ \(.*/, "");
+    var label = en ? "Display mode: " + NAME[m] + ". Click for \u201c" + nx + "\u201d" : "화면 모드: " + NAME[m] + " · 누르면 \u2018" + nx + "\u2019";
+    btn.title = label; btn.setAttribute("aria-label", label);
+    var meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", d ? "#0e1014" : "#f6f7f9");
+    document.dispatchEvent(new CustomEvent("jakji-theme", { detail: { mode: m, dark: d } }));
   }
-  btn.addEventListener("click", function () { set(!isDark()); });
-  window.addEventListener("storage", function (e) { if (e.key === "jakji_theme") { if (e.newValue === "dark") root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme"); paint(); } });
-  host.appendChild(btn); paint();
+  function set(m) { try { if (m === "auto") localStorage.removeItem("jakji_theme"); else localStorage.setItem("jakji_theme", m); } catch (e) {} apply(); }
+  btn.addEventListener("click", function () { set(NEXT[mode()]); });
+  if (mq) { var onSys = function () { if (mode() === "auto") apply(); }; if (mq.addEventListener) mq.addEventListener("change", onSys); else if (mq.addListener) mq.addListener(onSys); }
+  window.addEventListener("storage", function (e) { if (e.key === "jakji_theme") apply(); });
+  host.appendChild(btn); apply();
 })();

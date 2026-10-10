@@ -40,7 +40,8 @@
 .theme-btn { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); display: inline-grid; place-items: center; padding: 0; cursor: pointer; transition: border-color .15s, transform .15s; }
 .theme-btn:hover { border-color: var(--ink); transform: translateY(-1px); }
 .theme-btn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.theme-btn .sun { display: none; } :root[data-theme="dark"] .theme-btn .sun { display: block; } :root[data-theme="dark"] .theme-btn .moon { display: none; }
+.theme-btn svg { display: none; }
+.theme-btn[data-mode="auto"] .i-auto, .theme-btn[data-mode="light"] .i-light, .theme-btn[data-mode="dark"] .i-dark { display: block; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--ink); line-height: 1.7; word-break: keep-all; overflow-wrap: break-word; -webkit-font-smoothing: antialiased; }
 a { color: inherit; text-underline-offset: 3px; }
