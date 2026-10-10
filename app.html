@@ -681,8 +681,6 @@
       <button id="saveXlsxBtn" data-tab="sheet" title="엑셀(.xlsx)로 저장: 도식화 그림·원단·부자재·스와치·봉제 사양, 치수표, 발주표가 시트별로 들어갑니다. 원가는 들어가지 않습니다">엑셀로 저장</button>
       <button id="jobsBtn" title="이 브라우저에 저장한 여러 스타일을 열고 복제하기">내 스타일 <span id="jobsCount"></span></button>
       <button id="shareBtn" title="공장이나 내 다른 기기에서 열 수 있는 링크 만들기">공유 링크</button>
-      <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
-        <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
       <button id="bigViewBtn" class="mob-only" data-tab="sheet" type="button" title="작업지시서를 크게 보고 칸을 눌러 고칠 수 있게 합니다 (좌우로 밀어서 보기)" aria-pressed="false">🔍 크게 보기</button>
       <details class="more-menu" id="moreMenu">
         <summary title="작업 파일 저장·열기, HTML·SVG 내보내기, 인쇄 쪽수, 의견 보내기">더보기 ⋯</summary>
@@ -696,6 +694,8 @@
           <button id="fbBtn" title="운영자만 보는 비밀 의견 보내기">🔒 의견 보내기</button>
         </div>
       </details>
+      <label class="sheet-lang" data-tab="sheet" title="작업지시서에 적히는 언어. 해외 공장에는 English 또는 한·영 병기">작업지시서 언어
+        <select id="sheetLang" aria-label="작업지시서 언어"><option value="ko">한국어</option><option value="both">한·영 병기</option><option value="en">English</option></select></label>
       <input type="file" id="jobFile" accept=".json,application/json" hidden />
       <input type="file" id="photoFile" accept="image/jpeg,image/png,image/webp" hidden />
       <input type="file" id="swFile" accept="image/jpeg,image/png,image/webp" hidden />
