@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.SITE_URL || "http://localhost:8766/";
 const cfg = JSON.parse(fs.readFileSync(path.join(root, "site.config.json"), "utf8"));
-const PAGES = ["index.html", "app.html", "guide.html", "form.html", "form-tshirt.html", "form-longsleeve.html", "form-shirt.html", "form-hoodie.html", "form-jacket.html", "form-pants.html", "form-shorts.html", "form-skirt.html", "form-dress.html", "form-english.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "about.html", "privacy.html", "terms.html", "contact.html",
+const PAGES = ["index.html", "app.html", "guide.html", "form.html", "form-tshirt.html", "form-longsleeve.html", "form-shirt.html", "form-hoodie.html", "form-jacket.html", "form-pants.html", "form-shorts.html", "form-skirt.html", "form-dress.html", "form-english.html", "factory.html", "learn.html", "learn-sample.html", "learn-fabric.html", "learn-yield.html", "learn-size.html", "learn-label.html", "learn-inspect.html", "learn-flat.html", "learn-terms.html", "learn-wash.html", "learn-mistakes.html", "learn-tolerance.html", "learn-trims.html", "learn-order.html", "learn-english.html", "about.html", "privacy.html", "terms.html", "contact.html",
   "en/index.html", "en/guide.html", "en/form.html", "en/about.html", "en/contact.html", "en/privacy.html", "en/terms.html"];
 const EN_PAGES = PAGES.filter((f) => f.startsWith("en/"));
 const locOf = (f) => f.replace(/(^|\/)index\.html$/, "$1");
@@ -20,6 +20,8 @@ const ok = (name, pass, detail = "") => { results.push(pass); console.log(`${pas
 const pdfPages = (buf) => (Buffer.from(buf).toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
 
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, args: process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : [] });
+// 검사는 기기 설정이 밝다고 가정(자동 화면 모드가 기기 설정을 따라가므로, 컴퓨터가 어두운 모드여도 같은 결과가 나오게). 어두운 기기 시험은 emulateMediaFeatures로 따로 함
+{ const _np = browser.newPage.bind(browser); browser.newPage = async (...a) => { const pg = await _np(...a); await pg.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]); return pg; }; }
 const page = await browser.newPage();
 await page.setBypassServiceWorker(true);   // 앱 설치(서비스 워커)가 검사에 끼어들지 않게(서비스 워커 검사는 verify.mjs에서)
 /* 봇 탐지 요청: 같은 사이트 도메인의 아주 긴 무작위 한 단계 경로 (github.io 아래에서는 /chrispro1/ 밖의 모든 경로) */
@@ -175,7 +177,9 @@ ok("앱 설치 파일: manifest.json·sw.js·아이콘 4개가 열리고 형식�
 const themeBad = [];
 for (const f of PAGES.filter((x) => x !== "app.html")) {
   await page.goto(BASE + f, { waitUntil: "networkidle0" });
-  const r = await page.evaluate(() => { const b = document.getElementById("themeBtn"); const before = getComputedStyle(document.body).backgroundColor; if (b) { b.click(); b.click(); } return { btn: !!b, mode: b?.dataset.mode, attr: document.documentElement.getAttribute("data-theme"), changed: getComputedStyle(document.body).backgroundColor !== before, label: b?.getAttribute("aria-label") || "", lang: document.documentElement.lang }; });   // 자동 → 밝게 → 어둡게
+  await page.evaluate(() => { const b = document.getElementById("themeBtn"); window.__before = getComputedStyle(document.body).backgroundColor; if (b) { b.click(); b.click(); } });   // 자동 → 밝게 → 어둡게
+  await new Promise((x) => setTimeout(x, 450));   // 색이 바뀌는 애니메이션이 끝난 뒤에 잼
+  const r = await page.evaluate(() => { const b = document.getElementById("themeBtn"); return { btn: !!b, mode: b?.dataset.mode, attr: document.documentElement.getAttribute("data-theme"), changed: getComputedStyle(document.body).backgroundColor !== window.__before, label: b?.getAttribute("aria-label") || "", lang: document.documentElement.lang }; });
   await page.evaluate(() => { const b = document.getElementById("themeBtn"); if (b) b.click(); });
   const okLabel = r.lang === "en" ? /Display mode/.test(r.label) && !/[가-힣]/.test(r.label) : /화면 모드/.test(r.label);
   if (!r.btn || r.attr !== "dark" || r.mode !== "dark" || !r.changed || !okLabel) themeBad.push(`${f}:${JSON.stringify(r)}`);

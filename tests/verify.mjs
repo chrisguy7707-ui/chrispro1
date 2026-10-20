@@ -16,6 +16,8 @@ const isPortrait = (mb) => { const n = mb.match(/[\d.]+/g).map(Number); return n
 const pages = (buf) => (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
 
 const browser = await puppeteer.launch({ executablePath: process.env.CHROME || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true, args: process.env.CI ? ["--no-sandbox", "--disable-dev-shm-usage"] : [] });
+// 검사는 기기 설정이 밝다고 가정(자동 화면 모드가 기기 설정을 따라가므로, 컴퓨터가 어두운 모드여도 같은 결과가 나오게). 어두운 기기 시험은 emulateMediaFeatures로 따로 함
+{ const _np = browser.newPage.bind(browser); browser.newPage = async (...a) => { const pg = await _np(...a); await pg.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]); return pg; }; }
 const page = await browser.newPage();
 /* 봇 탐지 요청: 같은 사이트 도메인의 아주 긴 무작위 한 단계 경로 (github.io 아래에서는 /chrispro1/ 밖의 모든 경로) */
 const isGhBot = (u) => { const x = new globalThis.URL(u); return (x.hostname.endsWith("github.io") && !x.pathname.startsWith("/chrispro1/")) || (!/^(localhost|127\.0\.0\.1)$/.test(x.hostname) && /^\/[A-Za-z0-9_-]{60,}$/.test(x.pathname)); };
@@ -400,6 +402,7 @@ for (const type of ["skirt_h", "pouch"]) {
   await page.emulateMediaType("print");
   const cover = await page.evaluate(() => { const c = document.querySelector("#patPrint .pat-cover"); return [c.scrollHeight, c.clientHeight, Math.round(c.querySelector(".chk").getBoundingClientRect().width)]; });
   await page.emulateMediaType(null);
+  await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);
   ok(`${type} 인쇄 첫 장: 내용이 한 장에 들어가고 확인 네모 50mm(189px)`, cover[0] <= cover[1] + 1 && Math.abs(cover[2] - 189) <= 1, cover.join("/"));
   const pdf = await page.pdf({ preferCSSPageSize: true });
   fs.writeFileSync(new URL_(`pattern_${type}.pdf`, OUT), pdf);
@@ -1498,6 +1501,7 @@ await pth.evaluate(() => document.getElementById("tabSheetBtn").click());
 await pth.emulateMediaType("print");
 th.print = await pth.evaluate(() => ({ body: getComputedStyle(document.body).backgroundColor, sheet: getComputedStyle(document.getElementById("sheet")).backgroundColor, ink: getComputedStyle(document.querySelector("#sheet td")).color }));
 await pth.emulateMediaType("screen");
+await pth.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);   // emulateMediaType이 기기 설정 흉내를 지우므로 다시 설정
 const pdfDark = (await pth.pdf({ preferCSSPageSize: true })).length;
 // 새로 열어도 유지(그리기 전에 적용), 다른 페이지에도 적용, 다시 눌러 밝게
 await pth.goto(URL + "?lang=ko", { waitUntil: "domcontentloaded" });
