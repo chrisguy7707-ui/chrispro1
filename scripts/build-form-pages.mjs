@@ -308,7 +308,7 @@ const enRows = (slug, g) => EN[slug][g].rows;
   for (const slug of ORDER) KO[slug].m.sew.forEach((s, i) => { const en = EN[slug].m.sew[i]; if (en && !sewPairs.has(s)) sewPairs.set(s, en); });
   const dlRows = ENLIST.map((x) => `<tr><th>${e(x.ko)}<br><small>${e(x.en)}</small></th><td>${dlBtn(x.slug, "m", { en: true }).replace("남성 사이즈 (80~110)", "남성 · 영문")}</td><td>${dlBtn(x.slug, "w", { en: true }).replace("여성 사이즈 (44~88)", "여성 · 영문")}</td></tr>`).join("\n      ");
   const title = "작업지시서 영문 양식 (영어 엑셀) 무료 다운로드 | 작지", h1 = "작업지시서 영문 양식 무료 다운로드";
-  const desc = "해외 공장용 영문 작업지시서(tech pack) 엑셀 양식 18종. 측정 부위·봉제 사양이 영어로 적혀 있고 사이즈는 XXS~XXL 호칭을 함께 씁니다. 무료.";
+  const desc = "해외 공장용 영문 작업지시서 엑셀 양식 18종. 측정 부위·봉제 용어 한영 대응표와 사이즈 알파벳 표기 포함.";
   const lead = "해외 공장이나 영어 소통이 필요한 거래처에 보내는 영문 작업지시서(tech pack) 엑셀 양식입니다. 도식화·치수표·원단·부자재·봉제 사양이 모두 영어로 적혀 있습니다.";
   const faq = [["영문 양식과 한국어 양식은 뭐가 다른가요?", "내용은 같고 글자만 영어입니다. 측정 부위(Point of measure), 측정 방법(How to measure), 부자재와 봉제 사양이 영어 표현으로 바뀌어 있고, 사이즈는 80~110 호칭 옆에 XXS~XXL 알파벳을 함께 적습니다."],
     ["영어와 한국어를 함께 적을 수는 없나요?", "작지 도구에서 ‘작업지시서 언어’를 ‘한·영 병기’로 고르면 한국어 아래에 영어가 함께 적힌 엑셀·PDF를 만들 수 있습니다. 양식 파일은 영어 전용입니다."],
